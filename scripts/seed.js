@@ -1,0 +1,290 @@
+const fs = require('fs');
+const path = require('path');
+const { MongoClient } = require('mongodb');
+
+// Fallback product dataset
+const PRODUCTS = [
+  {
+    id: 'prod-01',
+    name: 'Peacock Ikat Loafers',
+    category: 'womens',
+    type: 'loafers',
+    price: 1499,
+    originalPrice: 2499,
+    rating: 4.8,
+    reviews: 142,
+    pattern: 'ikat',
+    patternColor: '#008080',
+    bgColor: '#f2f9f9',
+    tag: 'Best Seller',
+    desc: 'Woven cotton ikat canvas with premium tan vegan leather borders and cushioned memory foam soles.',
+    image: '/assets/loafers.png',
+    color: 'teal',
+    material: 'Ikat Canvas',
+    stock: 'in-stock',
+    sizes: [5, 6, 7, 8]
+  },
+  {
+    id: 'prod-02',
+    name: 'Kutch Embroidered Juttis',
+    category: 'womens',
+    type: 'sandals',
+    price: 1299,
+    originalPrice: 2199,
+    rating: 4.9,
+    reviews: 98,
+    pattern: 'kutch',
+    patternColor: '#dc2626',
+    bgColor: '#fff5f5',
+    tag: 'Artisan Special',
+    desc: 'Traditional mirror work embroidery from Gujarat on high-durability vegan leather backing.',
+    image: '/assets/mojris.png',
+    color: 'red',
+    material: 'Vegan Leather',
+    stock: 'in-stock',
+    sizes: [6, 7, 8]
+  },
+  {
+    id: 'prod-03',
+    name: 'Royal Mandala Slides',
+    category: 'mens',
+    type: 'slides',
+    price: 1199,
+    originalPrice: 1999,
+    rating: 4.7,
+    reviews: 165,
+    pattern: 'mandala',
+    patternColor: '#c48a43',
+    bgColor: '#fdfbf7',
+    tag: 'Trending',
+    desc: 'Lasercut royal mandala designs on premium cruelty-free tan leather with breathable lining.',
+    image: '/assets/slides.png',
+    color: 'tan',
+    material: 'Vegan Leather',
+    stock: 'low-stock',
+    sizes: [7, 8, 9, 10]
+  },
+  {
+    id: 'prod-04',
+    name: 'Indore Paisley Sandals',
+    category: 'womens',
+    type: 'sandals',
+    price: 1399,
+    originalPrice: 2299,
+    rating: 4.6,
+    reviews: 87,
+    pattern: 'paisley',
+    patternColor: '#4f46e5',
+    bgColor: '#f5f5ff',
+    tag: 'New Launch',
+    desc: 'Soft crossover straps featuring deep blue paisley motifs and durable anti-slip rubber outsoles.',
+    image: '/assets/sandals.png',
+    color: 'blue',
+    material: 'Ikat Canvas',
+    stock: 'in-stock',
+    sizes: [5, 6, 7]
+  },
+  {
+    id: 'prod-05',
+    name: 'Maharaja Velvet Loafers',
+    category: 'mens',
+    type: 'loafers',
+    price: 1799,
+    originalPrice: 2999,
+    rating: 4.9,
+    reviews: 112,
+    pattern: 'velvet',
+    patternColor: '#701a75',
+    bgColor: '#fdf4ff',
+    tag: 'Royal Edition',
+    desc: 'Rich velvet upper with gold-braid detail, handcrafted for wedding and festive occasions.',
+    image: '/assets/loafers.png',
+    color: 'purple',
+    material: 'Velvet',
+    stock: 'in-stock',
+    sizes: [8, 9, 10, 11]
+  },
+  {
+    id: 'prod-06',
+    name: 'Classic Tan Vegan Slides',
+    category: 'mens',
+    type: 'slides',
+    price: 999,
+    originalPrice: 1699,
+    rating: 4.5,
+    reviews: 210,
+    pattern: 'classic',
+    patternColor: '#a06e30',
+    bgColor: '#f7efe2',
+    tag: 'Daily Comfort',
+    desc: 'Ultra-cushioned everyday slides in matte tan finish. Water-resistant and highly lightweight.',
+    image: '/assets/slides.png',
+    color: 'tan',
+    material: 'Vegan Leather',
+    stock: 'in-stock',
+    sizes: [6, 7, 8, 9, 10]
+  },
+  {
+    id: 'prod-07',
+    name: 'Jaipur Floral Mojris',
+    category: 'womens',
+    type: 'sandals',
+    price: 1150,
+    originalPrice: 1899,
+    rating: 4.7,
+    reviews: 73,
+    pattern: 'floral',
+    patternColor: '#db2777',
+    bgColor: '#fdf2f8',
+    tag: '10% OFF Today',
+    desc: 'Delicate floral patterns block-printed in Jaipur on flexible, soft-fit flat juttis.',
+    image: '/assets/mojris.png',
+    color: 'pink',
+    material: 'Khadi Cotton',
+    stock: 'low-stock',
+    sizes: [5, 6, 7, 8]
+  },
+  {
+    id: 'prod-08',
+    name: 'Earthy Jute Sandals',
+    category: 'mens',
+    type: 'sandals',
+    price: 1299,
+    originalPrice: 2099,
+    rating: 4.6,
+    reviews: 94,
+    pattern: 'jute',
+    patternColor: '#78350f',
+    bgColor: '#fef3c7',
+    tag: 'Eco-Friendly',
+    desc: 'Natural braided jute fibers combined with dark chocolate vegan leather straps. Breathable and smart.',
+    image: '/assets/sandals.png',
+    color: 'tan',
+    material: 'Jute',
+    stock: 'in-stock',
+    sizes: [7, 8, 9, 10]
+  },
+  {
+    id: 'prod-09',
+    name: 'Kashmiri Aari Slides',
+    category: 'womens',
+    type: 'slides',
+    price: 1349,
+    originalPrice: 2299,
+    rating: 4.8,
+    reviews: 81,
+    pattern: 'aari',
+    patternColor: '#059669',
+    bgColor: '#ecfdf5',
+    tag: 'Exclusive Craft',
+    desc: 'Intricate Kashmiri Aari needlework chain-stitching in organic cotton thread on off-white canvas.',
+    image: '/assets/slides.png',
+    color: 'green',
+    material: 'Ikat Canvas',
+    stock: 'in-stock',
+    sizes: [6, 7, 8]
+  },
+  {
+    id: 'prod-10',
+    name: 'Urban Khadi Loafers',
+    category: 'mens',
+    type: 'loafers',
+    price: 1599,
+    originalPrice: 2699,
+    rating: 4.7,
+    reviews: 136,
+    pattern: 'khadi',
+    patternColor: '#1e293b',
+    bgColor: '#f8fafc',
+    tag: 'Sustainably Made',
+    desc: 'Hand-spun Indian khadi fabric outer with sleek black vegan trim, perfect for casual and formal wear.',
+    image: '/assets/loafers.png',
+    color: 'black',
+    material: 'Khadi Cotton',
+    stock: 'in-stock',
+    sizes: [8, 9, 10, 11]
+  },
+  {
+    id: 'prod-11',
+    name: 'Golden Mandala Heels',
+    category: 'womens',
+    type: 'sandals',
+    price: 1899,
+    originalPrice: 3199,
+    rating: 4.9,
+    reviews: 104,
+    pattern: 'gold-mandala',
+    patternColor: '#b45309',
+    bgColor: '#fffbeb',
+    tag: 'Limited Stock',
+    desc: 'Elegantly block-heeled sandals displaying golden mandala embroidery on soft vegan leather.',
+    image: '/assets/sandals.png',
+    color: 'gold',
+    material: 'Vegan Leather',
+    stock: 'low-stock',
+    sizes: [5, 6, 7, 8]
+  },
+  {
+    id: 'prod-12',
+    name: 'Sleek Onyx Vegan Sandals',
+    category: 'mens',
+    type: 'sandals',
+    price: 1249,
+    originalPrice: 1999,
+    rating: 4.4,
+    reviews: 152,
+    pattern: 'onyx',
+    patternColor: '#111827',
+    bgColor: '#f3f4f6',
+    tag: 'Cruelty-Free',
+    desc: 'Deep black textured vegan straps with a heavy-duty contoured footbed for all-terrain walking.',
+    image: '/assets/sandals.png',
+    color: 'black',
+    material: 'Vegan Leather',
+    stock: 'in-stock',
+    sizes: [7, 8, 9, 10, 11]
+  }
+];
+
+// Read env variables
+let uri = 'mongodb://localhost:27017/startupbiz';
+let dbName = 'startupbiz';
+
+const envPath = path.join(__dirname, '..', '.env.local');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim();
+      if (key === 'MONGODB_URI') uri = val;
+      if (key === 'MONGODB_DB') dbName = val;
+    }
+  });
+}
+
+async function seed() {
+  console.log(`Connecting to MongoDB at: ${uri}`);
+  const client = new MongoClient(uri);
+  
+  try {
+    await client.connect();
+    console.log('Connected successfully!');
+    const db = client.db(dbName);
+    
+    // Clear existing products
+    await db.collection('products').deleteMany({});
+    console.log('Cleared existing products.');
+    
+    // Insert new products
+    const result = await db.collection('products').insertMany(PRODUCTS);
+    console.log(`Successfully seeded ${result.insertedCount} products in MongoDB collection!`);
+  } catch (error) {
+    console.error('Seeding failed:', error);
+  } finally {
+    await client.close();
+  }
+}
+
+seed();
