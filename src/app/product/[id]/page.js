@@ -17,7 +17,11 @@ async function getProductData(idOrSlug) {
   try {
     const client = await clientPromise;
     const db = client.db('startupbiz');
-    const dbProducts = await db.collection('products').find({}).toArray();
+    const rawProducts = await db.collection('products').find({}).toArray();
+    const dbProducts = rawProducts.map(p => ({
+      ...p,
+      _id: p._id ? p._id.toString() : p.id
+    }));
 
     // Match by ID, database slug, or generated name slug
     let product = dbProducts.find(
@@ -25,12 +29,11 @@ async function getProductData(idOrSlug) {
     );
 
     if (product) {
-      // Find related database products
       const related = dbProducts
         .filter((p) => p.category === product.category && p.id !== product.id)
         .slice(0, 4);
 
-      return { product, relatedProducts: related };
+      return { product, relatedProducts: related, allProducts: dbProducts };
     }
   } catch (error) {
     console.error('Failed to query product from MongoDB:', error.message);
@@ -45,7 +48,7 @@ async function getProductData(idOrSlug) {
     const related = PRODUCTS
       .filter((p) => p.category === product.category && p.id !== product.id)
       .slice(0, 4);
-    return { product, relatedProducts: related };
+    return { product, relatedProducts: related, allProducts: PRODUCTS };
   }
 
   return null;
@@ -58,7 +61,7 @@ export async function generateMetadata({ params }) {
 
   if (!data) {
     return {
-      title: 'Product Not Found',
+      title: 'Product Not Found | SlideEase Footwear',
       description: 'The requested footwear item could not be found.'
     };
   }
@@ -77,18 +80,18 @@ export async function generateMetadata({ params }) {
     : `${siteUrl}${product.image}`;
 
   // Remove HTML tags from descriptions for plain text previews
-  const cleanDescription = (product.desc || product.shortDesc || 'Premium slides and footwear catalog.')
+  const cleanDescription = (product.desc || product.shortDesc || 'Premium handcrafted vegan slides and footwear.')
     .replace(/<[^>]*>/g, '')
     .substring(0, 160);
 
   return {
-    title: `${product.name} | Slidex Footwear`,
+    title: `${product.name} | SlideEase Footwear`,
     description: cleanDescription,
     openGraph: {
-      title: `${product.name} | Slidex Footwear`,
+      title: `${product.name} | SlideEase Footwear`,
       description: cleanDescription,
       url: `${siteUrl}/product/${id}`,
-      siteName: 'Slidex Footwear',
+      siteName: 'SlideEase Footwear',
       type: 'website',
       images: [
         {
@@ -101,7 +104,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${product.name} | Slidex Footwear`,
+      title: `${product.name} | SlideEase Footwear`,
       description: cleanDescription,
       images: [absoluteImageUrl]
     }
@@ -126,6 +129,7 @@ export default async function ProductPage({ params }) {
     <ProductDetailsWrapper 
       product={data.product} 
       relatedProducts={data.relatedProducts} 
+      allProducts={data.allProducts || []}
     />
   );
 }

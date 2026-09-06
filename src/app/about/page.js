@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'About Us | Slidex Footwear — Handcrafted Vegan Indian Footwear',
-  description: "Learn about Slidex Footwear's mission to blend traditional Indian craftsmanship with cruelty-free vegan materials. Our story, values, and artisan partnerships.",
+  title: 'About Us | SlideEase — Handcrafted Vegan Indian Footwear',
+  description: "Learn about SlideEase's mission to blend traditional Indian craftsmanship with cruelty-free vegan materials. Our story, values, and artisan partnerships.",
 };
 
 export default function AboutPage() {
@@ -25,7 +25,7 @@ export default function AboutPage() {
         <div className="page-hero-content">
           <span className="page-hero-tagline">Our Journey</span>
           <h1 className="page-hero-title">Crafting Comfort, Celebrating Heritage</h1>
-          <p className="page-hero-desc">The story of how a passion for ethical fashion and Indian craftsmanship became Slidex Footwear.</p>
+          <p className="page-hero-desc">The story of how a passion for ethical fashion and Indian craftsmanship became SlideEase.</p>
         </div>
       </section>
 
@@ -36,8 +36,8 @@ export default function AboutPage() {
             <div className="brand-story-text">
               <span className="brand-story-sub">Our Mission</span>
               <h2 className="brand-story-h2">Walk Light, Walk Right</h2>
-              <p className="brand-story-p">At Slidex Footwear, we believe style should never come at the cost of conscience. Founded in 2024 in Mumbai, India, our mission is to create premium-quality, cruelty-free footwear that celebrates India's rich weaving heritage while using zero animal products.</p>
-              <p className="brand-story-p">Every pair of Slidex shoes is handcrafted by local artisans from Gujarat, Rajasthan, and Madhya Pradesh — master weavers who have preserved traditional techniques for generations. We combine their craft with modern comfort engineering to deliver footwear that is both ethically made and ergonomically designed.</p>
+              <p className="brand-story-p">At SlideEase, we believe style should never come at the cost of conscience. Founded in 2024 in Mumbai, India, our mission is to create premium-quality, cruelty-free footwear that celebrates India's rich weaving heritage while using zero animal products.</p>
+              <p className="brand-story-p">Every pair of SlideEase shoes is handcrafted by local artisans from Gujarat, Rajasthan, and Madhya Pradesh — master weavers who have preserved traditional techniques for generations. We combine their craft with modern comfort engineering to deliver footwear that is both ethically made and ergonomically designed.</p>
               <div className="brand-story-features">
                 <div className="story-feature-item">
                   <span className="story-feature-icon">🌿</span>
@@ -132,7 +132,7 @@ export default function AboutPage() {
       <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }} id="about-timeline">
         <div className="container" style={{ maxWidth: '800px' }}>
           <h2 className="section-title">Our Journey</h2>
-          <p className="section-subtitle">Key milestones in the Slidex Footwear story.</p>
+          <p className="section-subtitle">Key milestones in the SlideEase story.</p>
           <div className="timeline">
             <div className="timeline-item">
               <div className="timeline-marker"></div>
@@ -155,7 +155,7 @@ export default function AboutPage() {
               <div className="timeline-content">
                 <span className="timeline-date">2025 — Q1</span>
                 <h4>PETA-Approved Vegan Certified</h4>
-                <p>Slidex receives official PETA Vegan Certification, becoming one of India's first certified vegan footwear brands.</p>
+                <p>SlideEase receives official PETA Vegan Certification, becoming one of India's first certified vegan footwear brands.</p>
               </div>
             </div>
             <div className="timeline-item">
@@ -171,7 +171,7 @@ export default function AboutPage() {
               <div className="timeline-content">
                 <span className="timeline-date">2026 — Present</span>
                 <h4>Building the Future</h4>
-                <p>Launching premium loafer line, international shipping, and the Slidex Loyalty Club with 10,000+ members.</p>
+                <p>Launching premium loafer line, international shipping, and the SlideEase Circle with 10,000+ members.</p>
               </div>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function AboutPage() {
       <section className="materials-section section-padding" id="about-team">
         <div className="container">
           <h2 className="section-title">Meet the Team</h2>
-          <p className="section-subtitle">The passionate people behind every pair of Slidex footwear.</p>
+          <p className="section-subtitle">The passionate people behind every pair of SlideEase footwear.</p>
           <div className="team-grid">
             <div className="team-card">
               <div className="team-avatar">AT</div>
@@ -212,20 +212,20 @@ export default function AboutPage() {
           <h2 className="section-title" style={{ fontSize: '1.8rem' }}>Follow Our Story</h2>
           <p className="section-subtitle">Join us on social media for style inspiration, behind-the-scenes craftsmanship, and exclusive drops.</p>
           <div className="social-links-large">
-            <a href="https://instagram.com/slidexfootwear" target="_blank" rel="noopener noreferrer" className="social-large-btn">
+            <a href="https://instagram.com/slideease" target="_blank" rel="noopener noreferrer" className="social-large-btn">
               <span style={{ fontSize: '2rem' }}>📸</span>
               <span>Instagram</span>
-              <span className="social-handle">@slidexfootwear</span>
+              <span className="social-handle">@slideease</span>
             </a>
-            <a href="https://facebook.com/slidexfootwear" target="_blank" rel="noopener noreferrer" className="social-large-btn">
+            <a href="https://facebook.com/slideease" target="_blank" rel="noopener noreferrer" className="social-large-btn">
               <span style={{ fontSize: '2rem' }}>👤</span>
               <span>Facebook</span>
-              <span className="social-handle">Slidex Footwear</span>
+              <span className="social-handle">SlideEase</span>
             </a>
-            <a href="https://twitter.com/slidexshoes" target="_blank" rel="noopener noreferrer" className="social-large-btn">
+            <a href="https://twitter.com/slideease" target="_blank" rel="noopener noreferrer" className="social-large-btn">
               <span style={{ fontSize: '2rem' }}>🐦</span>
               <span>Twitter</span>
-              <span className="social-handle">@slidexshoes</span>
+              <span className="social-handle">@slideease</span>
             </a>
           </div>
         </div>

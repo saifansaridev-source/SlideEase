@@ -12,12 +12,14 @@ export function CartProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Load cart and wishlist from LocalStorage on mount
+  // Load cart and wishlist from LocalStorage on mount & sync with MongoDB if logged in
   useEffect(() => {
     const storedCart = localStorage.getItem('slidex_cart');
+    let localCart = [];
     if (storedCart) {
       try {
-        setCart(JSON.parse(storedCart));
+        localCart = JSON.parse(storedCart);
+        setCart(localCart);
       } catch (e) {
         setCart([]);
       }
@@ -36,18 +38,58 @@ export function CartProvider({ children }) {
     if (storedDiscount) {
       setDiscount(parseFloat(storedDiscount));
     }
+
+    // Check if user is logged in and fetch cart from MongoDB
+    fetch('/api/cart')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.authenticated && Array.isArray(data.cart)) {
+          if (data.cart.length > 0) {
+            setCart(data.cart);
+            localStorage.setItem('slidex_cart', JSON.stringify(data.cart));
+          }
+        }
+      })
+      .catch(() => {});
+
+    // Check if user is logged in and fetch wishlist from MongoDB
+    fetch('/api/wishlist')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.authenticated && Array.isArray(data.wishlist)) {
+          if (data.wishlist.length > 0) {
+            setWishlist(data.wishlist);
+            localStorage.setItem('slidex_wishlist', JSON.stringify(data.wishlist));
+          }
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  // Save cart to LocalStorage when changed
+  // Save cart to LocalStorage and sync to MongoDB for logged-in users
   const saveCart = (newCart) => {
     setCart(newCart);
     localStorage.setItem('slidex_cart', JSON.stringify(newCart));
+    
+    // Sync to MongoDB asynchronously
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cart: newCart }),
+    }).catch(() => {});
   };
 
-  // Save wishlist to LocalStorage when changed
+  // Save wishlist to LocalStorage and sync to MongoDB for logged-in users
   const saveWishlist = (newWishlist) => {
     setWishlist(newWishlist);
     localStorage.setItem('slidex_wishlist', JSON.stringify(newWishlist));
+
+    // Sync to MongoDB asynchronously
+    fetch('/api/wishlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wishlist: newWishlist }),
+    }).catch(() => {});
   };
 
   const addToCart = (product, size = 'UK 8', qty = 1) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MediaSelector from '@/components/MediaSelector';
 import RichTextEditor from '@/components/RichTextEditor';
 import Link from 'next/link';
@@ -40,11 +40,14 @@ export default function AdminProducts() {
   const [patternColor, setPatternColor] = useState('#333333');
   const [bgColor, setBgColor] = useState('#f9f9f9');
   const [material, setMaterial] = useState('Vegan Leather');
+  const [color, setColor] = useState('tan');
   const [sizes, setSizes] = useState('6, 7, 8, 9, 10');
+  const [sizeStock, setSizeStock] = useState({ '5': 10, '6': 12, '7': 5, '8': 0, '9': 10, '10': 8 });
 
   // Media fields
   const [image, setImage] = useState('/assets/slides.png');
   const [gallery, setGallery] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   // Editing tracker
   const [editingProduct, setEditingProduct] = useState(null);
@@ -56,7 +59,7 @@ export default function AdminProducts() {
   const [formMsg, setFormMsg] = useState('');
   const [formError, setFormError] = useState('');
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/products?category=all');
       const json = await res.json();
@@ -70,9 +73,9 @@ export default function AdminProducts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/categories');
       const json = await res.json();
@@ -85,12 +88,12 @@ export default function AdminProducts() {
     } catch (err) {
       console.error('Failed to fetch categories');
     }
-  };
+  }, [editingProduct]);
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, [fetchProducts, fetchCategories]);
 
   const resetForm = () => {
     setName('');
@@ -112,6 +115,7 @@ export default function AdminProducts() {
     setPatternColor('#333333');
     setBgColor('#f9f9f9');
     setMaterial('Vegan Leather');
+    setColor('tan');
     setSizes('6, 7, 8, 9, 10');
     setImage('/assets/slides.png');
     setGallery('');
@@ -146,7 +150,9 @@ export default function AdminProducts() {
     setPatternColor(product.patternColor || '#333333');
     setBgColor(product.bgColor || '#f9f9f9');
     setMaterial(product.material || 'Vegan Leather');
+    setColor(product.color || 'tan');
     setSizes(Array.isArray(product.sizes) ? product.sizes.join(', ') : '6, 7, 8, 9, 10');
+    setSizeStock(product.sizeStock || { '5': 10, '6': 10, '7': 10, '8': 10, '9': 10, '10': 10 });
     
     setImage(product.image || '/assets/slides.png');
     setGallery(Array.isArray(product.gallery) ? product.gallery.join(', ') : '');
@@ -156,6 +162,46 @@ export default function AdminProducts() {
     setFormTab('general');
     setViewMode('form'); // Open edit form
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDirectFileUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setFormMsg('Uploading selected product photo(s)...');
+
+    try {
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success && data.urls) {
+        // If no main image set or default placeholder, set first uploaded as main
+        if (!image || image.includes('slides.png') || image.includes('og_image')) {
+          setImage(data.urls[0]);
+        }
+        // Append all uploaded to gallery
+        const existing = gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const combined = [...existing, ...data.urls];
+        setGallery(combined.join(', '));
+        setFormMsg(`✓ Successfully uploaded ${data.urls.length} product photo(s)!`);
+        setTimeout(() => setFormMsg(''), 4000);
+      } else {
+        setFormError(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      setFormError('Upload failed: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleFormSubmit = async (e) => {
@@ -187,8 +233,10 @@ export default function AdminProducts() {
       pattern,
       patternColor,
       bgColor,
-      material,
-      sizes: sizes ? sizes.split(',').map(s => parseInt(s.trim())).filter(s => !isNaN(s)) : [6, 7, 8, 9, 10],
+      material: material.trim(),
+      color: (color || 'tan').trim().toLowerCase(),
+      sizes: sizes ? sizes.split(',').map(s => s.trim()).filter(Boolean) : ['6', '7', '8', '9', '10'],
+      sizeStock: sizeStock || {},
       image,
       gallery: gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : []
     };
@@ -290,6 +338,7 @@ export default function AdminProducts() {
                   <th>Name</th>
                   <th>SKU</th>
                   <th>Category</th>
+                  <th>Color & Material</th>
                   <th>Price</th>
                   <th>Stock Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -298,11 +347,11 @@ export default function AdminProducts() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '4rem' }}>Fetching inventory catalog...</td>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '4rem' }}>Fetching inventory catalog...</td>
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '4rem' }}>No products found in the database. Click "Add New Product" to insert one!</td>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '4rem' }}>No products found in the database. Click "Add New Product" to insert one!</td>
                   </tr>
                 ) : (
                   products.map((prod) => (
@@ -318,6 +367,27 @@ export default function AdminProducts() {
                       </td>
                       <td><code>{prod.sku || `SLX-${prod.id.toUpperCase()}`}</code></td>
                       <td style={{ textTransform: 'capitalize' }}>{prod.category}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
+                          <span style={{ 
+                            display: 'inline-block', 
+                            width: '10px', 
+                            height: '10px', 
+                            borderRadius: '50%', 
+                            backgroundColor: prod.color === 'teal' ? '#008080' : 
+                                            prod.color === 'red' ? '#dc2626' : 
+                                            prod.color === 'tan' ? '#c48a43' : 
+                                            prod.color === 'blue' ? '#4f46e5' : 
+                                            prod.color === 'purple' ? '#701a75' : 
+                                            prod.color === 'pink' ? '#db2777' : 
+                                            prod.color === 'green' ? '#059669' : 
+                                            prod.color === 'gold' ? '#b45309' : 
+                                            prod.color === 'black' ? '#111827' : '#94a3b8' 
+                          }} />
+                          <strong style={{ textTransform: 'capitalize' }}>{prod.color || '—'}</strong>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{prod.material || '—'}</span>
+                      </td>
                       <td>
                         {prod.originalPrice && prod.originalPrice > prod.price ? (
                           <span>
@@ -630,18 +700,61 @@ export default function AdminProducts() {
                           </div>
                         </div>
 
-                        <div className="form-group">
-                          <label className="form-label">Allow Backorders?</label>
-                          <select className="filter-select" value={allowBackorders} onChange={(e) => setAllowBackorders(e.target.value)}>
-                            <option value="no">Do not allow</option>
-                            <option value="notify">Allow, but notify customer</option>
-                            <option value="yes">Allow</option>
-                          </select>
-                        </div>
-                      </>
-                    )}
+                    {/* Size-Wise Stock Quantities Manager */}
+                    <div className="form-group" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1rem' }}>
+                      <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>📏 Size-Wise Stock Quantities (Pairs per Size)</span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--accent-color)', fontWeight: 600 }}>
+                          Total calculated: {Object.values(sizeStock).reduce((acc, q) => acc + (parseInt(q) || 0), 0)} pairs
+                        </span>
+                      </label>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.8rem' }}>
+                        Specify units in stock for each size. Setting a size to 0 automatically grays it out and marks it &quot;Out of Stock&quot; on the storefront. Sizes under 5 pairs display &quot;Low Stock&quot;.
+                      </p>
 
-                    <div className="checkbox-row" style={{ borderTop: 'none', paddingTop: 0 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.8rem' }}>
+                        {['5', '6', '7', '8', '9', '10', '11'].map((sz) => {
+                          const currentVal = sizeStock[sz] !== undefined ? sizeStock[sz] : '';
+                          const isZero = currentVal === 0 || currentVal === '0';
+                          const isLow = currentVal > 0 && currentVal < 5;
+
+                          return (
+                            <div key={sz} style={{
+                              border: `1px solid ${isZero ? '#ef4444' : isLow ? '#f59e0b' : '#cbd5e1'}`,
+                              borderRadius: '8px',
+                              padding: '0.6rem 0.8rem',
+                              backgroundColor: isZero ? '#fef2f2' : isLow ? '#fffbeb' : '#f8fafc'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem', fontSize: '0.8rem', fontWeight: 700 }}>
+                                <span>UK {sz}</span>
+                                {isZero && <span style={{ color: '#ef4444', fontSize: '0.68rem' }}>Sold Out</span>}
+                                {isLow && <span style={{ color: '#d97706', fontSize: '0.68rem' }}>Low</span>}
+                              </div>
+                              <input 
+                                type="number" 
+                                min="0"
+                                className="form-input" 
+                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.85rem' }}
+                                placeholder="0"
+                                value={currentVal}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  const updated = { ...sizeStock, [sz]: Math.max(0, val) };
+                                  setSizeStock(updated);
+                                  // Update total stock qty
+                                  const sum = Object.values(updated).reduce((a, b) => a + (parseInt(b) || 0), 0);
+                                  setStockQty(String(sum));
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="checkbox-row" style={{ borderTop: 'none', paddingTop: '0.5rem' }}>
                       <input 
                         type="checkbox" 
                         id="soldIndividuallyForm" 
@@ -680,14 +793,45 @@ export default function AdminProducts() {
                     </div>
 
                     <div className="form-group" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '0.5rem' }}>
-                      <label className="form-label">Product Gallery Images</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <label className="form-label" style={{ margin: 0 }}>Product Gallery Photos (4+ Angles)</label>
+                        <div>
+                          <input 
+                            type="file" 
+                            multiple 
+                            accept="image/*" 
+                            id="directPhotoUpload" 
+                            style={{ display: 'none' }}
+                            onChange={handleDirectFileUpload}
+                            disabled={isUploading}
+                          />
+                          <label 
+                            htmlFor="directPhotoUpload"
+                            className="btn btn-primary"
+                            style={{ 
+                              padding: '0.4rem 0.9rem', 
+                              fontSize: '0.8rem', 
+                              cursor: isUploading ? 'not-allowed' : 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              opacity: isUploading ? 0.6 : 1
+                            }}
+                          >
+                            {isUploading ? '⏳ Uploading...' : '📤 Upload Multiple Photos'}
+                          </label>
+                        </div>
+                      </div>
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Click the "+" tile to insert pictures, and click "×" on any picture to remove it.</p>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                          Click &quot;Upload Multiple Photos&quot; to select 4+ images directly from your computer, or click &quot;+&quot; to pick existing media.
+                        </p>
                         
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
                           {gallery.split(',').map(s => s.trim()).filter(Boolean).map((imgUrl, i) => (
-                            <div key={i} style={{ width: '70px', height: '70px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-                              <img src={imgUrl} alt={`Gallery Preview ${i}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            <div key={i} style={{ width: '80px', height: '80px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
+                              <img src={imgUrl} alt={`Gallery Preview ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               <button
                                 type="button"
                                 onClick={() => {
@@ -697,18 +841,18 @@ export default function AdminProducts() {
                                 }}
                                 style={{
                                   position: 'absolute',
-                                  top: '2px',
-                                  right: '2px',
-                                  backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                                  top: '3px',
+                                  right: '3px',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.9)',
                                   color: '#fff',
                                   border: 'none',
                                   borderRadius: '50%',
-                                  width: '18px',
-                                  height: '18px',
+                                  width: '20px',
+                                  height: '20px',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  fontSize: '0.75rem',
+                                  fontSize: '0.8rem',
                                   cursor: 'pointer',
                                   padding: 0,
                                   lineHeight: 1
@@ -721,8 +865,9 @@ export default function AdminProducts() {
                           <button 
                             type="button" 
                             className="btn btn-outline" 
-                            style={{ width: '70px', height: '70px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', padding: 0 }}
+                            style={{ width: '80px', height: '80px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', padding: 0 }}
                             onClick={() => setIsGalleryPickerOpen(true)}
+                            title="Add from Media Library"
                           >
                             +
                           </button>
@@ -737,15 +882,55 @@ export default function AdminProducts() {
                   <>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                       <div className="form-group">
+                        <label className="form-label">Primary Filter Color</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          list="color-preset-list"
+                          placeholder="e.g. tan, black, teal, red, purple, gold, blue, pink, green"
+                          value={color} 
+                          onChange={(e) => setColor(e.target.value)} 
+                        />
+                        <datalist id="color-preset-list">
+                          <option value="tan">Tan</option>
+                          <option value="black">Black</option>
+                          <option value="teal">Teal</option>
+                          <option value="red">Red</option>
+                          <option value="purple">Purple</option>
+                          <option value="gold">Gold</option>
+                          <option value="blue">Blue</option>
+                          <option value="pink">Pink</option>
+                          <option value="green">Green</option>
+                        </datalist>
+                        <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                          Maps to the Shop catalog Color filter.
+                        </small>
+                      </div>
+
+                      <div className="form-group">
                         <label className="form-label">Upper Fabric / Material</label>
                         <input 
                           type="text" 
                           className="form-input" 
-                          placeholder="e.g. Khadi Cotton, Velvet, Canvas"
+                          list="material-preset-list"
+                          placeholder="e.g. Vegan Leather, Velvet, Jute, Khadi Cotton, Ikat Canvas"
                           value={material} 
                           onChange={(e) => setMaterial(e.target.value)} 
                         />
+                        <datalist id="material-preset-list">
+                          <option value="Vegan Leather">Vegan Leather</option>
+                          <option value="Ikat Canvas">Ikat Canvas</option>
+                          <option value="Velvet">Velvet</option>
+                          <option value="Jute">Jute</option>
+                          <option value="Khadi Cotton">Khadi Cotton</option>
+                        </datalist>
+                        <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                          Maps to the Shop catalog Material filter.
+                        </small>
                       </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
                       <div className="form-group">
                         <label className="form-label">Available Sizes (Comma-separated)</label>
                         <input 
@@ -756,18 +941,18 @@ export default function AdminProducts() {
                           onChange={(e) => setSizes(e.target.value)} 
                         />
                       </div>
+                      <div className="form-group">
+                        <label className="form-label">Upper Embroidery Pattern Type</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="e.g. kutch, ikat, mandala, classic"
+                          value={pattern} 
+                          onChange={(e) => setPattern(e.target.value)} 
+                        />
+                      </div>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Upper Embroidery Pattern Type</label>
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        placeholder="e.g. kutch, ikat, mandala, classic"
-                        value={pattern} 
-                        onChange={(e) => setPattern(e.target.value)} 
-                      />
-                    </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                       <div className="form-group">

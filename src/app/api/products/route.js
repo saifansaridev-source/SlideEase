@@ -20,6 +20,8 @@ export async function GET(request) {
     const type = searchParams.get('type');
     const sort = searchParams.get('sort');
     const search = searchParams.get('q');
+    const color = searchParams.get('color');
+    const material = searchParams.get('material');
     
     let filter = {};
     
@@ -28,6 +30,13 @@ export async function GET(request) {
     }
     if (type && type !== 'all') {
       filter.type = type;
+    }
+    if (color && color !== 'all') {
+      filter.color = { $regex: `^${color.trim()}$`, $options: 'i' };
+    }
+    if (material && material !== 'all') {
+      const cleanMat = material.replace(/-/g, '.*');
+      filter.material = { $regex: cleanMat, $options: 'i' };
     }
     if (search) {
       filter.$or = [
@@ -59,6 +68,8 @@ export async function GET(request) {
       const type = searchParams.get('type');
       const sort = searchParams.get('sort');
       const search = searchParams.get('q');
+      const color = searchParams.get('color');
+      const material = searchParams.get('material');
       
       // Local filter logic
       let filtered = [...PRODUCTS];
@@ -67,6 +78,17 @@ export async function GET(request) {
       }
       if (type && type !== 'all') {
         filtered = filtered.filter(p => p.type === type);
+      }
+      if (color && color !== 'all') {
+        filtered = filtered.filter(p => (p.color || '').toLowerCase() === color.toLowerCase().trim());
+      }
+      if (material && material !== 'all') {
+        const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const targetMat = clean(material);
+        filtered = filtered.filter(p => {
+          const pMat = clean(p.material);
+          return pMat.includes(targetMat) || targetMat.includes(pMat);
+        });
       }
       if (search) {
         const query = search.toLowerCase();

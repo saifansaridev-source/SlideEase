@@ -41,6 +41,17 @@ export async function GET() {
       .sort({ rating: -1 })
       .limit(5)
       .toArray();
+
+    // 8. Count Pending Returns & Enquiries
+    let pendingReturns = 0;
+    try {
+      pendingReturns = await db.collection('returns').countDocuments({ status: 'pending' });
+    } catch {}
+
+    let pendingEnquiries = 0;
+    try {
+      pendingEnquiries = await db.collection('enquiries').countDocuments({ status: { $in: ['unread', 'pending', 'new'] } });
+    } catch {}
       
     return NextResponse.json({
       success: true,
@@ -51,7 +62,9 @@ export async function GET() {
         totalProducts,
         recentOrders,
         lowStock,
-        topProducts
+        topProducts,
+        pendingReturns,
+        pendingEnquiries
       }
     });
   } catch (error) {

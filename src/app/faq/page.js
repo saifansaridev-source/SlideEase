@@ -26,7 +26,7 @@ export default function FaqPage() {
     {
       category: 'ordering',
       q: 'Can I modify or cancel my order after placing it?',
-      a: 'Yes, you can modify or cancel your order anytime before it has been shipped. Contact us via email at support@slidexfootwear.com or call +91 22 4567 8900. Once shipped, cancellations are not possible, but you can return the product after delivery.',
+      a: 'Yes, you can modify or cancel your order anytime before it has been shipped. Contact us via email at support@your-domain.com or call +91 22 4567 8900. Once shipped, cancellations are not possible, but you can return the product after delivery.',
     },
     {
       category: 'ordering',
@@ -94,7 +94,7 @@ export default function FaqPage() {
     {
       category: 'products',
       q: 'Are your shoes really 100% vegan?',
-      a: 'Yes! Every Slidex product is certified PETA-Approved Vegan. We use zero animal products — our "leather" is premium synthetic vegan leather, and our canvas is handwoven from cotton and jute fibers. Even our adhesives are plant-based.',
+      a: 'Yes! Every SlideEase product is certified PETA-Approved Vegan. We use zero animal products — our "leather" is premium synthetic vegan leather, and our canvas is handwoven from cotton and jute fibers. Even our adhesives are plant-based.',
     },
     {
       category: 'products',
@@ -114,8 +114,8 @@ export default function FaqPage() {
     },
     {
       category: 'account',
-      q: 'What is the Slidex Loyalty Club?',
-      a: 'The Slidex Club is our free loyalty program. Members earn 5 reward points for every ₹100 spent, receive early access to sales, and get a 10% welcome discount. Points can be redeemed as discounts on future orders.',
+      q: 'What is the SlideEase Loyalty Club?',
+      a: 'The SlideEase Club is our free loyalty program. Members earn 5 reward points for every ₹100 spent, receive early access to sales, and get a 10% welcome discount. Points can be redeemed as discounts on future orders.',
     },
   ];
 
@@ -143,7 +143,7 @@ export default function FaqPage() {
         <div className="page-hero-content">
           <span className="page-hero-tagline">Help Center</span>
           <h1 className="page-hero-title">Frequently Asked Questions</h1>
-          <p className="page-hero-desc">Everything you need to know about Slidex Footwear.</p>
+          <p className="page-hero-desc">Everything you need to know about SlideEase Footwear.</p>
         </div>
       </section>
 
@@ -191,7 +191,7 @@ export default function FaqPage() {
             <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Our customer support team is available Monday to Saturday, 9 AM to 6 PM.</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/contact" className="btn btn-primary">Contact Support</Link>
-              <a href="mailto:support@slidexfootwear.com" className="btn btn-outline">Email Us</a>
+              <a href="mailto:support@your-domain.com" className="btn btn-outline">Email Us</a>
             </div>
           </div>
         </div>

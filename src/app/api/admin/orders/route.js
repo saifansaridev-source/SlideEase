@@ -10,10 +10,22 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    const orderId = searchParams.get('id');
     
+    if (orderId) {
+      const { ObjectId } = await import('mongodb');
+      let q = { $or: [{ orderId }, { orderNumber: orderId }] };
+      if (ObjectId.isValid(orderId) && String(new ObjectId(orderId)) === orderId) {
+        q.$or.push({ _id: new ObjectId(orderId) });
+      }
+      const single = await db.collection('orders').findOne(q);
+      if (!single) return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ success: true, data: single });
+    }
+
     let query = {};
     if (status && status !== 'all') {
-      query.status = status;
+      query.status = status.toLowerCase();
     }
     
     const orders = await db.collection('orders')
@@ -38,33 +50,69 @@ export async function GET(request) {
   }
 }
 
-// PUT: Update order fulfillment status
+// PUT: Update order fulfillment status, tracking, notes, cancellation/refund
 export async function PUT(request) {
   try {
-    const { orderId, status } = await request.json();
+    const body = await request.json();
+    const { 
+      orderId, 
+      status, 
+      courierName, 
+      trackingNumber, 
+      adminNotes, 
+      cancelReason, 
+      refundAmount,
+      note 
+    } = body;
     
-    if (!orderId || !status) {
-      return NextResponse.json({ success: false, error: 'Order ID and Status parameters are required' }, { status: 400 });
+    if (!orderId) {
+      return NextResponse.json({ success: false, error: 'Order ID parameter is required' }, { status: 400 });
     }
     
     const client = await clientPromise;
     const db = client.db('startupbiz');
+    const { ObjectId } = await import('mongodb');
+
+    let filter = { $or: [{ orderId: orderId }, { orderNumber: orderId }] };
+    if (ObjectId.isValid(orderId) && String(new ObjectId(orderId)) === orderId) {
+      filter.$or.push({ _id: new ObjectId(orderId) });
+    }
+
+    const setFields = { updatedAt: new Date().toISOString() };
+    if (status) setFields.status = status.toLowerCase();
+    if (courierName !== undefined) setFields.courierName = courierName.trim();
+    if (trackingNumber !== undefined) setFields.trackingNumber = trackingNumber.trim();
+    if (adminNotes !== undefined) setFields.adminNotes = adminNotes;
+    if (cancelReason !== undefined) setFields.cancelReason = cancelReason;
+    if (refundAmount !== undefined) setFields.refundAmount = parseFloat(refundAmount) || 0;
+
+    const updateDoc = { $set: setFields };
+
+    if (status || note) {
+      const timelineEntry = {
+        status: (status || 'updated').toLowerCase(),
+        timestamp: new Date().toISOString(),
+        note: note || (cancelReason ? `Cancelled: ${cancelReason}` : `Status set to ${status || 'updated'}`)
+      };
+      updateDoc.$push = { timeline: timelineEntry };
+    }
     
-    const result = await db.collection('orders').updateOne(
-      { orderId: orderId },
-      { $set: { status: status.toLowerCase() } }
-    );
+    const result = await db.collection('orders').updateOne(filter, updateDoc);
     
     if (result.matchedCount === 0) {
       return NextResponse.json({ success: false, error: 'Order record not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ success: true, message: `Order status set to: ${status}` });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Order updated successfully',
+      updated: setFields
+    });
   } catch (error) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

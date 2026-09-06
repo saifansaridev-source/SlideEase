@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Cookie Policy | Slidex Footwear',
-  description: 'Read about what cookies we use, why we use them, cookie categories, third-party analytics integrations, and how to adjust preference configurations at Slidex Footwear.',
+  title: 'Cookie Policy | SlideEase Footwear',
+  description: 'Read about what cookies we use, why we use them, cookie categories, third-party analytics integrations, and how to adjust preference configurations at SlideEase Footwear.',
 };
 
 export default function CookiePage() {
@@ -50,7 +50,7 @@ export default function CookiePage() {
 
             <div className="legal-section" id="how-we-use">
               <h2>2. How We Use Cookies</h2>
-              <p>Slidex Footwear uses cookies to ensure our digital store behaves correctly. This includes tracking items placed in your shopping cart, preserving user profiles during session transitions, analyzing traffic metrics, and offering personalized discount coupons.</p>
+              <p>SlideEase Footwear uses cookies to ensure our digital store behaves correctly. This includes tracking items placed in your shopping cart, preserving user profiles during session transitions, analyzing traffic metrics, and offering personalized discount coupons.</p>
             </div>
 
             <div className="legal-section" id="categories">
@@ -71,7 +71,7 @@ export default function CookiePage() {
 
             <div className="legal-section" id="updates">
               <h2>5. Policy Updates</h2>
-              <p>We reserve the right to modify this Cookie Policy from time to time. Any changes will become effective immediately upon publishing the updated file on Slidex Footwear's website. We advise checking this page periodically to remain informed of our privacy compliance standards.</p>
+              <p>We reserve the right to modify this Cookie Policy from time to time. Any changes will become effective immediately upon publishing the updated file on SlideEase Footwear's website. We advise checking this page periodically to remain informed of our privacy compliance standards.</p>
             </div>
 
           </div>

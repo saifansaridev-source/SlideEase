@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = 'https://www.slidexfootwear.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
   
   return {
     rules: [

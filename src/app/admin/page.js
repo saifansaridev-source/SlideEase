@@ -51,7 +51,48 @@ export default function AdminDashboard() {
     );
   }
 
-  const { totalRevenue, totalOrders, totalCustomers, recentOrders, lowStock, topProducts } = stats;
+  const { 
+    totalRevenue = 0, 
+    totalOrders = 0, 
+    totalCustomers = 0, 
+    recentOrders = [], 
+    lowStock = [], 
+    topProducts = [], 
+    pendingReturns = 0, 
+    pendingEnquiries = 0 
+  } = stats || {};
+
+  const handleExportOrders = async () => {
+    try {
+      const res = await fetch('/api/admin/orders');
+      const json = await res.json();
+      if (json.success && json.data) {
+        const rows = [
+          ['Order ID', 'Customer Name', 'Email', 'Phone', 'Total', 'Payment Method', 'Status', 'Date'],
+          ...json.data.map(o => [
+            o.orderId || o._id,
+            `${o.customer?.firstname || ''} ${o.customer?.lastname || ''}`.trim() || o.firstName || 'Guest',
+            o.customer?.email || o.email || '',
+            o.customer?.phone || o.phone || '',
+            o.total || 0,
+            o.paymentMethod || 'Razorpay',
+            o.status || 'pending',
+            o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : ''
+          ])
+        ];
+        const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `slideease-orders-${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch {
+      alert('Could not export orders.');
+    }
+  };
 
   return (
     <>
@@ -70,6 +111,41 @@ export default function AdminDashboard() {
           ⚠️ {fallbackMsg}
         </div>
       )}
+
+      {/* Operational Attention Banner */}
+      {(pendingReturns > 0 || pendingEnquiries > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {pendingReturns > 0 && (
+            <Link href="/admin/returns" style={{ textDecoration: 'none' }}>
+              <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fdba74', borderRadius: '8px', padding: '1rem 1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#c2410c' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>🔄</span>
+                  <div>
+                    <strong style={{ fontSize: '0.95rem' }}>{pendingReturns} Pending Return Request{pendingReturns > 1 ? 's' : ''}</strong>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#ea580c' }}>Needs admin review and decision</p>
+                  </div>
+                </div>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Review →</span>
+              </div>
+            </Link>
+          )}
+          {pendingEnquiries > 0 && (
+            <Link href="/admin/enquiries" style={{ textDecoration: 'none' }}>
+              <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '1rem 1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#1d4ed8' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>💬</span>
+                  <div>
+                    <strong style={{ fontSize: '0.95rem' }}>{pendingEnquiries} Unread Customer Enquir{pendingEnquiries > 1 ? 'ies' : 'y'}</strong>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#2563eb' }}>Needs merchant response</p>
+                  </div>
+                </div>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Open →</span>
+              </div>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Stats Cards */}
       <section className="admin-stats-grid">
         <div className="admin-stat-card">
@@ -219,14 +295,20 @@ export default function AdminDashboard() {
             <Link href="/admin/products" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
               <span style={{ fontSize: '1.4rem' }}>➕</span> Add Footwear
             </Link>
+            <Link href="/admin/coupons" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
+              <span style={{ fontSize: '1.4rem' }}>🎟️</span> Create Coupon
+            </Link>
             <Link href="/admin/orders" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
               <span style={{ fontSize: '1.4rem' }}>🛒</span> Manage Orders
             </Link>
-            <Link href="/admin/customers" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
-              <span style={{ fontSize: '1.4rem' }}>👥</span> Customers List
+            <Link href="/admin/returns" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
+              <span style={{ fontSize: '1.4rem' }}>🔄</span> Returns ({pendingReturns})
             </Link>
-            <Link href="/" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
-              <span style={{ fontSize: '1.4rem' }}>🌐</span> View Storefront
+            <button onClick={handleExportOrders} className="quick-action-btn" style={{ background: 'none', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)', padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
+              <span style={{ fontSize: '1.4rem' }}>📥</span> Export Orders
+            </button>
+            <Link href="/admin/shipping-tax" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
+              <span style={{ fontSize: '1.4rem' }}>⚙️</span> Shipping & Tax
             </Link>
           </div>
         </div>

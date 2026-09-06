@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service | Slidex Footwear',
-  description: 'Read the Terms of Service for Slidex Footwear. Understand the rules and conditions that govern your use of our e-commerce platform.',
+  title: 'Terms of Service | SlideEase Footwear',
+  description: 'Read the Terms of Service for SlideEase Footwear. Understand the rules and conditions that govern your use of our e-commerce platform.',
 };
 
 export default function TermsPage() {
@@ -59,7 +59,7 @@ export default function TermsPage() {
 
           <div className="legal-section" id="tos-1">
             <h2>1. Acceptance of Terms</h2>
-            <p>By accessing and using the Slidex Footwear website ("www.slidexfootwear.com"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to all the terms and conditions, you must not use our website or services.</p>
+            <p>By accessing and using the SlideEase Footwear website (&quot;https://your-domain.com&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to all the terms and conditions, you must not use our website or services.</p>
             <p>These Terms apply to all visitors, users, customers, and others who access or use the Service. By using our Service, you acknowledge that you have read, understood, and agree to be bound by these Terms.</p>
           </div>
 
@@ -81,13 +81,13 @@ export default function TermsPage() {
             <h2>4. Orders & Payment</h2>
             <p>By placing an order, you are making an offer to purchase a product. All orders are subject to acceptance and availability. We reserve the right to refuse or cancel any order for any reason, including but not limited to product availability, errors in pricing, or suspected fraud.</p>
             <p>We accept the following payment methods: UPI, Debit/Credit Cards (Visa, Mastercard, RuPay), Net Banking, PhonePe, Paytm, Google Pay, and Cash on Delivery (COD) for select locations.</p>
-            <p>All payment information is processed securely through our payment partners using 256-bit SSL encryption. Slidex Footwear does not store your full payment card information on our servers.</p>
+            <p>All payment information is processed securely through our payment partners using 256-bit SSL encryption. SlideEase Footwear does not store your full payment card information on our servers.</p>
           </div>
 
           <div className="legal-section" id="tos-5">
             <h2>5. Shipping & Delivery</h2>
             <p>We ship to all serviceable pin codes across India. Standard delivery is free on orders above ₹999 and takes 3-5 business days. Express delivery (₹99) is available for metro cities with 24-48 hour delivery.</p>
-            <p>Delivery times are estimates and not guaranteed. Slidex Footwear is not responsible for delays caused by courier partners, force majeure events, or incorrect address details provided by the customer.</p>
+            <p>Delivery times are estimates and not guaranteed. SlideEase Footwear is not responsible for delays caused by courier partners, force majeure events, or incorrect address details provided by the customer.</p>
           </div>
 
           <div className="legal-section" id="tos-6">
@@ -98,8 +98,8 @@ export default function TermsPage() {
 
           <div className="legal-section" id="tos-7">
             <h2>7. Intellectual Property</h2>
-            <p>The Slidex Footwear name, logo, product designs, website content, images, and all associated intellectual property are owned by Slidex Footwear Private Limited and are protected by Indian and international copyright, trademark, and intellectual property laws.</p>
-            <p>You may not copy, reproduce, distribute, or create derivative works based on our content without express written consent from Slidex Footwear.</p>
+            <p>The SlideEase Footwear name, logo, product designs, website content, images, and all associated intellectual property are owned by SlideEase Footwear Private Limited and are protected by Indian and international copyright, trademark, and intellectual property laws.</p>
+            <p>You may not copy, reproduce, distribute, or create derivative works based on our content without express written consent from SlideEase Footwear.</p>
           </div>
 
           <div className="legal-section" id="tos-8">
@@ -109,7 +109,7 @@ export default function TermsPage() {
 
           <div className="legal-section" id="tos-9">
             <h2>9. Limitation of Liability</h2>
-            <p>In no event shall Slidex Footwear, its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.</p>
+            <p>In no event shall SlideEase Footwear, its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.</p>
           </div>
 
           <div className="legal-section" id="tos-10">
@@ -121,7 +121,7 @@ export default function TermsPage() {
             <h2>11. Contact Information</h2>
             <p>If you have any questions about these Terms, please contact us:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-              <li><strong>Email:</strong> legal@slidexfootwear.com</li>
+              <li><strong>Email:</strong> legal@your-domain.com</li>
               <li><strong>Phone:</strong> +91 22 4567 8900</li>
               <li><strong>Address:</strong> 1002 Bldg No 1d, Kopari, Powai, Mumbai 400076, India</li>
               <li><strong>CIN:</strong> U47713MH2026PTC468787</li>

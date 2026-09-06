@@ -45,7 +45,9 @@ export const MOCK_STATS = {
   totalProducts: PRODUCTS.length,
   recentOrders: MOCK_ORDERS,
   lowStock: PRODUCTS.filter(p => p.stock === 'low-stock' || p.stock === 'out-of-stock').slice(0, 5),
-  topProducts: PRODUCTS.slice(0, 5)
+  topProducts: PRODUCTS.slice(0, 5),
+  pendingReturns: 1,
+  pendingEnquiries: 2,
 };
 
 // Check if error is network/whitelist connection related

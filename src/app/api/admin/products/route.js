@@ -38,6 +38,7 @@ export async function POST(request) {
       material: body.material || 'Vegan Leather',
       stock: body.stock || 'in-stock',
       sizes: body.sizes || [6, 7, 8, 9, 10],
+      sizeStock: body.sizeStock || {},
       sku: body.sku || '',
       manageStock: body.manageStock === undefined ? true : !!body.manageStock,
       stockQty: parseInt(body.stockQty) || 0,

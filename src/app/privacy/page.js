@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy | Slidex Footwear',
-  description: 'Slidex Footwear Privacy Policy — how we collect, use, and protect your personal data. GDPR and CCPA compliant.',
+  title: 'Privacy Policy | SlideEase Footwear',
+  description: 'SlideEase Footwear Privacy Policy — how we collect, use, and protect your personal data. GDPR and CCPA compliant.',
 };
 
 export default function PrivacyPage() {
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
               <div className="right-card"><h4>🚫 Right to Object</h4><p>Object to processing of your data for marketing.</p></div>
               <div className="right-card"><h4>⏸️ Right to Restrict</h4><p>Request restriction of processing under certain conditions.</p></div>
             </div>
-            <p style={{ marginTop: '1rem' }}>To exercise any of these rights, contact us at <strong>privacy@slidexfootwear.com</strong>. We will respond within 30 days.</p>
+            <p style={{ marginTop: '1rem' }}>To exercise any of these rights, contact us at <strong>privacy@your-domain.com</strong>. We will respond within 30 days.</p>
           </div>
 
           <div className="legal-section" id="pp-8">
@@ -173,8 +173,8 @@ export default function PrivacyPage() {
             <h2>10. Contact Us</h2>
             <p>For any privacy-related inquiries:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-              <li><strong>Data Protection Officer:</strong> privacy@slidexfootwear.com</li>
-              <li><strong>General Support:</strong> support@slidexfootwear.com</li>
+              <li><strong>Data Protection Officer:</strong> privacy@your-domain.com</li>
+              <li><strong>General Support:</strong> support@your-domain.com</li>
               <li><strong>Phone:</strong> +91 22 4567 8900</li>
               <li><strong>Address:</strong> 1002 Bldg No 1d, Kopari, Powai, Mumbai 400076, India</li>
             </ul>

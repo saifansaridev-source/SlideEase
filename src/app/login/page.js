@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect');
   const [activeTab, setActiveTab] = useState('login');
 
   // Login states
@@ -64,11 +66,11 @@ export default function LoginPage() {
 
       if (data.success) {
         setLoginSuccess('Logged in successfully! Redirecting...');
-        const targetPath = data.user.role === 'admin' ? '/admin' : '/dashboard';
+        const targetPath = redirectPath || (data.user?.role === 'admin' ? '/admin' : '/dashboard');
         setTimeout(() => {
           router.push(targetPath);
           router.refresh();
-        }, 1500);
+        }, 800);
       } else {
         setLoginError(data.error || 'Login failed.');
       }
@@ -268,5 +270,13 @@ export default function LoginPage() {
       )}
 
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '6rem 0', color: 'var(--text-muted)' }}>Loading account portal...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
