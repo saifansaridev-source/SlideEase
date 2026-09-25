@@ -14,11 +14,11 @@ export default function OrderInvoicePage() {
   useEffect(() => {
     if (!orderId) return;
 
-    fetch(`/api/admin/orders?id=${orderId}`)
+    fetch(`/api/orders/${orderId}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.success && data.data) {
-          setOrder(data.data);
+        if (data.success && (data.data || data.order)) {
+          setOrder(data.data || data.order);
         } else {
           setError(data.error || 'Order not found');
         }
@@ -39,8 +39,11 @@ export default function OrderInvoicePage() {
     return (
       <div style={{ textAlign: 'center', padding: '5rem 1rem', fontFamily: 'sans-serif' }}>
         <h2 style={{ color: '#ef4444' }}>Unable to load invoice</h2>
-        <p>{error || 'Order record could not be found'}</p>
-        <Link href="/admin/orders" style={{ color: '#2563eb', fontWeight: 600 }}>← Return to Orders</Link>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem' }}>
+          <button onClick={() => window.history.back()} style={{ color: '#2563eb', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
+          <Link href="/account" style={{ color: '#2563eb', fontWeight: 600 }}>My Account</Link>
+          <Link href="/shop" style={{ color: '#64748b', fontWeight: 500 }}>Return to Store</Link>
+        </div>
       </div>
     );
   }

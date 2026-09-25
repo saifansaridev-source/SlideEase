@@ -1,30 +1,71 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
-export default function Turntable360() {
+// Multi-angle footwear perspectives
+const PRESET_VIEWPOINTS = [
+  { label: 'Front (0°)', angle: 0 },
+  { label: 'Quarter (45°)', angle: 45 },
+  { label: 'Profile (90°)', angle: 90 },
+  { label: 'Heel (180°)', angle: 180 },
+  { label: 'Medial (270°)', angle: 270 },
+];
+
+export default function Turntable360({ frames = null, productName = 'Peacock Ikat Loafer', price = 1499 }) {
   const { addToCart, setIsCartOpen } = useCart();
   const [angle, setAngle] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const startXRef = useRef(0);
+  const autoPlayRef = useRef(null);
+
+  // Default multi-angle frame sequence if dedicated 36-frame pack is not injected
+  const frameList = frames && frames.length > 0 ? frames : [
+    '/assets/loafers.png',
+    '/assets/slides.png',
+    '/assets/sandals.png',
+    '/assets/mojris.png',
+    '/assets/loafers.png'
+  ];
+
+  const totalFrames = frameList.length;
+  const currentFrameIndex = Math.min(
+    totalFrames - 1,
+    Math.floor((angle / 360) * totalFrames) % totalFrames
+  );
+
+  // Continuous Autoplay Turntable
+  useEffect(() => {
+    if (isAutoPlaying) {
+      autoPlayRef.current = setInterval(() => {
+        setAngle((prev) => (prev + 2) % 360);
+      }, 50);
+    } else {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    }
+    return () => {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    };
+  }, [isAutoPlaying]);
 
   const handleMouseDown = (e) => {
+    setIsAutoPlaying(false);
     setIsDragging(true);
     startXRef.current = e.clientX;
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging) return;
     const deltaX = e.clientX - startXRef.current;
     startXRef.current = e.clientX;
     setAngle((prev) => {
-      let next = (prev + deltaX * 0.75) % 360;
+      let next = (prev + deltaX * 0.8) % 360;
       if (next < 0) next += 360;
       return next;
     });
-  };
+  }, [isDragging]);
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -32,41 +73,34 @@ export default function Turntable360() {
 
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
+      setIsAutoPlaying(false);
       setIsDragging(true);
       startXRef.current = e.touches[0].clientX;
     }
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     if (!isDragging || e.touches.length !== 1) return;
     const deltaX = e.touches[0].clientX - startXRef.current;
     startXRef.current = e.touches[0].clientX;
     setAngle((prev) => {
-      let next = (prev + deltaX * 0.75) % 360;
+      let next = (prev + deltaX * 0.8) % 360;
       if (next < 0) next += 360;
       return next;
     });
-  };
+  }, [isDragging]);
 
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
-  const normalized = angle > 180 ? angle - 360 : angle;
-  const scaleX = Math.cos((angle * Math.PI) / 180);
-  const skewY = Math.sin((angle * Math.PI) / 180) * 8;
-  const transformStyle = `perspective(900px) rotateY(${normalized * 0.55}deg) scaleX(${Math.abs(scaleX) < 0.2 ? 0.2 : 1}) skewY(${skewY}deg)`;
-  const shadowDistance = Math.sin((angle * Math.PI) / 180) * 15;
-
   const handleAddToCart = () => {
     addToCart({
       id: 'prod-01',
-      name: 'Peacock Ikat Loafer',
-      price: 1499,
-      size: 7,
-      image: '/assets/loafers.png',
-      bgColor: '#f2f9f9',
-      pattern: 'ikat'
+      name: productName,
+      price: price,
+      size: '7',
+      image: frameList[0],
     });
     setIsCartOpen(true);
   };
@@ -75,90 +109,141 @@ export default function Turntable360() {
     <section className="section-360-showcase" id="showcase-360">
       <div className="container">
         <div style={{ textAlign: 'center', maxWidth: '650px', margin: '0 auto 40px auto' }}>
-          <span className="craft-eyebrow">✦ 360° Craft Inspection</span>
-          <h2 className="section-title">Experience Every Angle of Detail</h2>
+          <span className="craft-eyebrow">✦ 360° Studio Inspection</span>
+          <h2 className="section-title">Experience Every Angle of Handcraft</h2>
           <p className="section-subtitle">
-            Drag or swipe horizontally to rotate our signature Peacock Ikat Loafer. Inspect hand-stitched borders and ergonomic contouring.
+            Interact with our multi-angle studio turntable. Inspect hand-stitched borders, arch ergonomics, and cruelty-free finishes.
           </p>
         </div>
 
         <div className="turntable-container">
-          {/* Interactive 360 Viewer Box */}
-          <div 
-            className="turntable-viewer-box" 
-            id="turntable-box"
-            style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none' }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div className="turntable-degree-badge">
-              <span>⟳ Angle:</span>
-              <span id="turntable-angle-val">{Math.round(angle)}°</span>
+          {/* Interactive Viewer Frame */}
+          <div>
+            <div 
+              className="turntable-viewer-box" 
+              id="turntable-box"
+              style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', position: 'relative' }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="turntable-degree-badge">
+                <span>⟳ Studio Angle:</span>
+                <span id="turntable-angle-val">{Math.round(angle)}°</span>
+              </div>
+              
+              <img 
+                src={frameList[currentFrameIndex]} 
+                alt={`${productName} 360 View - Frame ${currentFrameIndex + 1}`} 
+                className="turntable-image-layer" 
+                id="turntable-img"
+                style={{
+                  filter: 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15))',
+                  transition: isDragging ? 'none' : 'opacity 0.15s ease',
+                  maxHeight: '340px',
+                  objectFit: 'contain',
+                }}
+                draggable="false"
+              />
+              
+              <div className="turntable-hint-overlay">
+                <span>👈 Drag or swipe to rotate 360° 👉</span>
+              </div>
             </div>
-            
-            <img 
-              src="/assets/loafers.png" 
-              alt="SlideEase 360 Turntable View" 
-              className="turntable-image-layer" 
-              id="turntable-img"
-              style={{
-                transform: transformStyle,
-                filter: `drop-shadow(${shadowDistance}px 18px 25px rgba(26, 35, 50, 0.22))`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-              }}
-              draggable="false"
-            />
-            
-            <div className="turntable-hint-overlay">
-              <span>👈 Drag or swipe to spin (360°) 👉</span>
+
+            {/* Turntable Controls */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {PRESET_VIEWPOINTS.map((vp) => (
+                  <button
+                    key={vp.angle}
+                    type="button"
+                    onClick={() => {
+                      setIsAutoPlaying(false);
+                      setAngle(vp.angle);
+                    }}
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      border: Math.abs(angle - vp.angle) < 25 ? '1px solid var(--accent-color)' : '1px solid var(--border-color)',
+                      backgroundColor: Math.abs(angle - vp.angle) < 25 ? '#fef3c7' : '#fff',
+                      color: Math.abs(angle - vp.angle) < 25 ? '#92400e' : 'var(--text-muted)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {vp.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                style={{
+                  fontSize: '0.78rem',
+                  padding: '5px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--accent-color)',
+                  backgroundColor: isAutoPlaying ? 'var(--accent-color)' : '#fff',
+                  color: isAutoPlaying ? '#fff' : 'var(--accent-color)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {isAutoPlaying ? '⏸ Pause Spin' : '▶ Auto Turntable'}
+              </button>
             </div>
           </div>
 
           {/* Hotspots & Specifications */}
           <div className="turntable-details">
             <span style={{ fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--accent-dark)', fontWeight: 600 }}>
-              Flagship Silhouette
+              Signature Footwear Silhouette
             </span>
-            <h3 className="turntable-title">Peacock Ikat Loafer</h3>
+            <h3 className="turntable-title">{productName}</h3>
             <div className="turntable-price">
-              ₹1,499 <span style={{ textDecoration: 'line-through', fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>₹2,499</span>
+              ₹{price?.toLocaleString('en-IN')}{' '}
+              <span style={{ textDecoration: 'line-through', fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>
+                ₹2,499
+              </span>
             </div>
             
             <div className="turntable-hotspots">
               <div className="hotspot-item">
                 <div className="hotspot-icon">01</div>
                 <div>
-                  <h5>Hand-Dyed Ikat Canvas</h5>
-                  <p>Spun from organic cotton canvas dyed with natural teal indigo extracts.</p>
+                  <h5>Hand-Dyed Vegan Canvas</h5>
+                  <p>Breathable organic cotton weave treated with natural plant-based water repellents.</p>
                 </div>
               </div>
               <div className="hotspot-item">
                 <div className="hotspot-icon">02</div>
                 <div>
-                  <h5>Dual-Density Footbed</h5>
-                  <p>High-resilience foam reduces joint impact for effortless 10,000-step comfort.</p>
+                  <h5>Ergonomic Arch Cushioning</h5>
+                  <p>High-resilience dual-density memory foam reduces impact for all-day walking comfort.</p>
                 </div>
               </div>
               <div className="hotspot-item">
                 <div className="hotspot-icon">03</div>
                 <div>
-                  <h5>Reinforced Goodyear Stitch</h5>
-                  <p>Cruelty-free vegan leather welt hand-stitched for longevity and shape retention.</p>
+                  <h5>Reinforced Goodyear Welt</h5>
+                  <p>Cruelty-free vegan leather welt with perimeter stitching for lasting durability.</p>
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
               <button className="btn btn-accent" id="turntable-add-cart-btn" onClick={handleAddToCart}>
-                Add to Cart • ₹1,499
+                Add to Cart • ₹{price?.toLocaleString('en-IN')}
               </button>
               <Link href="/product/prod-01" className="btn btn-outline">
-                Full Specifications
+                View Full Specs & Care
               </Link>
             </div>
           </div>

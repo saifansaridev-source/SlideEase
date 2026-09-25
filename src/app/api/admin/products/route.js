@@ -1,6 +1,15 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { isConnectionError } from '@/lib/dbFallback';
+import { ObjectId } from 'mongodb';
+
+// Helper to construct query for product by id or _id
+function getProductFilter(id) {
+  if (ObjectId.isValid(id) && String(new ObjectId(id)) === id) {
+    return { $or: [{ _id: new ObjectId(id) }, { id: id }] };
+  }
+  return { id: id };
+}
 
 // POST: Add new footwear item
 export async function POST(request) {
@@ -11,15 +20,17 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Name, price, and category are required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     // Auto-generate ID if not provided
     const newId = body.id || 'prod-' + Math.floor(1000 + Math.random() * 9000);
+
+    const sizeStock = body.sizeStock || { '6': 10, '7': 10, '8': 10, '9': 10, '10': 10 };
+    const computedTotalStock = Object.values(sizeStock).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
     
     const productData = {
       id: newId,
-      name: body.name,
+      name: body.name.trim(),
       category: body.category,
       type: body.type || 'slides',
       price: parseFloat(body.price),
@@ -36,15 +47,17 @@ export async function POST(request) {
       gallery: body.gallery || [],
       color: body.color || 'neutral',
       material: body.material || 'Vegan Leather',
-      stock: body.stock || 'in-stock',
-      sizes: body.sizes || [6, 7, 8, 9, 10],
-      sizeStock: body.sizeStock || {},
-      sku: body.sku || '',
+      stock: computedTotalStock > 5 ? 'in-stock' : computedTotalStock > 0 ? 'low-stock' : 'out-of-stock',
+      sizes: body.sizes || ['6', '7', '8', '9', '10'],
+      sizeStock: sizeStock,
+      sku: body.sku || `${newId}-MAIN`.toUpperCase(),
       manageStock: body.manageStock === undefined ? true : !!body.manageStock,
-      stockQty: parseInt(body.stockQty) || 0,
-      lowStockThreshold: parseInt(body.lowStockThreshold) || 10,
+      stockQty: body.stockQty !== undefined ? parseInt(body.stockQty) : computedTotalStock,
+      lowStockThreshold: parseInt(body.lowStockThreshold) || 5,
       allowBackorders: body.allowBackorders || 'no',
-      soldIndividually: !!body.soldIndividually
+      soldIndividually: !!body.soldIndividually,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     
     await db.collection('products').insertOne(productData);
@@ -54,7 +67,7 @@ export async function POST(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -71,10 +84,9 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'Product ID parameter is missing' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
-    
-    const result = await db.collection('products').deleteOne({ id: id });
+    const db = await getDb();
+    const filter = getProductFilter(id);
+    const result = await db.collection('products').deleteOne(filter);
     
     if (result.deletedCount === 0) {
       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
@@ -85,7 +97,7 @@ export async function DELETE(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -102,11 +114,19 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: 'Product ID is required for updates' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
+    const filter = getProductFilter(id);
+
+    // If sizeStock is updated, re-calculate total stock quantity
+    if (updateData.sizeStock && typeof updateData.sizeStock === 'object') {
+      const computedTotal = Object.values(updateData.sizeStock).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+      updateData.stockQty = computedTotal;
+      updateData.stock = computedTotal > 5 ? 'in-stock' : computedTotal > 0 ? 'low-stock' : 'out-of-stock';
+    }
+    updateData.updatedAt = new Date().toISOString();
     
     const result = await db.collection('products').updateOne(
-      { id: id },
+      filter,
       { $set: updateData }
     );
     
@@ -119,7 +139,7 @@ export async function PUT(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

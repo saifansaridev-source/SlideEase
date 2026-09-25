@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyPassword, hashPassword, signSession } from '@/lib/auth';
@@ -11,8 +11,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Email and password are required.' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const normalizedEmail = email.toLowerCase().trim();
     const user = await db.collection('users').findOne({ email: normalizedEmail });

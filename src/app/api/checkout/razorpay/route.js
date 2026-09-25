@@ -1,12 +1,45 @@
 import Razorpay from 'razorpay';
 import { NextResponse } from 'next/server';
+import { calculateAuthoritativePricing } from '@/lib/pricing';
 
 export async function POST(request) {
   try {
-    const { amount, currency = 'INR', receipt = `order_${Date.now()}` } = await request.json();
+    const body = await request.json();
+    const { 
+      items, 
+      couponCode, 
+      shippingMethod = 'standard', 
+      giftWrap = false,
+      b2g1FreeProductId,
+      b2g1FreeSize,
+      currency = 'INR', 
+      receipt = `order_${Date.now()}` 
+    } = body;
 
-    if (!amount || amount <= 0) {
-      return NextResponse.json({ success: false, error: 'Invalid order amount.' }, { status: 400 });
+    // Backend-authoritative calculation: calculate price directly from MongoDB
+    let authoritativeTotal;
+    let authoritativePricing;
+
+    if (items && Array.isArray(items) && items.length > 0) {
+      authoritativePricing = await calculateAuthoritativePricing({
+        items,
+        couponCode,
+        shippingMethod,
+        isCod: false,
+        giftWrap,
+        b2g1FreeProductId,
+        b2g1FreeSize,
+      });
+      authoritativeTotal = authoritativePricing.pricing.total;
+    } else if (body.amount && body.amount > 0) {
+      // Fallback for direct amount if items not passed, but warn
+      authoritativeTotal = Number(body.amount);
+    } else {
+      return NextResponse.json({ success: false, error: 'Valid order items or amount are required.' }, { status: 400 });
+    }
+
+    if (!authoritativeTotal || authoritativeTotal <= 0) {
+      return NextResponse.json({ success: false, error: 'Calculated order total must be greater than zero.' }, { status: 400 });
     }
 
     const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -24,12 +57,15 @@ export async function POST(request) {
       key_secret,
     });
 
+    const amountInPaise = Math.round(authoritativeTotal * 100);
+
     const options = {
-      amount: Math.round(amount * 100), // convert rupees to paise
+      amount: amountInPaise,
       currency,
       receipt,
       notes: {
         brand: 'SlideEase Footwear',
+        coupon: couponCode || 'NONE',
       },
     };
 
@@ -43,11 +79,12 @@ export async function POST(request) {
         currency: order.currency,
       },
       keyId: key_id,
+      pricing: authoritativePricing ? authoritativePricing.pricing : null,
     });
   } catch (error) {
     return NextResponse.json({ 
       success: false, 
       error: error.message || 'Failed to create Razorpay order.' 
-    }, { status: error.statusCode || 500 });
+    }, { status: 400 });
   }
 }

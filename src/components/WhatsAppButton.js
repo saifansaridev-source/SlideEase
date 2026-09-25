@@ -1,10 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 export default function WhatsAppButton() {
   const pathname = usePathname();
+  const [waNumber, setWaNumber] = useState('919820012345');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data?.whatsappNumber) {
+          setWaNumber(res.data.whatsappNumber.replace(/[^0-9]/g, ''));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -12,7 +24,7 @@ export default function WhatsAppButton() {
 
   return (
     <a
-      href="https://wa.me/912245678900?text=Hi%20SlideEase!%20I%20have%20a%20query."
+      href={`https://wa.me/${waNumber}?text=Hi%20SlideEase!%20I%20have%20an%20inquiry%20regarding%20artisan%20footwear.`}
       className="whatsapp-float-btn"
       id="whatsapp-float-btn"
       target="_blank"

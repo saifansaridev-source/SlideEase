@@ -7,8 +7,33 @@ export default function StyleQuizModal({ isOpen, onClose }) {
   const { addToCart, setIsCartOpen } = useCart();
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({ occasion: '', silhouette: '', comfort: '' });
+  const [loadingMatch, setLoadingMatch] = useState(false);
+  const [matchResult, setMatchResult] = useState(null);
+  const [selectedSize, setSelectedSize] = useState('7');
 
   if (!isOpen) return null;
+
+  const fetchRecommendation = async (finalAnswers) => {
+    setLoadingMatch(true);
+    try {
+      const res = await fetch('/api/quiz/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalAnswers),
+      });
+      const data = await res.json();
+      if (data.success && data.recommended) {
+        setMatchResult(data.recommended);
+        if (data.recommended.sizes && data.recommended.sizes.length > 0) {
+          setSelectedSize(String(data.recommended.sizes[0]));
+        }
+      }
+    } catch (err) {
+      console.error('Quiz recommendation error:', err);
+    } finally {
+      setLoadingMatch(false);
+    }
+  };
 
   const handleSelect = (field, value) => {
     const updated = { ...answers, [field]: value };
@@ -16,25 +41,20 @@ export default function StyleQuizModal({ isOpen, onClose }) {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      setStep(4); // Result state
+      setStep(4);
+      fetchRecommendation(updated);
     }
   };
 
   const handleReset = () => {
     setAnswers({ occasion: '', silhouette: '', comfort: '' });
+    setMatchResult(null);
     setStep(1);
   };
 
   const handleAddMatch = () => {
-    addToCart({
-      id: 'prod-01',
-      name: 'Peacock Ikat Loafer',
-      price: 1499,
-      size: 7,
-      image: '/assets/loafers.png',
-      bgColor: '#f2f9f9',
-      pattern: 'ikat'
-    });
+    if (!matchResult) return;
+    addToCart(matchResult, selectedSize, 1);
     onClose();
     setIsCartOpen(true);
   };
@@ -156,32 +176,89 @@ export default function StyleQuizModal({ isOpen, onClose }) {
         {/* Step 4: Result */}
         {step === 4 && (
           <div className="quiz-result-pane" style={{ textAlign: 'center', padding: '10px 0' }}>
-            <span style={{ fontSize: '2rem', marginBottom: '8px', display: 'inline-block' }}>✨</span>
-            <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: 'var(--primary-color)', marginBottom: '6px' }}>
-              Your Handcrafted Match
-            </h4>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
-              Based on your occasion and comfort preferences, our master craftsmen recommend:
-            </p>
-            
-            <div style={{ background: 'var(--bg-light)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px', display: 'flex', alignItems: 'center', gap: '20px', textAlign: 'left', marginBottom: '24px' }}>
-              <img src="/assets/loafers.png" alt="Match" style={{ width: '100px', height: '80px', objectFit: 'contain', borderRadius: '6px' }} />
-              <div>
-                <span className="craft-tag">98% Aesthetic Match</span>
-                <h5 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', color: 'var(--primary-color)', margin: '6px 0 2px 0' }}>
-                  Peacock Ikat Loafer
-                </h5>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Handcrafted teal Ikat canvas with contoured memory foam.
+            {loadingMatch ? (
+              <div style={{ padding: '3rem 0' }}>
+                <div style={{ fontSize: '2.5rem', animation: 'spin 1.5s infinite linear', display: 'inline-block' }}>⚙️</div>
+                <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', color: 'var(--primary-color)', marginTop: '1rem' }}>
+                  Consulting Master Footwear Archives...
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Matching silhouette, arch dynamics, and occasion craft.
                 </p>
-                <div style={{ fontWeight: 700, color: 'var(--accent-dark)', marginTop: '4px' }}>₹1,499</div>
               </div>
-            </div>
+            ) : matchResult ? (
+              <>
+                <span style={{ fontSize: '2rem', marginBottom: '8px', display: 'inline-block' }}>✨</span>
+                <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: 'var(--primary-color)', marginBottom: '6px' }}>
+                  Your Handcrafted Match
+                </h4>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
+                  Based on your preferences, our master craftsmen recommend:
+                </p>
+                
+                <div style={{ background: 'var(--bg-light)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '20px', display: 'flex', alignItems: 'center', gap: '20px', textAlign: 'left', marginBottom: '20px' }}>
+                  <img 
+                    src={matchResult.image || '/assets/loafers.png'} 
+                    alt={matchResult.name} 
+                    style={{ width: '100px', height: '80px', objectFit: 'contain', borderRadius: '6px' }} 
+                  />
+                  <div>
+                    <span className="craft-tag">✦ {matchResult.badge || 'Artisan Pick'}</span>
+                    <h5 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', color: 'var(--primary-color)', margin: '6px 0 2px 0' }}>
+                      {matchResult.name}
+                    </h5>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                      Category: {matchResult.category} {matchResult.color ? `• ${matchResult.color}` : ''}
+                    </p>
+                    <div style={{ fontWeight: 700, color: 'var(--accent-dark)', marginTop: '4px' }}>
+                      ₹{matchResult.price?.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button className="btn btn-accent" onClick={handleAddMatch}>Add to Bag • Instant Match</button>
-              <button className="btn btn-outline" onClick={handleReset}>Retake Quiz</button>
-            </div>
+                {/* Size Selector */}
+                {matchResult.sizes && matchResult.sizes.length > 0 && (
+                  <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      Select Footwear Size (UK):
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {matchResult.sizes.map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSelectedSize(String(sz))}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '4px',
+                            border: selectedSize === String(sz) ? '2px solid var(--accent-color)' : '1px solid var(--border-color)',
+                            backgroundColor: selectedSize === String(sz) ? 'var(--accent-color)' : '#fff',
+                            color: selectedSize === String(sz) ? '#fff' : 'var(--text-color)',
+                            fontWeight: 600,
+                            fontSize: '0.82rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          UK {sz}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button className="btn btn-accent" onClick={handleAddMatch}>
+                    Add Size UK {selectedSize} to Bag • Instant Match
+                  </button>
+                  <button className="btn btn-outline" onClick={handleReset}>Retake Quiz</button>
+                </div>
+              </>
+            ) : (
+              <div>
+                <p>No exact match found. Please try different options.</p>
+                <button className="btn btn-outline" onClick={handleReset}>Retake Quiz</button>
+              </div>
+            )}
           </div>
         )}
 

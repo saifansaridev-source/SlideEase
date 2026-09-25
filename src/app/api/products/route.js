@@ -1,12 +1,11 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { PRODUCTS } from '@/data/products';
 import { NextResponse } from 'next/server';
 import { isConnectionError } from '@/lib/dbFallback';
 
 export async function GET(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     // Check if products collection has items
     const count = await db.collection('products').countDocuments();

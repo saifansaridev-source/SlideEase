@@ -50,8 +50,13 @@ export const MOCK_STATS = {
   pendingEnquiries: 2,
 };
 
-// Check if error is network/whitelist connection related
+// Check if error is network/whitelist connection related (only allowed in development)
 export function isConnectionError(error) {
+  // In production, NEVER return fake business data silently
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEV_FALLBACK !== 'true') {
+    return false;
+  }
+
   const msg = error?.message || '';
   return (
     msg.includes('SSL') ||

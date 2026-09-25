@@ -1,11 +1,10 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 // GET: Fetch all return requests
 export async function GET(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -39,8 +38,7 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const returnDoc = {
       orderId,
@@ -76,8 +74,12 @@ export async function PUT(request) {
     }
 
     const { ObjectId } = await import('mongodb');
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
+
+    const returnDoc = await db.collection('returns').findOne({ _id: new ObjectId(id) });
+    if (!returnDoc) {
+      return NextResponse.json({ success: false, error: 'Return request not found.' }, { status: 404 });
+    }
 
     const update = {
       status,
@@ -86,13 +88,52 @@ export async function PUT(request) {
     if (refundAmount !== undefined) update.refundAmount = Number(refundAmount);
     if (adminNotes !== undefined) update.adminNotes = adminNotes;
 
-    const result = await db.collection('returns').updateOne(
+    await db.collection('returns').updateOne(
       { _id: new ObjectId(id) },
       { $set: update }
     );
 
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ success: false, error: 'Return request not found.' }, { status: 404 });
+    // If return is approved or completed, handle stock restoration / exchange deduction
+    if (status === 'completed' || status === 'refunded' || status === 'approved') {
+      const firstItem = returnDoc.items?.[0];
+      if (firstItem && firstItem.id && firstItem.size) {
+        if (returnDoc.type === 'return' && !returnDoc.stockRestored) {
+          // Restore returned size stock
+          await db.collection('products').updateOne(
+            { id: firstItem.id },
+            { 
+              $inc: { 
+                [`sizeStock.${firstItem.size}`]: 1, 
+                stockQty: 1 
+              } 
+            }
+          );
+          await db.collection('returns').updateOne({ _id: new ObjectId(id) }, { $set: { stockRestored: true } });
+        } else if (returnDoc.type === 'exchange' && returnDoc.exchangeDetails?.replacementSize && !returnDoc.exchangeStockDeducted) {
+          // Deduct replacement size stock
+          const repSize = returnDoc.exchangeDetails.replacementSize;
+          await db.collection('products').updateOne(
+            { id: firstItem.id },
+            { 
+              $inc: { 
+                [`sizeStock.${repSize}`]: -1, 
+                stockQty: -1 
+              } 
+            }
+          );
+          // And restore returned original size stock
+          await db.collection('products').updateOne(
+            { id: firstItem.id },
+            { 
+              $inc: { 
+                [`sizeStock.${firstItem.size}`]: 1, 
+                stockQty: 1 
+              } 
+            }
+          );
+          await db.collection('returns').updateOne({ _id: new ObjectId(id) }, { $set: { exchangeStockDeducted: true } });
+        }
+      }
     }
 
     return NextResponse.json({ success: true, message: `Return updated to: ${status}` });
@@ -112,8 +153,7 @@ export async function DELETE(request) {
     }
 
     const { ObjectId } = await import('mongodb');
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('returns').deleteOne({ _id: new ObjectId(id) });
     return NextResponse.json({ success: true, message: 'Return request deleted.' });

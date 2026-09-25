@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 const PAGES = ['faq', 'about', 'blog', 'shipping-returns', 'privacy', 'terms', 'cookie'];
@@ -9,8 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     if (slug) {
       const page = await db.collection('cms_pages').findOne({ slug });
@@ -44,8 +43,7 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('cms_pages').updateOne(
       { slug },
@@ -80,8 +78,7 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'slug parameter is required.' }, { status: 400 });
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('cms_pages').deleteOne({ slug });
     return NextResponse.json({ success: true, message: `CMS page "${slug}" reset to default.` });

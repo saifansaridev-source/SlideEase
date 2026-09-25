@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 // Public endpoint — returns only the settings the storefront needs
@@ -20,8 +20,7 @@ const DEFAULTS = {
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     const doc = await db.collection('settings').findOne({ key: 'shipping_tax' });
 
     if (!doc) {

@@ -1,11 +1,10 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 // GET: Fetch all newsletter subscribers (+optional search)
 export async function GET(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') || '';
@@ -37,8 +36,7 @@ export async function DELETE(request) {
     }
 
     const { ObjectId } = await import('mongodb');
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('newsletter').deleteOne({ _id: new ObjectId(id) });
     return NextResponse.json({ success: true, message: 'Subscriber removed.' });

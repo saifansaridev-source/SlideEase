@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_CATEGORIES, isConnectionError } from '@/lib/dbFallback';
 
@@ -10,8 +10,7 @@ const DEFAULT_CATEGORIES = [
 // GET: Retrieve all categories, seeding defaults if empty
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const count = await db.collection('categories').countDocuments();
     if (count === 0) {
@@ -38,8 +37,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Category Name and Slug are required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const formattedSlug = slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]+/g, '');
     
@@ -79,8 +77,7 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'Category slug parameter is required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const result = await db.collection('categories').deleteOne({ slug: slug });
     if (result.deletedCount === 0) {

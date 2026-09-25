@@ -1,4 +1,4 @@
-﻿import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -9,17 +9,18 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Please enter a valid email address.' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const cleanEmail = email.toLowerCase().trim();
+    const db = await getDb();
     
-    // Check if email already subscribed
-    const existing = await db.collection('subscriptions').findOne({ email });
+    // Check if email already subscribed in authoritative newsletter collection
+    const existing = await db.collection('newsletter').findOne({ email: cleanEmail });
     if (existing) {
       return NextResponse.json({ success: true, message: 'You are already subscribed to our newsletter!' });
     }
     
-    await db.collection('subscriptions').insertOne({
-      email,
+    await db.collection('newsletter').insertOne({
+      email: cleanEmail,
+      active: true,
       subscribedAt: new Date()
     });
     

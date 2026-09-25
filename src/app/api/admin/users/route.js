@@ -1,16 +1,15 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_USERS, isConnectionError } from '@/lib/dbFallback';
 
-// GET: Retrieve all user accounts
+// GET: Retrieve all user accounts (excluding sensitive password hashes)
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const users = await db.collection('users')
-      .find({})
+      .find({}, { projection: { passwordHash: 0 } })
       .sort({ createdAt: -1 })
       .toArray();
       
@@ -33,8 +32,7 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: 'User ID and Role parameters are required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const result = await db.collection('users').updateOne(
       { _id: new ObjectId(id) },
@@ -50,7 +48,7 @@ export async function PUT(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -67,8 +65,7 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'User ID parameter is missing' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const result = await db.collection('users').deleteOne({ _id: new ObjectId(id) });
     

@@ -13,8 +13,9 @@ export default function WishlistPage() {
     fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.products) && data.products.length > 0) {
-          setAllProducts(data.products);
+        const prods = data.data || data.products;
+        if (data.success && Array.isArray(prods) && prods.length > 0) {
+          setAllProducts(prods);
         }
       })
       .catch(() => {});

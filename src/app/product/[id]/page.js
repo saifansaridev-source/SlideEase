@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { PRODUCTS } from '@/data/products';
 import ProductDetailsWrapper from '@/components/ProductDetailsWrapper';
 
@@ -15,8 +15,7 @@ const slugify = (text) => {
 
 async function getProductData(idOrSlug) {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     const rawProducts = await db.collection('products').find({}).toArray();
     const dbProducts = rawProducts.map(p => ({
       ...p,

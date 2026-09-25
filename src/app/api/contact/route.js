@@ -1,5 +1,6 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { sendEmail } from '@/lib/email';
 
 export async function POST(request) {
   try {
@@ -12,25 +13,57 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    if (message.length > 5000) {
+      return NextResponse.json(
+        { success: false, error: 'Message exceeds maximum allowed character length (5000).' },
+        { status: 400 }
+      );
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanName = name.trim();
+    const cleanMessage = message.trim();
+
+    const db = await getDb();
 
     const inquiry = {
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
+      name: cleanName,
+      email: cleanEmail,
       phone: phone ? phone.trim() : '',
       subject: subject ? subject.trim() : 'General Inquiry',
-      message: message.trim(),
+      message: cleanMessage,
       status: 'unread',
       createdAt: new Date(),
     };
 
     const result = await db.collection('inquiries').insertOne(inquiry);
 
+    // Send acknowledgement email safely
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: 'We Received Your Message — SlideEase Footwear Concierge',
+        html: `
+          <div style="font-family: sans-serif; padding: 24px; color: #1f2937;">
+            <h2 style="color: #111827;">Namaste ${cleanName},</h2>
+            <p>Thank you for contacting SlideEase. We have received your inquiry regarding <strong>"${inquiry.subject}"</strong>.</p>
+            <p>Our footwear concierge team will review your message and respond within 24 business hours.</p>
+            <blockquote style="border-left: 4px solid #d97706; padding-left: 12px; margin: 16px 0; color: #4b5563;">
+              ${cleanMessage}
+            </blockquote>
+            <p style="font-size: 13px; color: #6b7280;">SlideEase Footwear &bull; Mumbai, India</p>
+          </div>
+        `,
+        text: `Thank you for contacting SlideEase. We have received your inquiry: "${cleanMessage}". We will respond shortly.`
+      });
+    } catch (e) {
+      console.warn('Contact acknowledgement email non-fatal error:', e.message);
+    }
+
     return NextResponse.json({
       success: true,
       inquiryId: result.insertedId.toString(),
-      message: 'Thank you! Your inquiry has been submitted to SlideEase support team.',
+      message: 'Thank you! Your inquiry has been submitted to SlideEase concierge team.',
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -39,8 +72,7 @@ export async function POST(request) {
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const inquiries = await db
       .collection('inquiries')

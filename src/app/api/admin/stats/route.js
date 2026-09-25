@@ -1,20 +1,26 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_STATS, isConnectionError } from '@/lib/dbFallback';
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
-    // 1. Calculate Total Revenue (Sum of 'total' from all orders)
+    // 1. Calculate Authoritative Total Revenue (Sum of pricing.total or legacy total)
     const revenueStats = await db.collection('orders').aggregate([
-      { $group: { _id: null, total: { $sum: '$total' } } }
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $ifNull: ['$pricing.total', '$total'] } },
+        }
+      }
     ]).toArray();
     const totalRevenue = revenueStats[0]?.total || 0;
     
-    // 2. Count Total Orders
+    // 2. Count Total Orders & Breakdown
     const totalOrders = await db.collection('orders').countDocuments();
+    const paidOrders = await db.collection('orders').countDocuments({ 'payment.status': 'Paid' });
+    const codOrders = await db.collection('orders').countDocuments({ 'payment.method': 'COD' });
     
     // 3. Count Total Registered Customers
     const totalCustomers = await db.collection('users').countDocuments();
@@ -29,13 +35,18 @@ export async function GET() {
       .limit(5)
       .toArray();
        
-    // 6. Fetch Low Stock Alerts (items marked as low-stock or less than 15 units count if trackable)
+    // 6. Fetch Low Stock Alerts (items where stockQty <= 10 or marked low-stock)
     const lowStock = await db.collection('products')
-      .find({ stock: 'low-stock' })
-      .limit(5)
+      .find({
+        $or: [
+          { stock: 'low-stock' },
+          { stockQty: { $lte: 10 } }
+        ]
+      })
+      .limit(6)
       .toArray();
 
-    // 7. Calculate Top Selling Products (simple aggregation or list top 4 highest rated/selling fallback)
+    // 7. Calculate Top Products sorted by rating/demand
     const topProducts = await db.collection('products')
       .find({})
       .sort({ rating: -1 })
@@ -45,12 +56,12 @@ export async function GET() {
     // 8. Count Pending Returns & Enquiries
     let pendingReturns = 0;
     try {
-      pendingReturns = await db.collection('returns').countDocuments({ status: 'pending' });
+      pendingReturns = await db.collection('returns').countDocuments({ status: { $in: ['pending', 'Pending'] } });
     } catch {}
 
     let pendingEnquiries = 0;
     try {
-      pendingEnquiries = await db.collection('enquiries').countDocuments({ status: { $in: ['unread', 'pending', 'new'] } });
+      pendingEnquiries = await db.collection('inquiries').countDocuments({ status: { $in: ['unread', 'pending', 'new'] } });
     } catch {}
       
     return NextResponse.json({
@@ -58,6 +69,8 @@ export async function GET() {
       data: {
         totalRevenue,
         totalOrders,
+        paidOrders,
+        codOrders,
         totalCustomers,
         totalProducts,
         recentOrders,

@@ -6,39 +6,57 @@ import { usePathname } from 'next/navigation';
 export default function LiveChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [waNumber, setWaNumber] = useState('919820012345');
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Namaste! Welcome to SlideEase concierge. How may I assist your style journey today?' }
+    { 
+      sender: 'bot', 
+      text: 'Namaste! I am the SlideEase Automated Concierge Assistant. How can I help you with sizing, materials, or orders today?' 
+    }
   ]);
   const [input, setInput] = useState('');
+
+  React.useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data?.whatsappNumber) {
+          setWaNumber(res.data.whatsappNumber.replace(/[^0-9]/g, ''));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (pathname?.startsWith('/admin')) {
     return null;
   }
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSendText = (userText) => {
+    if (!userText.trim()) return;
 
-    const userText = input.trim();
     setMessages((prev) => [...prev, { sender: 'user', text: userText }]);
     setInput('');
 
     setTimeout(() => {
-      let reply = "Thank you for reaching out! For immediate bespoke support, connect directly with our master artisan team on WhatsApp (+91 22 4567 8900).";
+      let reply = `Thank you for asking! For bespoke live styling advice, tap below to chat directly with our master footwear artisans on WhatsApp.`;
       const lower = userText.toLowerCase();
 
       if (lower.includes('size') || lower.includes('fit') || lower.includes('measure')) {
-        reply = "Our shoes fit true to Indian/UK standard sizing. If between sizes, we recommend ordering one size up. Check our detailed interactive /size-guide page!";
+        reply = "Our handcrafted footwear fits true to Indian/UK standard sizing. For broader feet or half-sizes, we recommend sizing up by one size. You can also explore our interactive Size & Fit Assistant.";
       } else if (lower.includes('shipping') || lower.includes('delivery') || lower.includes('track')) {
-        reply = "We offer complimentary express delivery on bespoke orders above ₹999. Typical delivery takes 2 to 4 business days with live SMS tracking.";
+        reply = "We offer complimentary express delivery across India on orders above ₹999. Orders typically arrive in 3-5 business days with automated SMS and email tracking.";
       } else if (lower.includes('return') || lower.includes('exchange') || lower.includes('refund')) {
-        reply = "We provide a 7-day hassle-free doorstep size exchange. Items must remain in unworn condition with original box packaging.";
+        reply = "We provide a 7-day hassle-free doorstep size exchange and returns. Submit directly from your Customer Account Dashboard with live replacement stock reservation.";
       } else if (lower.includes('material') || lower.includes('vegan') || lower.includes('leather')) {
-        reply = "All SlideEase products are 100% PETA-approved cruelty-free vegan leather and natural plant-based cork footbeds, combined with traditional Indian artisan weaves.";
+        reply = "All SlideEase footwear is 100% cruelty-free, crafted with PETA-approved vegan leather, sustainable cork footbeds, and traditional hand-woven Indian textiles.";
       }
 
       setMessages((prev) => [...prev, { sender: 'bot', text: reply }]);
-    }, 600);
+    }, 450);
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    handleSendText(input);
   };
 
   return (
@@ -58,7 +76,7 @@ export default function LiveChatWidget() {
         <div className="chat-window-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
-            <h4>SlideEase Artisan Concierge</h4>
+            <h4 style={{ margin: 0, fontSize: '0.95rem' }}>SlideEase Help Assistant</h4>
           </div>
           <button className="chat-window-close" onClick={() => setIsOpen(false)} aria-label="Close chat window">&times;</button>
         </div>
@@ -69,6 +87,39 @@ export default function LiveChatWidget() {
               {m.text}
             </div>
           ))}
+        </div>
+
+        {/* Quick Question Pills */}
+        <div style={{ display: 'flex', gap: '6px', padding: '6px 12px', overflowX: 'auto', background: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
+          <button 
+            type="button" 
+            onClick={() => handleSendText('What is your sizing guide?')}
+            style={{ fontSize: '0.72rem', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: '12px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
+          >
+            📏 Sizing
+          </button>
+          <button 
+            type="button" 
+            onClick={() => handleSendText('How do size exchanges work?')}
+            style={{ fontSize: '0.72rem', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: '12px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
+          >
+            🔄 Exchanges
+          </button>
+          <button 
+            type="button" 
+            onClick={() => handleSendText('Are your materials vegan?')}
+            style={{ fontSize: '0.72rem', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: '12px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
+          >
+            🌿 Materials
+          </button>
+          <a 
+            href={`https://wa.me/${waNumber}?text=Hi%20SlideEase!%20I%20would%20like%20to%20speak%20with%20a%20human%20concierge.`}
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ fontSize: '0.72rem', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: '12px', border: '1px solid #16a34a', background: '#dcfce7', color: '#166534', textDecoration: 'none', fontWeight: 600 }}
+          >
+            💬 WhatsApp Live
+          </a>
         </div>
 
         <form onSubmit={handleSend} className="chat-input-area">

@@ -2,77 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { DEFAULT_HERO_SLIDES } from '@/lib/cms-defaults';
 
 export default function HeroCarousel() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [countdown, setCountdown] = useState({ hours: 14, mins: 42, secs: 18 });
-  const [adminBanners, setAdminBanners] = useState({ heroImage1: '', heroImage2: '', heroImage3: '' });
+  const [slides, setSlides] = useState(DEFAULT_HERO_SLIDES);
 
-  // Fetch admin-configured hero images from MongoDB
+  // Fetch admin-configured hero slides from MongoDB
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const res = await fetch('/api/hero-banner');
         const data = await res.json();
-        if (data.success && data.banner) {
-          setAdminBanners(data.banner);
+        if (data.success && data.banner?.slides && data.banner.slides.length > 0) {
+          setSlides(data.banner.slides);
         }
       } catch (err) {
-        // Fallback gracefully to neutral gradient placeholders
+        // Fallback gracefully to default slides
       }
     };
     fetchBanners();
   }, []);
 
-  const neutralPlaceholders = [
-    'linear-gradient(135deg, #0b111a 0%, #1a2332 50%, #0f1622 100%)',
-    'linear-gradient(135deg, #120e09 0%, #241c14 50%, #161b24 100%)',
-    'linear-gradient(135deg, #0d141e 0%, #17212e 50%, #0a0f16 100%)',
-  ];
-
-  const slides = [
-    {
-      tagline: '✦ Ascend with Heritage',
-      title: 'Every stitch carries a hand.\nEvery step carries a story.',
-      desc: 'Handcrafted from cork-based vegan leather and traditional Indian artisan weaves, re-engineered with dual-density memory foam for modern movement.',
-      bg: adminBanners.heroImage1 ? `url('${adminBanners.heroImage1}')` : neutralPlaceholders[0],
-      isImage: Boolean(adminBanners.heroImage1),
-      primaryLink: '/shop',
-      primaryText: 'Explore the Collection',
-      secondaryLink: '/#craft-journey',
-      secondaryText: 'See the Craft'
-    },
-    {
-      tagline: '✦ Living Craft • Cruelty-Free Elegance',
-      title: "The Women's Guild:\nIkat Weaves & Kutch Mirrorwork",
-      desc: 'Preserving generational textile artistry on contoured, shock-absorbing bases designed for everyday festive and casual poise.',
-      bg: adminBanners.heroImage2 ? `url('${adminBanners.heroImage2}')` : neutralPlaceholders[1],
-      isImage: Boolean(adminBanners.heroImage2),
-      primaryLink: '/shop?category=womens',
-      primaryText: "Explore Women's",
-      secondaryLink: '/#craft-journey',
-      secondaryText: 'Meet the Artisans'
-    },
-    {
-      tagline: '✦ Grounded Sophistication',
-      title: "The Men's Edit:\nSleek Cork Slides & Formal Loafers",
-      desc: 'Double-padded memory foam soles wrapped in water-resistant vegan leather. Built for daily strides, celebrations, and understated poise.',
-      bg: adminBanners.heroImage3 ? `url('${adminBanners.heroImage3}')` : neutralPlaceholders[2],
-      isImage: Boolean(adminBanners.heroImage3),
-      primaryLink: '/shop?category=mens',
-      primaryText: "Explore Men's",
-      secondaryLink: '/#showcase-360',
-      secondaryText: '360° Studio'
-    }
-  ];
+  const activeSlides = slides.filter(s => s.isActive !== false);
 
   // Auto-advance slides
   useEffect(() => {
+    if (activeSlides.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
+      setActiveSlide((prev) => (prev + 1) % activeSlides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [activeSlides.length]);
 
   // Countdown timer tick
   useEffect(() => {
@@ -88,82 +50,125 @@ export default function HeroCarousel() {
   }, []);
 
   const prevSlide = () => {
-    setActiveSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setActiveSlide((prev) => (prev === 0 ? activeSlides.length - 1 : prev - 1));
   };
 
   const nextSlide = () => {
-    setActiveSlide((prev) => (prev + 1) % slides.length);
+    setActiveSlide((prev) => (prev + 1) % activeSlides.length);
   };
+
+  const neutralPlaceholders = [
+    'linear-gradient(135deg, #0b111a 0%, #1a2332 50%, #0f1622 100%)',
+    'linear-gradient(135deg, #120e09 0%, #241c14 50%, #161b24 100%)',
+    'linear-gradient(135deg, #0d141e 0%, #17212e 50%, #0a0f16 100%)',
+  ];
 
   return (
     <section className="hero-carousel" id="hero-banner-section" aria-label="Hero Slideshow">
-      {slides.map((slide, idx) => (
-        <div 
-          key={idx}
-          className={`carousel-slide ${activeSlide === idx ? 'active' : ''}`}
-          style={{ 
-            backgroundImage: slide.isImage ? slide.bg : undefined,
-            background: !slide.isImage ? slide.bg : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            display: activeSlide === idx ? 'block' : 'none'
-          }}
-          role="img"
-          aria-label={slide.title}
-        >
-          <div className="carousel-overlay" style={{ background: slide.isImage ? 'rgba(15, 22, 34, 0.65)' : 'transparent' }}></div>
-          <div className="carousel-content">
-            <span className="carousel-tagline">{slide.tagline}</span>
-            {idx === 0 ? (
-              <h1 className="carousel-title" style={{ whiteSpace: 'pre-line' }}>{slide.title}</h1>
-            ) : (
-              <h2 className="carousel-title" style={{ whiteSpace: 'pre-line' }}>{slide.title}</h2>
-            )}
-            <p className="carousel-desc">{slide.desc}</p>
+      {activeSlides.map((slide, idx) => {
+        const hasImage = Boolean(slide.image);
+        const bg = hasImage 
+          ? `url('${slide.image}')` 
+          : neutralPlaceholders[idx % neutralPlaceholders.length];
 
-            {/* Countdown timer on slide 1 */}
-            {idx === 0 && (
-              <div className="hero-countdown" id="hero-countdown" aria-label="Sale countdown timer">
-                <span className="countdown-label">🔥 Summer Sale Ends In:</span>
-                <div className="countdown-digits">
-                  <div className="countdown-unit"><span>{String(countdown.hours).padStart(2, '0')}</span><small>Hours</small></div>
-                  <div className="countdown-sep">:</div>
-                  <div className="countdown-unit"><span>{String(countdown.mins).padStart(2, '0')}</span><small>Mins</small></div>
-                  <div className="countdown-sep">:</div>
-                  <div className="countdown-unit"><span>{String(countdown.secs).padStart(2, '0')}</span><small>Secs</small></div>
+        return (
+          <div 
+            key={slide.id || idx}
+            className={`carousel-slide ${activeSlide === idx ? 'active' : ''}`}
+            style={{ 
+              backgroundImage: hasImage ? bg : undefined,
+              background: !hasImage ? bg : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              display: activeSlide === idx ? 'block' : 'none',
+              textAlign: slide.textAlign || 'left',
+            }}
+            role="img"
+            aria-label={slide.heading || slide.tagline}
+          >
+            <div className="carousel-overlay" style={{ 
+              background: hasImage 
+                ? `rgba(15, 22, 34, ${(slide.overlayOpacity || 65) / 100})` 
+                : 'transparent' 
+            }}></div>
+            <div className="carousel-content">
+              {slide.showTagline !== false && slide.tagline && (
+                <span className="carousel-tagline">{slide.tagline}</span>
+              )}
+
+              {slide.showHeading !== false && slide.heading && (
+                idx === 0 ? (
+                  <h1 className="carousel-title" style={{ whiteSpace: 'pre-line' }}>{slide.heading}</h1>
+                ) : (
+                  <h2 className="carousel-title" style={{ whiteSpace: 'pre-line' }}>{slide.heading}</h2>
+                )
+              )}
+
+              {slide.showDescription !== false && slide.description && (
+                <p className="carousel-desc">{slide.description}</p>
+              )}
+
+              {/* Countdown timer if slide has it enabled */}
+              {slide.showCountdown && (
+                <div className="hero-countdown" id="hero-countdown" aria-label="Sale countdown timer">
+                  <span className="countdown-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px', verticalAlign: 'middle' }}><path d="M17.657 3.343A8 8 0 1 1 6.343 20.657 8 8 0 0 1 17.657 3.343z"/></svg>
+                    Summer Sale Ends In:
+                  </span>
+                  <div className="countdown-digits">
+                    <div className="countdown-unit"><span>{String(countdown.hours).padStart(2, '0')}</span><small>Hours</small></div>
+                    <div className="countdown-sep">:</div>
+                    <div className="countdown-unit"><span>{String(countdown.mins).padStart(2, '0')}</span><small>Mins</small></div>
+                    <div className="countdown-sep">:</div>
+                    <div className="countdown-unit"><span>{String(countdown.secs).padStart(2, '0')}</span><small>Secs</small></div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="carousel-actions">
-              <Link href={slide.primaryLink} className="btn btn-accent">
-                {slide.primaryText}
-              </Link>
-              <Link href={slide.secondaryLink} className="btn-hairline-gold">
-                {slide.secondaryText}
-              </Link>
+              {(slide.showCta !== false || slide.showSecondaryCta !== false) && (
+                <div className="carousel-actions">
+                  {slide.showCta !== false && slide.ctaLink && (
+                    <Link href={slide.ctaLink} className="btn btn-accent">
+                      {slide.ctaText || 'Explore'}
+                    </Link>
+                  )}
+                  {slide.showSecondaryCta !== false && slide.secondaryCtaLink && (
+                    <Link href={slide.secondaryCtaLink} className="btn-hairline-gold">
+                      {slide.secondaryCtaText || 'Learn More'}
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Prev/Next Navigation Arrows */}
-      <button className="carousel-arrow carousel-prev" onClick={prevSlide} aria-label="Previous slide">&#8249;</button>
-      <button className="carousel-arrow carousel-next" onClick={nextSlide} aria-label="Next slide">&#8250;</button>
+      {activeSlides.length > 1 && (
+        <>
+          <button className="carousel-arrow carousel-arrow-prev" onClick={prevSlide} aria-label="Previous slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button className="carousel-arrow carousel-arrow-next" onClick={nextSlide} aria-label="Next slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
 
-      {/* Slide Indicators */}
-      <div className="carousel-dots" role="tablist" aria-label="Slide indicators">
-        {slides.map((_, idx) => (
-          <span 
-            key={idx}
-            className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`}
-            onClick={() => setActiveSlide(idx)}
-            role="tab"
-            aria-selected={activeSlide === idx}
-            aria-label={`Slide ${idx + 1}`}
-          ></span>
-        ))}
-      </div>
+          {/* Slide Dots */}
+          <div className="carousel-dots" role="tablist" aria-label="Slide indicators">
+            {activeSlides.map((_, idx) => (
+              <button
+                key={idx}
+                className={`carousel-dot ${activeSlide === idx ? 'active' : ''}`}
+                onClick={() => setActiveSlide(idx)}
+                role="tab"
+                aria-label={`Slide ${idx + 1}`}
+                aria-selected={activeSlide === idx}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

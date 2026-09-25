@@ -1,11 +1,10 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { PRODUCTS } from '@/data/products';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const results = [];
     for (const prod of PRODUCTS) {

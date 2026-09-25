@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
@@ -17,8 +17,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Invalid session', orders: [] }, { status: 401 });
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const orders = await db
       .collection('orders')
@@ -45,8 +44,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Mandatory checkout fields are missing' }, { status: 400 });
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const orderNumber = `SE-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 

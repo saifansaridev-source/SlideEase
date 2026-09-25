@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
@@ -17,8 +17,7 @@ export async function GET() {
       return NextResponse.json({ success: false, authenticated: false, wishlist: [] });
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     const user = await db.collection('users').findOne({ email: sessionData.email.toLowerCase() });
 
     if (!user) {
@@ -50,8 +49,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     if (body.wishlist && Array.isArray(body.wishlist)) {
       // Sync full wishlist array

@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { hashPassword, signSession } from '@/lib/auth';
 import { cookies } from 'next/headers';
@@ -14,8 +14,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();

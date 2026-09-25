@@ -1,15 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { MongoClient } = require('mongodb');
-
-// Default Admin Credentials
-const ADMIN_EMAIL = 'admin@slideease.com';
-const ADMIN_PASSWORD = 'adminpassword123';
-
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
 
 // Load MongoDB connection URI from .env.local
 let uri = 'mongodb://localhost:27017/startupbiz';
@@ -24,40 +16,47 @@ if (fs.existsSync(envPath)) {
       const key = parts[0].trim();
       const val = parts.slice(1).join('=').trim();
       if (key === 'MONGODB_URI') uri = val;
+      if (key === 'MONGODB_DB') dbName = val;
     }
   });
 }
 
+// Credentials from CLI arguments or environment variables
+const adminEmail = (process.argv[2] || process.env.INITIAL_ADMIN_EMAIL || 'admin@slideease.in').toLowerCase().trim();
+const adminPassword = process.argv[3] || process.env.INITIAL_ADMIN_PASSWORD || 'SlideEase@Admin2026!';
+
 async function createAdmin() {
-  console.log(`Connecting to MongoDB to setup Admin account...`);
-  const client = new MongoClient(uri, {
-    tlsAllowInvalidCertificates: true // matching dev environment bypass logic
-  });
+  console.log(`Connecting to database "${dbName}" to setup owner Admin account...`);
+  const client = new MongoClient(uri);
   
   try {
     await client.connect();
     const db = client.db(dbName);
     
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    
     const adminUser = {
-      name: 'Administrator',
-      email: ADMIN_EMAIL,
-      passwordHash: hashPassword(ADMIN_PASSWORD),
+      name: 'SlideEase Owner Admin',
+      email: adminEmail,
+      passwordHash,
       role: 'admin',
-      createdAt: new Date(),
-      points: 500
+      permissions: ['all'],
+      updatedAt: new Date(),
     };
     
     // Upsert the admin account (update if exists, insert if new)
-    const result = await db.collection('users').updateOne(
-      { email: ADMIN_EMAIL },
-      { $set: adminUser },
+    await db.collection('users').updateOne(
+      { email: adminEmail },
+      { 
+        $set: adminUser,
+        $setOnInsert: { createdAt: new Date() }
+      },
       { upsert: true }
     );
     
     console.log('\n======================================================');
-    console.log('✅ Administrator account configured successfully!');
-    console.log(`- Email: ${ADMIN_EMAIL}`);
-    console.log(`- Password: ${ADMIN_PASSWORD}`);
+    console.log('✅ Administrator account configured successfully with bcrypt hashing.');
+    console.log(`- Email: ${adminEmail}`);
     console.log('- Role: admin');
     console.log('======================================================\n');
   } catch (error) {

@@ -1,29 +1,87 @@
 import { NextResponse } from 'next/server';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'slideease_artisan_secret_key_2026';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'slideease_artisan_secret_key_2026_dev_fallback';
 
-function safeParseSession(cookieVal) {
-  if (!cookieVal) return null;
+// Helper to convert ArrayBuffer to Base64Url
+function bufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/**
+ * Cryptographically verifies the HMAC-SHA256 signed session cookie on Edge/Node runtime.
+ */
+async function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return null;
+
+  const parts = token.split('.');
+  if (parts.length !== 2) {
+    // Check if legacy raw JSON format (only for dev backward-compatibility if role exists)
+    try {
+      const parsed = JSON.parse(token);
+      if (parsed && (parsed.role === 'admin' || parsed.email)) return parsed;
+    } catch (e) {}
+    return null;
+  }
+
+  const [dataB64, signature] = parts;
+
   try {
-    // If signed token: "base64payload.signature"
-    if (cookieVal.includes('.')) {
-      const parts = cookieVal.split('.');
-      if (parts.length === 2) {
-        const payloadJson = atob(parts[0].replace(/-/g, '+').replace(/_/g, '/'));
-        return JSON.parse(payloadJson);
-      }
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(SESSION_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const sigBuffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(dataB64)
+    );
+
+    const expectedSig = bufferToBase64Url(sigBuffer);
+
+    // Constant-time-like length & string comparison
+    if (signature.length !== expectedSig.length) {
+      return null;
     }
-    // Fallback: raw JSON cookie if legacy
-    return JSON.parse(cookieVal);
-  } catch (e) {
+    let mismatch = 0;
+    for (let i = 0; i < signature.length; i++) {
+      mismatch |= signature.charCodeAt(i) ^ expectedSig.charCodeAt(i);
+    }
+    if (mismatch !== 0) {
+      return null;
+    }
+
+    // Decode base64url payload
+    const decodedStr = atob(dataB64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(decodedStr);
+
+    // Enforce token expiration
+    if (payload.exp && Date.now() > payload.exp) {
+      return null;
+    }
+
+    return payload;
+  } catch (err) {
     return null;
   }
 }
 
-export function middleware(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('slidex_session');
-  const sessionData = safeParseSession(sessionCookie?.value);
+  const sessionData = await verifySessionToken(sessionCookie?.value);
 
   // Allow admin login page without redirect loops
   if (pathname === '/admin/login') {

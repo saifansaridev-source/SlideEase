@@ -13,6 +13,18 @@ const PROMO_MESSAGES = [
 export default function PromoBar() {
   const pathname = usePathname();
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [userState, setUserState] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setUserState(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -25,6 +37,10 @@ export default function PromoBar() {
     return null;
   }
 
+  // Calculate tier
+  const points = userState?.points || 0;
+  const tierName = points >= 1500 ? 'Master Guild VIP' : points >= 500 ? 'Connoisseur' : 'Apprentice';
+
   return (
     <div className="promo-bar" id="promo-bar-section">
       <div className="promo-bar-container">
@@ -32,9 +48,15 @@ export default function PromoBar() {
         <span id="promo-text" style={{ transition: 'opacity 0.4s ease' }}>
           {PROMO_MESSAGES[currentIdx]}
         </span>
-        <Link href="/dashboard#slideease-circle" className="circle-header-pill" id="header-circle-pill" title="View SlideEase Circle Privileges">
-          <span className="circle-dot"></span> SlideEase Circle • <strong>350 Pts</strong> (Artisan Tier)
-        </Link>
+        {userState ? (
+          <Link href="/dashboard" className="circle-header-pill" id="header-circle-pill" title="View Your SlideEase Circle Privileges">
+            <span className="circle-dot"></span> Circle • <strong>{points} Pts</strong> ({tierName})
+          </Link>
+        ) : (
+          <Link href="/login" className="circle-header-pill" id="header-circle-pill" title="Join SlideEase Circle">
+            <span className="circle-dot"></span> SlideEase Circle • <strong>Join VIP Privileges</strong>
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,19 +1,19 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_ORDERS, isConnectionError } from '@/lib/dbFallback';
+import { sendShippingUpdateEmail } from '@/lib/email';
+import { ObjectId } from 'mongodb';
 
 // GET: Fetch all checkout orders
 export async function GET(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const orderId = searchParams.get('id');
     
     if (orderId) {
-      const { ObjectId } = await import('mongodb');
       let q = { $or: [{ orderId }, { orderNumber: orderId }] };
       if (ObjectId.isValid(orderId) && String(new ObjectId(orderId)) === orderId) {
         q.$or.push({ _id: new ObjectId(orderId) });
@@ -69,13 +69,16 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: 'Order ID parameter is required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
-    const { ObjectId } = await import('mongodb');
+    const db = await getDb();
 
     let filter = { $or: [{ orderId: orderId }, { orderNumber: orderId }] };
     if (ObjectId.isValid(orderId) && String(new ObjectId(orderId)) === orderId) {
       filter.$or.push({ _id: new ObjectId(orderId) });
+    }
+
+    const currentOrder = await db.collection('orders').findOne(filter);
+    if (!currentOrder) {
+      return NextResponse.json({ success: false, error: 'Order record not found' }, { status: 404 });
     }
 
     const setFields = { updatedAt: new Date().toISOString() };
@@ -85,6 +88,25 @@ export async function PUT(request) {
     if (adminNotes !== undefined) setFields.adminNotes = adminNotes;
     if (cancelReason !== undefined) setFields.cancelReason = cancelReason;
     if (refundAmount !== undefined) setFields.refundAmount = parseFloat(refundAmount) || 0;
+
+    // Inventory Restoration on Order Cancellation
+    if (status && status.toLowerCase() === 'cancelled' && !currentOrder.stockRestored) {
+      for (const item of (currentOrder.items || [])) {
+        if (item.id && item.size) {
+          const qty = item.quantity || item.qty || 1;
+          await db.collection('products').updateOne(
+            { id: item.id },
+            { 
+              $inc: { 
+                [`sizeStock.${item.size}`]: qty, 
+                stockQty: qty 
+              } 
+            }
+          );
+        }
+      }
+      setFields.stockRestored = true;
+    }
 
     const updateDoc = { $set: setFields };
 
@@ -97,12 +119,20 @@ export async function PUT(request) {
       updateDoc.$push = { timeline: timelineEntry };
     }
     
-    const result = await db.collection('orders').updateOne(filter, updateDoc);
+    await db.collection('orders').updateOne(filter, updateDoc);
     
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ success: false, error: 'Order record not found' }, { status: 404 });
+    // If order was dispatched with tracking number, send shipping email to customer
+    if (trackingNumber && (status === 'shipped' || currentOrder.status === 'shipped' || courierName)) {
+      try {
+        await sendShippingUpdateEmail(
+          { ...currentOrder, ...setFields },
+          { trackingNumber, courier: courierName || currentOrder.courierName || 'Courier Partner' }
+        );
+      } catch (emailErr) {
+        console.warn('Shipping email non-fatal error:', emailErr.message);
+      }
     }
-    
+
     return NextResponse.json({ 
       success: true, 
       message: 'Order updated successfully',

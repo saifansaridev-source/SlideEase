@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 // Default settings if none stored in DB yet
@@ -21,8 +21,7 @@ const DEFAULTS = {
 // GET: Return current shipping & tax settings
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const doc = await db.collection('settings').findOne({ key: 'shipping_tax' });
 
@@ -49,8 +48,7 @@ export async function POST(request) {
       if (body[k] !== undefined) update[k] = body[k];
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('settings').updateOne(
       { key: 'shipping_tax' },

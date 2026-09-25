@@ -1,4 +1,5 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
+import { verifySession } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
@@ -11,15 +12,12 @@ export async function GET() {
       return NextResponse.json({ success: false, authenticated: false, cart: [] });
     }
 
-    let sessionData;
-    try {
-      sessionData = JSON.parse(sessionCookie.value);
-    } catch (e) {
+    const sessionData = verifySession(sessionCookie.value);
+    if (!sessionData || !sessionData.email) {
       return NextResponse.json({ success: false, authenticated: false, cart: [] });
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     const user = await db.collection('users').findOne({ email: sessionData.email });
 
     if (!user) {
@@ -41,16 +39,13 @@ export async function POST(request) {
       return NextResponse.json({ success: false, authenticated: false, message: 'Guest mode, stored locally' });
     }
 
-    let sessionData;
-    try {
-      sessionData = JSON.parse(sessionCookie.value);
-    } catch (e) {
-      return NextResponse.json({ success: false, authenticated: false });
+    const sessionData = verifySession(sessionCookie.value);
+    if (!sessionData || !sessionData.email) {
+      return NextResponse.json({ success: false, authenticated: false, message: 'Invalid session' });
     }
 
     const { cart } = await request.json();
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('users').updateOne(
       { email: sessionData.email },

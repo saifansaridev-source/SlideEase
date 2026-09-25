@@ -1,4 +1,4 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_COUPONS, isConnectionError } from '@/lib/dbFallback';
 
@@ -10,8 +10,7 @@ const DEFAULT_COUPONS = [
 // GET: Retrieve all coupons, seeding defaults if empty
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const count = await db.collection('coupons').countDocuments();
     if (count === 0) {
@@ -38,9 +37,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Coupon Code and Discount are required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
-    
+    const db = await getDb();
     const upperCode = code.trim().toUpperCase();
     
     // Check if coupon already exists
@@ -53,7 +50,9 @@ export async function POST(request) {
       code: upperCode,
       discount: parseFloat(discount),
       minOrder: parseFloat(minOrder || 0),
-      active: active === undefined ? true : !!active
+      active: active === undefined ? true : !!active,
+      usedCount: 0,
+      createdAt: new Date(),
     };
     
     await db.collection('coupons').insertOne(newCoupon);
@@ -62,7 +61,7 @@ export async function POST(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -78,12 +77,11 @@ export async function PUT(request) {
       return NextResponse.json({ success: false, error: 'Coupon code is required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const result = await db.collection('coupons').updateOne(
       { code: code.toUpperCase() },
-      { $set: { active: !!active } }
+      { $set: { active: !!active, updatedAt: new Date() } }
     );
     
     if (result.matchedCount === 0) {
@@ -95,7 +93,7 @@ export async function PUT(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -112,8 +110,7 @@ export async function DELETE(request) {
       return NextResponse.json({ success: false, error: 'Coupon code parameter is required' }, { status: 400 });
     }
     
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
     
     const result = await db.collection('coupons').deleteOne({ code: code.toUpperCase() });
     if (result.deletedCount === 0) {
@@ -125,7 +122,7 @@ export async function DELETE(request) {
     if (isConnectionError(error)) {
       return NextResponse.json({
         success: false,
-        error: "Database Connection Failed. Please verify your MongoDB Atlas Network IP Whitelist. Go to MongoDB Atlas -> Security -> Network Access and add 0.0.0.0/0 to allow connections."
+        error: "Database Connection Failed. Please verify your MongoDB configuration."
       }, { status: 503 });
     }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

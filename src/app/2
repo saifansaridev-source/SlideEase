@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 120">
+  <style>
+    .slide { 
+      fill: #111111; 
+      font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif; 
+      font-weight: 900; 
+      font-style: italic; 
+      font-size: 72px; 
+      letter-spacing: -2px;
+    }
+    .ease { 
+      fill: #8c6239; 
+      font-family: 'Segoe UI', 'Trebuchet MS', Arial, sans-serif; 
+      font-weight: 900; 
+      font-style: italic; 
+      font-size: 72px; 
+      letter-spacing: -1px;
+    }
+    .tm { 
+      fill: #111111; 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      font-weight: 800; 
+      font-size: 26px; 
+      font-style: normal;
+    }
+  </style>
+  <text x="10" y="85">
+    <tspan class="slide">Slide</tspan><tspan class="ease">Ease</tspan><tspan class="tm" dy="-45" dx="5">™</tspan>
+  </text>
+</svg>

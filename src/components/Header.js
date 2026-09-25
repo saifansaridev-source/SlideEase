@@ -149,9 +149,6 @@ export default function Header() {
                   </div>
                 </div>
               </li>
-
-              <li><Link href="/#craft-journey" className="nav-link">Craft Journey</Link></li>
-              <li><Link href="/#showcase-360" className="nav-link">360° Studio</Link></li>
               <li><Link href="/shop?sale=true" className="nav-link" style={{ color: 'var(--danger-color)', fontWeight: 700 }}>Sale</Link></li>
               <li><Link href="/about" className="nav-link">About</Link></li>
               <li><Link href="/contact" className="nav-link">Contact</Link></li>
@@ -244,8 +241,6 @@ export default function Header() {
           <li><Link href="/shop" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Shop All</Link></li>
           <li><Link href="/shop?category=mens" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Men's Collection</Link></li>
           <li><Link href="/shop?category=womens" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Women's Collection</Link></li>
-          <li><Link href="/#craft-journey" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Craft Journey</Link></li>
-          <li><Link href="/#showcase-360" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>360° Studio</Link></li>
           <li><Link href="/shop?sale=true" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--danger-color)', fontWeight: 700 }}>Summer Sale</Link></li>
           <li><Link href="/blog" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Blog & Guides</Link></li>
           <li><Link href="/contact" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Contact Us</Link></li>

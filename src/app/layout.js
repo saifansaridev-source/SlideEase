@@ -6,6 +6,8 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import BackToTopButton from '@/components/BackToTopButton';
 import LiveChatWidget from '@/components/LiveChatWidget';
 import CookieConsent from '@/components/CookieConsent';
+import PromoPopup from '@/components/PromoPopup';
+import SplitScreenIntro from '@/components/SplitScreenIntro';
 import { CartProvider } from '@/context/CartContext';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
@@ -105,6 +107,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </noscript>
         )}
         <CartProvider>
+          <SplitScreenIntro />
           <Header />
           <main>{children}</main>
           <Footer />
@@ -112,6 +115,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <BackToTopButton />
           <LiveChatWidget />
           <CookieConsent />
+          <PromoPopup />
         </CartProvider>
       </body>
     </html>

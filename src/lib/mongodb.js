@@ -1,9 +1,11 @@
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
-const options = {
-  tlsAllowInvalidCertificates: true,
-};
+// Configure TLS options safely
+const options = {};
+if (process.env.MONGODB_ALLOW_INVALID_CERTS === 'true') {
+  options.tlsAllowInvalidCertificates = true;
+}
 
 let client;
 let clientPromise;
@@ -13,16 +15,23 @@ if (!process.env.MONGODB_URI) {
 }
 
 if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable to preserve connection across module reloads
   if (!global._mongoClientPromise) {
     client = new MongoClient(uri, options);
     global._mongoClientPromise = client.connect();
   }
   clientPromise = global._mongoClientPromise;
 } else {
-  // In production mode, it is best to not use a global variable
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
+}
+
+/**
+ * Returns the authoritative database instance using configured MONGODB_DB or default.
+ */
+export async function getDb() {
+  const c = await clientPromise;
+  const dbName = process.env.MONGODB_DB || 'startupbiz';
+  return c.db(dbName);
 }
 
 export default clientPromise;

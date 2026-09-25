@@ -39,6 +39,23 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   const [variantStockClass, setVariantStockClass] = useState(
     isSelectedSizeOOS ? 'out-of-stock' : isSelectedSizeLow ? 'low-stock' : 'in-stock'
   );
+
+  useEffect(() => {
+    const qty = product.sizeStock && product.sizeStock[String(selectedSize)] !== undefined
+      ? product.sizeStock[String(selectedSize)]
+      : 10;
+    if (qty === 0) {
+      setVariantStockLabel('Out of Stock');
+      setVariantStockClass('out-of-stock');
+    } else if (qty < 5) {
+      setVariantStockLabel(`Only ${qty} Left!`);
+      setVariantStockClass('low-stock');
+    } else {
+      setVariantStockLabel('In Stock');
+      setVariantStockClass('in-stock');
+    }
+  }, [selectedSize, product.sizeStock]);
+
   const [qty, setQty] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
 
@@ -532,12 +549,37 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
                 </div>
               </div>
 
-              {/* Trust Badges */}
-              <div className="product-trust-strip">
-                <div className="trust-mini-badge"><span>🔒</span> Secure 256-Bit Payment</div>
-                <div className="trust-mini-badge"><span>🚚</span> Free Shipping Above ₹999</div>
-                <div className="trust-mini-badge"><span>🔄</span> 7-Day Easy Exchanges</div>
-                <div className="trust-mini-badge"><span>🌿</span> 100% PETA Vegan Approved</div>
+              {/* Trust & Benefit Boxes */}
+              <div className="product-trust-strip" id="product-benefit-boxes">
+                <div className="trust-mini-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  <span>Secure 256-Bit Payment</span>
+                </div>
+                <div className="trust-mini-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <rect x="1" y="3" width="15" height="13"/>
+                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                    <circle cx="5.5" cy="18.5" r="2.5"/>
+                    <circle cx="18.5" cy="18.5" r="2.5"/>
+                  </svg>
+                  <span>Free Shipping Above ₹999</span>
+                </div>
+                <div className="trust-mini-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  <span>7-Day Easy Exchanges</span>
+                </div>
+                <div className="trust-mini-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                  </svg>
+                  <span>100% PETA Vegan Certified</span>
+                </div>
               </div>
 
             </div>

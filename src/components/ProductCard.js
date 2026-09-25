@@ -6,7 +6,7 @@ import { useCart } from '@/context/CartContext';
 
 export default function ProductCard({ product }) {
   const { addToCart, toggleWishlist, wishlist } = useCart();
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 7);
+  const [selectedSize, setSelectedSize] = useState((product.sizes && product.sizes[0]) || 7);
 
   const isWishlisted = wishlist.includes(product.id);
   const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
@@ -19,22 +19,57 @@ export default function ProductCard({ product }) {
       .replace(/(^-|-$)+/g, '');
   };
   const productSlug = product.slug || slugify(product.name);
+  const productUrl = `/product/${productSlug || product.id}`;
 
   return (
-    <div className="product-card">
-      <div className="product-card-img-wrapper" style={{ backgroundColor: product.bgColor || '#f9f9f9', position: 'relative' }}>
-        <Link href={`/product/${productSlug}`}>
-          <img src={product.image} alt={product.name} className="product-card-img" />
+    <div className="product-card" id={`product-card-${product.id}`}>
+      <div 
+        className="product-card-img-wrapper" 
+        style={{ backgroundColor: product.bgColor || '#faf8f5', position: 'relative' }}
+      >
+        <Link 
+          href={productUrl} 
+          className="product-card-img-link"
+          style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+          aria-label={`View ${product.name}`}
+        >
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="product-card-img" 
+            loading="lazy"
+          />
         </Link>
-        {product.tag && <span className="product-badge">{product.tag}</span>}
+        
+        {/* Floating Badges */}
+        <div className="product-badges-container" style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 2, pointerEvents: 'none' }}>
+          {product.tag && (
+            <span className="product-badge product-badge-primary">
+              {product.tag}
+            </span>
+          )}
+          {product.comfort && (
+            <span className="product-badge product-badge-comfort">
+              {product.comfort}
+            </span>
+          )}
+        </div>
+
+        {/* Wishlist Button */}
         <button 
+          type="button"
           className={`wishlist-btn-float ${isWishlisted ? 'active' : ''}`}
-          onClick={() => toggleWishlist(product.id)}
-          aria-label="Add to wishlist"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
             position: 'absolute',
             top: '10px',
             right: '10px',
+            zIndex: 3,
             border: 'none',
             borderRadius: '50%',
             cursor: 'pointer',
@@ -50,37 +85,48 @@ export default function ProductCard({ product }) {
       </div>
 
       <div className="product-card-details">
-        <div className="product-card-rating">
-          <span className="star-rating">★ {product.rating}</span>
-          <span className="review-count">({product.reviews})</span>
-        </div>
-        
-        <h3 className="product-card-title">
-          <Link href={`/product/${productSlug}`}>{product.name}</Link>
-        </h3>
+        <Link href={productUrl} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+          <div className="product-card-rating">
+            <span className="star-rating" style={{ color: 'var(--accent-color)' }}>★ {product.rating || 4.8}</span>
+            <span className="review-count">({product.reviews || 95})</span>
+          </div>
+          
+          <h3 className="product-card-title">
+            {product.name}
+          </h3>
 
-        <div className="product-card-price-row">
-          <span className="current-price">₹{product.price}</span>
-          <span className="original-price">₹{product.originalPrice}</span>
-          <span className="discount-percent">({discountPercent}% OFF)</span>
-        </div>
+          <div className="product-card-price-row">
+            <span className="current-price">₹{product.price}</span>
+            <span className="original-price">₹{product.originalPrice}</span>
+            <span className="discount-percent">({discountPercent}% OFF)</span>
+          </div>
+        </Link>
 
         <div className="product-card-actions" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <select 
             id={`size-${product.id}`} 
             className="filter-select" 
-            style={{ width: '100%', padding: '0.3rem' }}
+            style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.82rem', background: '#fff' }}
             value={selectedSize}
-            onChange={(e) => setSelectedSize(parseInt(e.target.value))}
+            onChange={(e) => {
+              e.stopPropagation();
+              setSelectedSize(parseInt(e.target.value));
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {product.sizes.map((sz) => (
-              <option key={sz} value={sz}>Size {sz}</option>
+            {(product.sizes || [6, 7, 8, 9, 10]).map((sz) => (
+              <option key={sz} value={sz}>Size UK {sz}</option>
             ))}
           </select>
           <button 
+            type="button"
             className="btn btn-primary btn-sm" 
-            onClick={() => addToCart(product, `UK ${selectedSize}`)}
-            style={{ width: '100%' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart(product, `UK ${selectedSize}`);
+            }}
+            style={{ width: '100%', padding: '0.55rem', fontWeight: 600, fontSize: '0.85rem' }}
           >
             Add to Cart
           </button>

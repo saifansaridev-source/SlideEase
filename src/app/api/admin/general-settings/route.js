@@ -1,14 +1,14 @@
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 const DEFAULTS = {
   storeName: 'SlideEase',
   storeTagline: 'Walk in Comfort. Stand in Style.',
-  supportEmail: 'support@your-domain.com',
-  supportPhone: '+91 98765 43210',
-  whatsappNumber: '919876543210',
-  address: '',
-  gstNumber: '',
+  supportEmail: 'support@slideease.in',
+  supportPhone: '+91 98200 12345',
+  whatsappNumber: '919820012345',
+  address: 'SlideEase Footwear Studio, Mumbai, Maharashtra 400001',
+  gstNumber: '27AABCS1234F1Z5',
   maintenanceMode: false,
   loyaltyPointsEnabled: true,
   loyaltyPointsPerRupee: 1,        // pts earned per ₹ spent
@@ -16,13 +16,12 @@ const DEFAULTS = {
   reviewModerationEnabled: false,
   maxCartItems: 10,
   defaultCurrency: 'INR',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://slideease.in',
 };
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     const doc = await db.collection('settings').findOne({ key: 'general' });
 
@@ -47,8 +46,7 @@ export async function POST(request) {
       if (body[k] !== undefined) update[k] = body[k];
     }
 
-    const client = await clientPromise;
-    const db = client.db('startupbiz');
+    const db = await getDb();
 
     await db.collection('settings').updateOne(
       { key: 'general' },

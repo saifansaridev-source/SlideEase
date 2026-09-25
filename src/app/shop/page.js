@@ -93,8 +93,17 @@ function ShopContent() {
               return pMat.includes(targetMat) || targetMat.includes(pMat);
             });
           }
-          if (stock === 'in-stock')  data = data.filter(p => (p.stock || 99) > 5);
-          if (stock === 'low-stock') data = data.filter(p => (p.stock || 99) > 0 && (p.stock || 99) <= 5);
+          const getStockCount = (p) => {
+            if (typeof p.stockQty === 'number') return p.stockQty;
+            if (typeof p.stock === 'number') return p.stock;
+            if (p.sizeStock && typeof p.sizeStock === 'object') {
+              return Object.values(p.sizeStock).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
+            }
+            return 50;
+          };
+          if (stock === 'in-stock')  data = data.filter(p => getStockCount(p) > 5);
+          if (stock === 'low-stock') data = data.filter(p => { const s = getStockCount(p); return s > 0 && s <= 5; });
+          if (stock === 'out-of-stock') data = data.filter(p => getStockCount(p) === 0);
           setProducts(data);
           setIsFallback(!!json.isFallback);
         }
@@ -270,22 +279,56 @@ function ShopContent() {
       )}
 
       {/* ── STYLE LOOKBOOK ──────────────────────────────────────────────── */}
-      <section className="materials-section section-padding" id="shop-style-guide-section">
+      <section className="materials-section section-padding" id="shop-style-guide-section" style={{ backgroundColor: '#faf8f5', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="container">
-          <h2 className="section-title">How To Style SlideEase</h2>
-          <p className="section-subtitle">Our footwear is versatile, matching ethnic, formal, and casual styles alike.</p>
-          <div className="materials-grid">
-            {[
-              { icon: '👔', title: 'Ethno-Formal Look',   desc: 'Pair our Maharaja Velvet Loafers or Royal Mandala slides with Nehru jackets, linen shirts, or premium cotton kurtas for wedding receptions or festivals.' },
-              { icon: '👖', title: 'Smart-Casual Appeal', desc: 'Slip on the Peacock Ikat Loafers or Classic Tan Vegan slides with rolled-up chinos, polo shirts, or denim jeans for weekend get-togethers.' },
-              { icon: '👗', title: 'Boho-Chic Elegance',  desc: 'Match our Jaipur Floral Mojris or Kashmiri Aari Slides with flowy maxi dresses, long skirts, or indigo-dyed kurtis for an artistic, daily look.' },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} className="material-card">
-                <div className="material-icon-wrapper">{icon}</div>
-                <h3 className="material-h3">{title}</h3>
-                <p className="material-desc">{desc}</p>
+          <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 2.5rem auto' }}>
+            <span className="craft-eyebrow">✦ Sartorial Synergy</span>
+            <h2 className="section-title">How To Style SlideEase</h2>
+            <p className="section-subtitle">Our handcrafted footwear is versatile, effortlessly accentuating ethnic, formal, and smart-casual silhouettes alike.</p>
+          </div>
+          
+          <div className="materials-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+            {/* Card 1: Ethno-Formal */}
+            <div className="material-card" style={{ background: '#ffffff', border: '1px solid rgba(201, 169, 97, 0.3)', borderRadius: 'var(--radius-md)', padding: '2rem' }}>
+              <div className="material-icon-wrapper" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(26, 35, 50, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2 8 8h8l-4-6Z"/>
+                  <path d="M8 8v14h8V8"/>
+                  <path d="M4 10h16"/>
+                </svg>
               </div>
-            ))}
+              <h3 className="material-h3" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>Ethno-Formal Elegance</h3>
+              <p className="material-desc" style={{ lineHeight: 1.6, fontSize: '0.88rem' }}>
+                Pair our Maharaja Velvet Loafers or Royal Mandala slides with Nehru jackets, raw silk bandhgalas, or handloom cotton kurtas for celebrations and black-tie evenings.
+              </p>
+            </div>
+
+            {/* Card 2: Smart-Casual */}
+            <div className="material-card" style={{ background: '#ffffff', border: '1px solid rgba(201, 169, 97, 0.3)', borderRadius: 'var(--radius-md)', padding: '2rem' }}>
+              <div className="material-icon-wrapper" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(26, 35, 50, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              </div>
+              <h3 className="material-h3" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>Smart-Casual Appeal</h3>
+              <p className="material-desc" style={{ lineHeight: 1.6, fontSize: '0.88rem' }}>
+                Slip on the Peacock Ikat Loafers or Classic Tan Vegan slides with tapered chinos, polo shirts, or selvedge denim for relaxed boardrooms and weekend retreats.
+              </p>
+            </div>
+
+            {/* Card 3: Bohemian */}
+            <div className="material-card" style={{ background: '#ffffff', border: '1px solid rgba(201, 169, 97, 0.3)', borderRadius: 'var(--radius-md)', padding: '2rem' }}>
+              <div className="material-icon-wrapper" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(26, 35, 50, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem auto' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </div>
+              <h3 className="material-h3" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>Contemporary Bohemian</h3>
+              <p className="material-desc" style={{ lineHeight: 1.6, fontSize: '0.88rem' }}>
+                Match Jaipur Floral Mojris or Kashmiri Aari Slides with breathable maxi dresses, organic linen skirts, or indigo-dyed kurtis for an effortless artistic silhouette.
+              </p>
+            </div>
           </div>
         </div>
       </section>
