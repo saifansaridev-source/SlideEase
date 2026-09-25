@@ -144,6 +144,11 @@ export default function AdminSidebarClient({ children }) {
             <span>CMS Pages</span>
           </Link>
 
+          <Link href="/admin/blog" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/blog') ? 'active' : ''}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M8 7h8"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg>
+            <span>Blog Management</span>
+          </Link>
+
           <Link href="/admin/popups" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/popups') ? 'active' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="13" y2="13"></line><line x1="9" y1="17" x2="11" y2="17"></line></svg>
             <span>Promotional Popups</span>

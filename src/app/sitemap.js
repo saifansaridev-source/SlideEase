@@ -1,4 +1,6 @@
 import { PRODUCTS } from '@/data/products';
+import { getDb } from '@/lib/mongodb';
+import { DEFAULT_BLOGS } from '@/lib/blog-defaults';
 
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
@@ -10,6 +12,35 @@ export default async function sitemap() {
     changeFrequency: 'weekly',
     priority: 0.8,
   }));
+
+  // Dynamic blog articles URLs
+  let blogUrls = [];
+  try {
+    const db = await getDb();
+    const publishedBlogs = await db.collection('blogs').find({ status: 'published' }).toArray();
+    if (publishedBlogs.length > 0) {
+      blogUrls = publishedBlogs.map((b) => ({
+        url: `${baseUrl}/blog/${b.slug}`,
+        lastModified: new Date(b.updatedAt || b.createdAt || Date.now()),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      }));
+    } else {
+      blogUrls = DEFAULT_BLOGS.map((b) => ({
+        url: `${baseUrl}/blog/${b.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      }));
+    }
+  } catch (err) {
+    blogUrls = DEFAULT_BLOGS.map((b) => ({
+      url: `${baseUrl}/blog/${b.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+  }
 
   // Standard static page URL targets
   const staticUrls = [
@@ -26,5 +57,5 @@ export default async function sitemap() {
     { url: `${baseUrl}/cookie`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  return [...staticUrls, ...productUrls];
+  return [...staticUrls, ...productUrls, ...blogUrls];
 }

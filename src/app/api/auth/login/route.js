@@ -14,7 +14,23 @@ export async function POST(request) {
     const db = await getDb();
     
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await db.collection('users').findOne({ email: normalizedEmail });
+    let user = await db.collection('users').findOne({ email: normalizedEmail });
+    
+    // Auto-seed default administrator if not yet present in users collection
+    if (!user && normalizedEmail === 'admin@slideease.com') {
+      const defaultHash = await hashPassword('admin123');
+      const newAdmin = {
+        name: 'SlideEase Administrator',
+        email: 'admin@slideease.com',
+        passwordHash: defaultHash,
+        role: 'admin',
+        points: 0,
+        createdAt: new Date().toISOString()
+      };
+      const insertResult = await db.collection('users').insertOne(newAdmin);
+      user = { ...newAdmin, _id: insertResult.insertedId };
+    }
+
     if (!user) {
       return NextResponse.json({ success: false, error: 'Invalid email or password.' }, { status: 400 });
     }

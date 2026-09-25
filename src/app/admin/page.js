@@ -307,6 +307,9 @@ export default function AdminDashboard() {
             <button onClick={handleExportOrders} className="quick-action-btn" style={{ background: 'none', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)', padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
               <span style={{ fontSize: '1.4rem' }}>📥</span> Export Orders
             </button>
+            <Link href="/admin/blog" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
+              <span style={{ fontSize: '1.4rem' }}>📖</span> Manage Blog
+            </Link>
             <Link href="/admin/shipping-tax" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
               <span style={{ fontSize: '1.4rem' }}>⚙️</span> Shipping & Tax
             </Link>

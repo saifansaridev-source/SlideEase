@@ -1,44 +1,43 @@
 import React from 'react';
 import Link from 'next/link';
+import { getDb } from '@/lib/mongodb';
+import { DEFAULT_BLOGS } from '@/lib/blog-defaults';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'Blog & Fashion Guides | SlideEase Footwear',
   description: 'Read SlideEase Footwear blog. Get expert tips on vegan footwear care, latest summer styles, ethical fashion guides, and traditional heritage styling.',
 };
 
-export default function BlogPage() {
-  const blogPosts = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
-      category: 'Footwear Care',
-      date: 'July 5, 2026 • 5 min read',
-      title: 'How to Care for Vegan Leather Shoes',
-      desc: 'Unlike animal hide, high-grade synthetic vegan leather requires specific cleaning methods. Learn how to maintain the shine, prevent creases, and clean stains without damaging the texture.'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&auto=format&fit=crop&q=80',
-      category: 'Latest Trends',
-      date: 'June 28, 2026 • 4 min read',
-      title: 'Top Footwear Trends for the Festive Season',
-      desc: 'Traditional Indian weaves are making a huge comeback this season. Discover how to pair mirror-work juttis and velvet loafers with contemporary ethnic and fusion wear.'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80',
-      category: 'Buying Guides',
-      date: 'June 15, 2026 • 6 min read',
-      title: 'Finding Your Perfect Cushion: Memory Foam vs Cork',
-      desc: 'Confused between contoured cork soles and double-padded memory foam insoles? Our detailed ergonomic guide explains which base matches your walking posture and arches.'
+async function getPublishedBlogs() {
+  try {
+    const db = await getDb();
+    const count = await db.collection('blogs').countDocuments();
+    if (count === 0) {
+      await db.collection('blogs').insertMany(DEFAULT_BLOGS);
     }
-  ];
+    const docs = await db.collection('blogs')
+      .find({ status: 'published' })
+      .sort({ createdAt: -1 })
+      .toArray();
+    if (docs && docs.length > 0) return docs;
+  } catch (err) {
+    console.warn('Could not fetch blogs from DB, using fallback:', err.message);
+  }
+  return DEFAULT_BLOGS.filter(b => b.status === 'published');
+}
+
+export default async function BlogPage() {
+  const blogs = await getPublishedBlogs();
 
   return (
     <>
+      <Header />
+
       <style dangerouslySetInnerHTML={{ __html: `
         .blog-hero {
-          background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1600&auto=format&fit=crop&q=80') center center;
+          background: linear-gradient(rgba(11, 72, 93, 0.75), rgba(7, 48, 62, 0.9)), url('https://images.unsplash.com/photo-1549298916-b41d501d3772?w=1600&auto=format&fit=crop&q=80') center center;
           background-size: cover;
           color: var(--bg-white);
           text-align: center;
@@ -47,7 +46,7 @@ export default function BlogPage() {
         }
         .blog-hero h1 {
           font-family: var(--font-heading);
-          font-size: 3rem;
+          font-size: clamp(2.2rem, 5vw, 3.2rem);
           font-weight: 800;
           margin-bottom: 1rem;
           letter-spacing: 0.05em;
@@ -55,45 +54,48 @@ export default function BlogPage() {
         .blog-hero p {
           font-size: 1.1rem;
           color: rgba(253, 251, 247, 0.9);
-          max-width: 600px;
+          max-width: 620px;
           margin: 0 auto;
+          line-height: 1.6;
         }
         .blog-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 2.5rem;
-          margin-top: 4rem;
-          margin-bottom: 4rem;
+          margin-top: 3.5rem;
+          margin-bottom: 5rem;
         }
-        @media screen and (max-width: 1024px) {
+        @media (max-width: 1024px) {
           .blog-grid {
             grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
           }
         }
-        @media screen and (max-width: 640px) {
+        @media (max-width: 680px) {
           .blog-grid {
             grid-template-columns: 1fr;
+            gap: 2rem;
           }
         }
         .blog-card {
-          background-color: var(--bg-white);
-          border: 1px solid var(--border-color);
+          background: var(--bg-white);
           border-radius: var(--radius-md);
           overflow: hidden;
-          box-shadow: var(--shadow-sm);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
           display: flex;
           flex-direction: column;
-          height: 100%;
-          transition: var(--transition-smooth);
+          border: 1px solid var(--border-color);
         }
         .blog-card:hover {
-          transform: translateY(-5px);
-          box-shadow: var(--shadow-md);
+          transform: translateY(-6px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.12);
         }
         .blog-card-img-wrapper {
           position: relative;
-          aspect-ratio: 1.6;
+          height: 240px;
           overflow: hidden;
+          background-color: #f1ede4;
         }
         .blog-card-img-wrapper img {
           width: 100%;
@@ -108,81 +110,116 @@ export default function BlogPage() {
           position: absolute;
           top: 1rem;
           left: 1rem;
-          background-color: var(--accent-color);
+          background: var(--primary-color);
           color: var(--bg-white);
-          padding: 0.3rem 0.8rem;
-          border-radius: 4px;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
+          padding: 0.35rem 0.85rem;
+          border-radius: 50px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .blog-card-content {
-          padding: 1.5rem;
+          padding: 1.8rem;
           display: flex;
           flex-direction: column;
-          flex: 1;
+          flex-grow: 1;
         }
         .blog-date {
-          font-size: 0.75rem;
+          font-size: 0.82rem;
           color: var(--text-muted);
           margin-bottom: 0.6rem;
         }
         .blog-card-title {
           font-family: var(--font-heading);
-          font-size: 1.25rem;
-          font-weight: 700;
+          font-size: 1.3rem;
           color: var(--primary-color);
-          margin-bottom: 0.8rem;
-          line-height: 1.4;
+          margin-bottom: 0.85rem;
+          line-height: 1.35;
+          font-weight: 700;
         }
         .blog-card-desc {
-          font-size: 0.88rem;
-          color: var(--text-dark);
+          font-size: 0.92rem;
+          color: var(--text-muted);
           line-height: 1.6;
-          margin-bottom: 1.2rem;
-          flex: 1;
+          margin-bottom: 1.5rem;
+          flex-grow: 1;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
         .blog-read-more {
-          font-size: 0.85rem;
-          font-weight: 700;
           color: var(--accent-color);
-          text-decoration: none;
+          font-weight: 700;
+          font-size: 0.9rem;
           display: inline-flex;
           align-items: center;
-          gap: 0.3rem;
-          transition: var(--transition-smooth);
+          gap: 0.4rem;
+          text-decoration: none;
+          transition: gap 0.2s ease;
         }
         .blog-read-more:hover {
-          color: var(--primary-color);
+          gap: 0.7rem;
         }
-      ` }} />
+      `}} />
 
       {/* Blog Hero Banner */}
       <section className="blog-hero">
-        <h1>The SlideEase Journal</h1>
-        <p>Your ultimate destination for premium footwear trends, sustainable fashion insights, and expert leather & fabric care guides.</p>
+        <div className="container">
+          <span style={{ fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--accent-color)', fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>
+            ✦ The SlideEase Journal
+          </span>
+          <h1>Fashion, Heritage &amp; Footwear Care</h1>
+          <p>
+            Explore artisan styling tips, sustainable material deep-dives, ergonomic buying guides, and behind-the-scenes stories from our workshop.
+          </p>
+        </div>
       </section>
 
       {/* Blog Main Section */}
-      <main className="container section-padding">
-        <div className="blog-grid">
-          {blogPosts.map((post) => (
-            <article key={post.id} className="blog-card">
-              <div className="blog-card-img-wrapper">
-                <img src={post.image} alt={post.title} />
-                <span className="blog-category">{post.category}</span>
-              </div>
-              <div className="blog-card-content">
-                <span className="blog-date">{post.date}</span>
-                <h2 className="blog-card-title">{post.title}</h2>
-                <p className="blog-card-desc">{post.desc}</p>
-                <Link href="/blog" className="blog-read-more">Read Full Guide →</Link>
-              </div>
-            </article>
-          ))}
-        </div>
+      <main className="container" style={{ padding: '0 1.5rem' }}>
+        {blogs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '5rem 1rem', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📖</div>
+            <h3 style={{ fontFamily: 'var(--font-heading)', color: 'var(--primary-color)' }}>No Articles Published Yet</h3>
+            <p>Our editorial team is busy crafting new footwear stories and guides. Check back soon!</p>
+          </div>
+        ) : (
+          <div className="blog-grid">
+            {blogs.map((post) => {
+              const formattedDate = post.createdAt 
+                ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'Recent';
+
+              return (
+                <article key={post.slug || post.id} className="blog-card">
+                  <Link href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="blog-card-img-wrapper">
+                      <img src={post.coverImage || post.image || '/og_image.png'} alt={post.title} />
+                      <span className="blog-category">{post.category || 'Footwear'}</span>
+                    </div>
+                  </Link>
+
+                  <div className="blog-card-content">
+                    <span className="blog-date">{formattedDate} • {post.readTime || '5 min read'}</span>
+                    <Link href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <h2 className="blog-card-title">{post.title}</h2>
+                    </Link>
+                    <p className="blog-card-desc">{post.excerpt || post.desc || ''}</p>
+                    <Link href={`/blog/${post.slug}`} className="blog-read-more">
+                      Read Full Guide →
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </main>
+
+      <Footer />
     </>
   );
 }
