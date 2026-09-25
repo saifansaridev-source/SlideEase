@@ -107,7 +107,7 @@ export default function AdminShippingTax() {
             </div>
           ))}
 
-          <div style={{ marginTop: '1.25rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <div className="admin-form-row-2" style={{ marginTop: '1.25rem' }}>
             {SHIPPING_FIELDS.map(({ label, key, type, help }) => (
               <div key={key} className="form-group">
                 <label className="form-label">{label}</label>
@@ -140,7 +140,7 @@ export default function AdminShippingTax() {
             <label htmlFor="toggle-taxIncludedInPrice">Product prices already include GST (tax-inclusive pricing)</label>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem' }}>
+          <div className="admin-form-row-3">
             {TAX_FIELDS.map(({ label, key, type, help }) => (
               <div key={key} className="form-group">
                 <label className="form-label">{label}</label>

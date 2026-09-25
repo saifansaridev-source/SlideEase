@@ -304,7 +304,7 @@ export default function AdminInventory() {
 
               <form onSubmit={handleSaveModalInventory} className="contact-form" style={{ gap: '1.2rem', padding: 0 }}>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="admin-form-row-2">
                   <div className="form-group">
                     <label className="form-label">SKU (Stock Keeping Unit)</label>
                     <input
@@ -343,7 +343,7 @@ export default function AdminInventory() {
 
                 {manageStock && (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">Stock Quantity</label>
                         <input

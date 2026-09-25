@@ -104,7 +104,7 @@ export default function AdminGeneralSettings() {
               {section.label}
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+            <div className="admin-form-row-2">
               {section.fields.map(({ key, label, type, help }) => {
                 if (type === 'toggle') {
                   return (

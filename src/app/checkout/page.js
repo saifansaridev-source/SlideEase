@@ -310,17 +310,17 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: '2.5rem', alignItems: 'start' }}>
+        <div className="checkout-layout-grid">
 
           {/* LEFT: Delivery & Payment Details Form */}
           <form onSubmit={handleProcessOrder} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
             {/* 1. Contact Information */}
-            <div style={{ backgroundColor: 'var(--bg-white)', padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span>1.</span> Contact Information
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="checkout-form-row-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--primary-color)' }}>
                     Email Address *
@@ -351,12 +351,12 @@ export default function CheckoutPage() {
             </div>
 
             {/* 2. Shipping Address */}
-            <div style={{ backgroundColor: 'var(--bg-white)', padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span>2.</span> Delivery Address
               </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="checkout-form-row-2" style={{ marginBottom: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--primary-color)' }}>First Name *</label>
                   <input
@@ -393,7 +393,7 @@ export default function CheckoutPage() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <div className="checkout-form-row-3">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.4rem', color: 'var(--primary-color)' }}>City *</label>
                   <input
@@ -440,7 +440,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* 3. Shipping Method Selection */}
-            <div style={{ backgroundColor: 'var(--bg-white)', padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span>3.</span> Shipping Option
               </h2>
@@ -501,7 +501,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* 4. Payment Selection */}
-            <div style={{ backgroundColor: 'var(--bg-white)', padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <span>4.</span> Payment Gateway
               </h2>
@@ -601,7 +601,7 @@ export default function CheckoutPage() {
           </form>
 
           {/* RIGHT: Order Summary Card */}
-          <div style={{ backgroundColor: 'var(--bg-white)', padding: '2rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', position: 'sticky', top: '2rem' }}>
+          <div className="checkout-card checkout-summary-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.8rem', marginBottom: '1.2rem' }}>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', margin: 0, color: 'var(--primary-color)' }}>
                 Order Summary

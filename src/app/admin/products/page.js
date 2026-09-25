@@ -467,10 +467,10 @@ export default function AdminProducts() {
           <form onSubmit={handleFormSubmit}>
             
             {/* Horizontal Metatab Selector inside Form wrapper */}
-            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '2.5rem', padding: '2rem', minHeight: '450px' }}>
+            <div className="admin-modal-split">
               
               {/* Left Pane Options List */}
-              <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #e2e8f0', paddingRight: '1.5rem', gap: '0.4rem' }}>
+              <div className="admin-modal-tabs">
                 <button
                   type="button"
                   style={{
@@ -563,7 +563,7 @@ export default function AdminProducts() {
                       />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">Category</label>
                         <select className="filter-select" value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -582,7 +582,7 @@ export default function AdminProducts() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">Sale Price (₹)</label>
                         <input 
@@ -640,7 +640,7 @@ export default function AdminProducts() {
                 {/* 2. INVENTORY TAB */}
                 {formTab === 'inventory' && (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">SKU (Stock Keeping Unit)</label>
                         <input 
@@ -675,7 +675,7 @@ export default function AdminProducts() {
 
                     {manageStock && (
                       <>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        <div className="admin-form-row-2">
                           <div className="form-group">
                             <label className="form-label">Stock Quantity</label>
                             <input 
@@ -880,7 +880,7 @@ export default function AdminProducts() {
                 {/* 4. ATTRIBUTES TAB */}
                 {formTab === 'attributes' && (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">Primary Filter Color</label>
                         <input 
@@ -930,7 +930,7 @@ export default function AdminProducts() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+                    <div className="admin-form-row-2" style={{ marginTop: '1rem' }}>
                       <div className="form-group">
                         <label className="form-label">Available Sizes (Comma-separated)</label>
                         <input 
@@ -954,7 +954,7 @@ export default function AdminProducts() {
                     </div>
 
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-form-row-2">
                       <div className="form-group">
                         <label className="form-label">Embroidery Motif Color</label>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

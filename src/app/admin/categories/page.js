@@ -131,7 +131,7 @@ export default function AdminCategories() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '3rem' }}>
+    <div className="admin-split-layout">
       
       {/* Category Add Form */}
       <div className="admin-card">

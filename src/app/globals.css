@@ -5760,3 +5760,67 @@ textarea:focus-visible {
     width: 290px;
   }
 }
+
+/* ============================================================
+   CHECKOUT RESPONSIVE LAYOUT SYSTEM
+   ============================================================ */
+.checkout-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.checkout-card {
+  background-color: var(--bg-white);
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.checkout-summary-card {
+  position: sticky;
+  top: 2rem;
+}
+
+.checkout-form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.checkout-form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media screen and (max-width: 1024px) {
+  .checkout-layout-grid {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 1.75rem;
+  }
+}
+
+@media screen and (max-width: 860px) {
+  .checkout-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .checkout-summary-card {
+    position: static !important;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .checkout-card {
+    padding: 1.25rem 1rem !important;
+  }
+  .checkout-form-row-2,
+  .checkout-form-row-3 {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+}

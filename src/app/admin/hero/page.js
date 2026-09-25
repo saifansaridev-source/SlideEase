@@ -84,7 +84,7 @@ function SlideContentEditor({ slide, index, onChange }) {
         </div>
 
         {/* Tagline + Heading */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="admin-form-row-2">
           <div>
             <FieldLabel htmlFor={`slide-${index}-tagline`}>Tagline / Eyebrow</FieldLabel>
             <TextField id={`slide-${index}-tagline`} value={slide.tagline} onChange={v => update('tagline', v)} placeholder="e.g. ✦ Ascend with Heritage" />
@@ -131,7 +131,7 @@ function SlideContentEditor({ slide, index, onChange }) {
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Primary CTA Button</span>
             <Toggle id={`slide-${index}-showcta`} checked={slide.showCta !== false} onChange={v => update('showCta', v)} label="Show" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="admin-form-row-2">
             <div>
               <FieldLabel htmlFor={`slide-${index}-ctatext`}>Button Text</FieldLabel>
               <TextField id={`slide-${index}-ctatext`} value={slide.ctaText} onChange={v => update('ctaText', v)} placeholder="e.g. Explore the Collection" />
@@ -149,7 +149,7 @@ function SlideContentEditor({ slide, index, onChange }) {
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Secondary CTA Button</span>
             <Toggle id={`slide-${index}-showseccta`} checked={slide.showSecondaryCta !== false} onChange={v => update('showSecondaryCta', v)} label="Show" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="admin-form-row-2">
             <div>
               <FieldLabel htmlFor={`slide-${index}-secctatext`}>Button Text</FieldLabel>
               <TextField id={`slide-${index}-secctatext`} value={slide.secondaryCtaText} onChange={v => update('secondaryCtaText', v)} placeholder="e.g. See the Craft" />

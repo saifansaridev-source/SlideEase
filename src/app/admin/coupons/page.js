@@ -114,7 +114,7 @@ export default function AdminCoupons() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '3rem' }}>
+    <div className="admin-split-layout">
       
       {/* Coupon Add Form */}
       <div className="admin-card">

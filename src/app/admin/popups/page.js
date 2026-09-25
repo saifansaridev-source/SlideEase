@@ -153,10 +153,10 @@ function PopupEditor({ popup, onChange, onDelete }) {
         <div style={{ padding: '1.4rem', background: '#fff', display: 'grid', gap: '1.2rem' }}>
 
           {/* Live Preview */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div className="admin-split-layout">
             <div style={{ display: 'grid', gap: '1rem' }}>
               {/* Basic Content */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="admin-form-row-2">
                 <div>
                   <FieldLabel htmlFor={`${popup.id}-type`}>Popup Type</FieldLabel>
                   <Sel id={`${popup.id}-type`} value={popup.type} onChange={v => update('type', v)} options={[
@@ -191,7 +191,7 @@ function PopupEditor({ popup, onChange, onDelete }) {
               </div>
 
               {/* CTA */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="admin-form-row-2">
                 <div>
                   <FieldLabel htmlFor={`${popup.id}-ctatext`}>CTA Button Text</FieldLabel>
                   <Inp id={`${popup.id}-ctatext`} value={popup.ctaText} onChange={v => update('ctaText', v)} placeholder="e.g. Shop Now" />
@@ -224,7 +224,7 @@ function PopupEditor({ popup, onChange, onDelete }) {
               </div>
 
               {/* Color Pickers */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.6rem' }}>
+              <div className="admin-form-row-3">
                 {[
                   { label: 'Background', field: 'bgColor' },
                   { label: 'Accent', field: 'accentColor' },

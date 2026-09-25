@@ -117,7 +117,7 @@ export default function AdminCMS() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="admin-split-layout">
 
         {/* Page List */}
         <div className="admin-card" style={{ padding: '1rem' }}>
@@ -178,7 +178,7 @@ export default function AdminCMS() {
             {err && <div style={{ padding: '0.7rem 1rem', background: '#fee2e2', color: '#991b1b', borderRadius: '6px', marginBottom: '1rem', fontWeight: 600, fontSize: '0.85rem' }}>⚠ {err}</div>}
 
             <form onSubmit={handleSave}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+              <div className="admin-form-row-2" style={{ marginBottom: '1.25rem' }}>
                 <div className="form-group">
                   <label className="form-label">Page Title</label>
                   <input

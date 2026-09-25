@@ -291,7 +291,7 @@ export default function AdminDashboard() {
           <div className="admin-card-header">
             <h3>⚡ Quick Actions</h3>
           </div>
-          <div className="quick-actions-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+          <div className="quick-actions-grid" style={{ marginTop: '1rem' }}>
             <Link href="/admin/products" className="quick-action-btn" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--primary-color)' }}>
               <span style={{ fontSize: '1.4rem' }}>➕</span> Add Footwear
             </Link>
