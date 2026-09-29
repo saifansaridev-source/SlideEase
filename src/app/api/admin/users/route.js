@@ -1,11 +1,22 @@
 import { getDb } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
 import { MOCK_USERS, isConnectionError } from '@/lib/dbFallback';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 // GET: Retrieve all user accounts (excluding sensitive password hashes)
 export async function GET() {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const db = await getDb();
     
     const users = await db.collection('users')
@@ -26,6 +37,7 @@ export async function GET() {
 // PUT: Modify customer user role (admin vs customer)
 export async function PUT(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { id, role } = await request.json();
     
     if (!id || !role) {
@@ -58,6 +70,7 @@ export async function PUT(request) {
 // DELETE: Terminate customer user account
 export async function DELETE(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     

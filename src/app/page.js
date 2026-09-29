@@ -6,13 +6,11 @@ import HeroCarousel from '@/components/HeroCarousel';
 import NewArrivalsSlider from '@/components/NewArrivalsSlider';
 import ProductCard from '@/components/ProductCard';
 import Turntable360 from '@/components/Turntable360';
-import StyleQuizModal from '@/components/StyleQuizModal';
 import { PRODUCTS } from '@/data/products';
 import { DEFAULT_SECTION_IMAGES } from '@/lib/cms-defaults';
 
 export default function Home() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [catalogProducts, setCatalogProducts] = useState(PRODUCTS);
   const [cmsImages, setCmsImages] = useState(DEFAULT_SECTION_IMAGES);
 
@@ -434,84 +432,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 11: STYLE QUIZ TEASER */}
-      <section className="quiz-teaser-section" id="style-quiz-teaser">
-        <div className="container">
-          <div className="quiz-teaser-content">
-            <div className="quiz-teaser-text">
-              <span className="craft-eyebrow">✦ Find Your Footing</span>
-              <h3>Not Sure Which Silhouette Fits Your Life?</h3>
-              <p>Answer 3 quick questions about your occasion, preferred silhouette, and comfort needs. Our styling concierge will match you with your ideal handcrafted pair.</p>
-            </div>
-            <div>
-              <button className="btn btn-accent" onClick={() => setIsQuizOpen(true)} style={{ padding: '14px 32px', fontSize: '1rem' }}>
-                Take the 60-Second Style Quiz →
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* SECTION 12: SLIDEEASE CIRCLE LOYALTY */}
-      <section className="slidex-circle-section" id="slideease-circle">
-        <div className="container">
-          <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto' }}>
-            <span className="craft-eyebrow">✦ The Circle of Craft</span>
-            <h2 className="section-title">Join the SlideEase Circle</h2>
-            <p className="section-subtitle">A loyalty collective celebrating return patronage, artisan appreciation, and conscious living. Earn points on every handcrafted step.</p>
-          </div>
-
-          <div className="circle-tiers-grid">
-            {/* Tier 1 */}
-            <div className="tier-card">
-              <span className="tier-badge">Entry Tier</span>
-              <h3 className="tier-name">Artisan Apprentice</h3>
-              <p className="tier-points">0 – 499 Circle Points</p>
-              <ul className="tier-perks-list">
-                <li>5 Circle Points for every ₹100 spent</li>
-                <li>Early preview of seasonal collections</li>
-                <li>Complimentary Pan-India express delivery</li>
-                <li>Digital shoe care & artisan guide</li>
-              </ul>
-              <Link href="/login" className="btn btn-outline" style={{ width: '100%', textAlign: 'center' }}>
-                Join Free Today
-              </Link>
-            </div>
-
-            {/* Tier 2 (Featured) */}
-            <div className="tier-card featured">
-              <span className="tier-badge" style={{ background: 'var(--accent-color)', color: '#1a2332' }}>Most Popular</span>
-              <h3 className="tier-name">Craft Connoisseur</h3>
-              <p className="tier-points">500 – 1,499 Circle Points</p>
-              <ul className="tier-perks-list">
-                <li>8 Circle Points for every ₹100 spent</li>
-                <li>24-Hour early access to limited artisan drops</li>
-                <li>Annual birthday gift & double points day</li>
-                <li>Free monogrammed linen dust bag with every order</li>
-              </ul>
-              <Link href="/shop" className="btn btn-accent" style={{ width: '100%', textAlign: 'center' }}>
-                Explore & Earn Points
-              </Link>
-            </div>
-
-            {/* Tier 3 */}
-            <div className="tier-card">
-              <span className="tier-badge">Private Guild</span>
-              <h3 className="tier-name">Master Guild VIP</h3>
-              <p className="tier-points">1,500+ Circle Points</p>
-              <ul className="tier-perks-list">
-                <li>12 Circle Points for every ₹100 spent</li>
-                <li>Custom bespoke sizing consultations</li>
-                <li>Lifetime complimentary sole repair service</li>
-                <li>Invitation to annual artisan guild workshops</li>
-              </ul>
-              <Link href="/contact" className="btn btn-outline" style={{ width: '100%', textAlign: 'center' }}>
-                Guild Inquiries
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* SECTION 13: CUSTOMER TESTIMONIALS */}
       <section className="testimonials-section section-padding" id="customer-reviews-section">
@@ -641,8 +562,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Global Style Quiz Modal */}
-      <StyleQuizModal isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
     </>
   );
 }

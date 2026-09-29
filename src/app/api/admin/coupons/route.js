@@ -1,6 +1,16 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
 import { MOCK_COUPONS, isConnectionError } from '@/lib/dbFallback';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 const DEFAULT_COUPONS = [
   { code: 'SLIDEEASE10', discount: 0.10, minOrder: 0, active: true },
@@ -10,6 +20,7 @@ const DEFAULT_COUPONS = [
 // GET: Retrieve all coupons, seeding defaults if empty
 export async function GET() {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const db = await getDb();
     
     const count = await db.collection('coupons').countDocuments();
@@ -31,6 +42,7 @@ export async function GET() {
 // POST: Add a new coupon
 export async function POST(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { code, discount, minOrder, active } = await request.json();
     
     if (!code || discount === undefined) {
@@ -71,6 +83,7 @@ export async function POST(request) {
 // PUT: Toggle active status
 export async function PUT(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { code, active } = await request.json();
     
     if (!code) {
@@ -103,6 +116,7 @@ export async function PUT(request) {
 // DELETE: Remove a coupon
 export async function DELETE(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     

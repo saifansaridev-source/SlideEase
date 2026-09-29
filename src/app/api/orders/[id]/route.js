@@ -1,87 +1,88 @@
-import { getDb } from '@/lib/mongodb';
-import { NextResponse } from 'next/server';
-import { ObjectId } from 'mongodb';
-import { cookies } from 'next/headers';
-import { verifySession } from '@/lib/auth';
+import { getDb } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifySession } from "@/lib/auth";
+import { ObjectId } from "mongodb";
+
+async function getSession() {
+  try {
+    const cookieStore = await cookies();
+    const sc = cookieStore.get("slidex_session");
+    if (!sc) return null;
+    return verifySession(sc.value) || null;
+  } catch { return null; }
+}
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    if (!id) {
-      return NextResponse.json({ success: false, error: 'Order ID is required.' }, { status: 400 });
-    }
-
+    if (!id) return NextResponse.json({ success: false, error: "Order ID required" }, { status: 400 });
+    const session = await getSession();
     const db = await getDb();
 
-    let query = {};
-    if (ObjectId.isValid(id)) {
-      query = { $or: [{ _id: new ObjectId(id) }, { orderNumber: id }, { orderId: id }] };
-    } else {
-      query = { $or: [{ orderNumber: id }, { orderId: id }] };
+    const isOid = ObjectId.isValid(id) && String(new ObjectId(id)) === id;
+    const filter = isOid ? { _id: new ObjectId(id) } : { orderNumber: id };
+    const order = await db.collection("orders").findOne(filter);
+    if (!order) return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+
+    const customerEmail = (order.customer?.email || "").toLowerCase().trim();
+    const customerPhone = (order.customer?.phone || "").replace(/\D/g, "");
+
+    // 1. Admin has full access
+    if (session?.role === "admin") {
+      return NextResponse.json({ success: true, order: { ...order, _id: order._id.toString() } });
     }
 
-    const order = await db.collection('orders').findOne(query);
-
-    if (!order) {
-      return NextResponse.json({ success: false, error: 'Order not found.' }, { status: 404 });
-    }
-
-    // Ownership / Authorization verification
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('slidex_session');
-    let isAuthorized = false;
-
-    if (sessionCookie) {
-      const session = verifySession(sessionCookie.value);
-      if (session) {
-        // Admin has universal operational access
-        if (session.role === 'admin') {
-          isAuthorized = true;
-        } else if (session.email && order.customer?.email) {
-          // Customer can only view their own order
-          if (session.email.toLowerCase().trim() === order.customer.email.toLowerCase().trim()) {
-            isAuthorized = true;
-          }
-        }
+    // 2. Authenticated user
+    if (session?.email) {
+      const sessionEmail = session.email.toLowerCase().trim();
+      if (customerEmail && customerEmail !== sessionEmail) {
+        return NextResponse.json({ success: false, error: "Unauthorized access to this order." }, { status: 403 });
       }
+      return NextResponse.json({ success: true, order: { ...order, _id: order._id.toString() } });
     }
 
-    // Optional email or phone query parameter verification for guest order lookup
+    // 3. Unauthenticated / Guest access:
+    // If querying by exact unguessable 24-character hexadecimal MongoDB ObjectId (returned upon checkout redirect)
+    if (isOid) {
+      return NextResponse.json({ success: true, order: { ...order, _id: order._id.toString() } });
+    }
+
+    // If querying by sequential/human-readable orderNumber without session:
+    // Require verification via email or phone query param
     const { searchParams } = new URL(request.url);
-    const verifyEmail = searchParams.get('email');
-    const verifyPhone = searchParams.get('phone');
+    const verifyEmail = (searchParams.get("email") || "").toLowerCase().trim();
+    const verifyPhone = (searchParams.get("phone") || "").replace(/\D/g, "");
 
-    if (verifyEmail && order.customer?.email && verifyEmail.toLowerCase().trim() === order.customer.email.toLowerCase().trim()) {
-      isAuthorized = true;
-    }
-    if (verifyPhone && order.customer?.phone && verifyPhone.trim() === order.customer.phone.trim()) {
-      isAuthorized = true;
-    }
-
-    // If order was just placed within the last 15 minutes, allow access from confirmation flow
-    const orderAgeMs = Date.now() - new Date(order.createdAt).getTime();
-    if (orderAgeMs < 15 * 60 * 1000) {
-      isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
-      return NextResponse.json({
-        success: false,
-        error: 'Unauthorized. You do not have permission to view this order or invoice.'
-      }, { status: 403 });
+    if (
+      (verifyEmail && verifyEmail === customerEmail) ||
+      (verifyPhone && customerPhone && (verifyPhone === customerPhone || customerPhone.endsWith(verifyPhone)))
+    ) {
+      return NextResponse.json({ success: true, order: { ...order, _id: order._id.toString() } });
     }
 
     return NextResponse.json({
-      success: true,
-      data: {
-        ...order,
-        _id: order._id.toString(),
-      },
-      order: {
-        ...order,
-        _id: order._id.toString(),
-      },
-    });
+      success: false,
+      error: "Authentication or order verification (email/phone) required to view this order.",
+      requiresVerification: true,
+    }, { status: 401 });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request, { params }) {
+  try {
+    const { id } = await params;
+    const session = await getSession();
+    if (session?.role !== "admin") return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    const updates = await request.json();
+    const db = await getDb();
+    const allowedFields = ["status", "fulfillmentStatus", "trackingNumber", "trackingUrl", "notes"];
+    const setData = { updatedAt: new Date() };
+    for (const f of allowedFields) { if (updates[f] !== undefined) setData[f] = updates[f]; }
+    await db.collection("orders").updateOne({ _id: new ObjectId(id) }, { $set: setData });
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

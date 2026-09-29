@@ -126,6 +126,16 @@ export default function AdminSidebarClient({ children }) {
             <span>Reviews</span>
           </Link>
           
+          <Link href="/admin/qa" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/qa') ? 'active' : ''}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>Product Q&amp;A</span>
+          </Link>
+
+          <Link href="/admin/alerts" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/alerts') ? 'active' : ''}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span>Customer Alerts</span>
+          </Link>
+
           <Link href="/admin/marketing" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/marketing') ? 'active' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
             <span>Newsletter</span>
@@ -157,6 +167,16 @@ export default function AdminSidebarClient({ children }) {
           {/* CONFIG GROUP */}
           <div className="admin-nav-group-label" style={{ padding: '0.85rem 1.5rem 0.35rem', fontSize: '0.65rem', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Configuration</div>
           
+          <Link href="/admin/stores" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/stores') ? 'active' : ''}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Store Locations</span>
+          </Link>
+
+          <Link href="/compare" target="_blank" onClick={closeSidebar} className={`admin-nav-item ${isActive('/compare') ? 'active' : ''}`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            <span>Product Compare</span>
+          </Link>
+
           <Link href="/admin/shipping-tax" onClick={closeSidebar} className={`admin-nav-item ${isActive('/admin/shipping-tax') ? 'active' : ''}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"></path><path d="M15 18H9"></path><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"></path><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="18" r="2"></circle></svg>
             <span>Shipping &amp; Logistics</span>

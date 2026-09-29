@@ -1,7 +1,17 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
 import { isConnectionError } from '@/lib/dbFallback';
 import { ObjectId } from 'mongodb';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 // Helper to construct query for product by id or _id
 function getProductFilter(id) {
@@ -11,9 +21,25 @@ function getProductFilter(id) {
   return { id: id };
 }
 
+// GET: Admin retrieve products
+export async function GET(request) {
+  try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    const db = await getDb();
+    const products = await db.collection('products').find({}).sort({ createdAt: -1 }).toArray();
+    return NextResponse.json({ success: true, data: products, count: products.length });
+  } catch (error) {
+    if (isConnectionError(error)) {
+      return NextResponse.json({ success: true, data: [], isFallback: true });
+    }
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 // POST: Add new footwear item
 export async function POST(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const body = await request.json();
     
     if (!body.name || !body.price || !body.category) {
@@ -77,6 +103,7 @@ export async function POST(request) {
 // DELETE: Delete a product
 export async function DELETE(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
@@ -107,6 +134,7 @@ export async function DELETE(request) {
 // PUT: Update a product (stock status, pricing, info, etc.)
 export async function PUT(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const body = await request.json();
     const { id, ...updateData } = body;
     

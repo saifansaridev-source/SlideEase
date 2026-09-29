@@ -63,7 +63,61 @@ export async function GET() {
     try {
       pendingEnquiries = await db.collection('inquiries').countDocuments({ status: { $in: ['unread', 'pending', 'new'] } });
     } catch {}
-      
+
+    // 9. Weekly Sales — last 7 complete days, financially valid orders only
+    // Financially valid = payment.status 'Paid' OR payment.method 'COD'
+    const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    let weeklySales = DAY_LABELS.map((label, i) => {
+      const d = new Date(sevenDaysAgo);
+      d.setDate(sevenDaysAgo.getDate() + i);
+      return { label: DAY_LABELS[d.getDay()], date: d.toISOString().slice(0, 10), revenue: 0, orders: 0 };
+    });
+
+    try {
+      const weeklyAgg = await db.collection('orders').aggregate([
+        {
+          $match: {
+            createdAt: { $gte: sevenDaysAgo },
+            $or: [
+              { 'payment.status': 'Paid' },
+              { 'payment.method': 'COD' },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+05:30' },
+            },
+            revenue: { $sum: { $ifNull: ['$pricing.total', '$total', 0] } },
+            orders:  { $sum: 1 },
+          },
+        },
+      ]).toArray();
+
+      const byDate = {};
+      for (const row of weeklyAgg) {
+        byDate[row._id] = { revenue: row.revenue, orders: row.orders };
+      }
+      weeklySales = weeklySales.map((day) => ({
+        ...day,
+        ...(byDate[day.date] || {}),
+      }));
+    } catch (weeklyErr) {
+      console.warn('Weekly sales aggregation non-fatal error:', weeklyErr.message);
+    }
+
+    const maxRevenue = Math.max(...weeklySales.map((d) => d.revenue), 1);
+    weeklySales = weeklySales.map((d) => ({
+      ...d,
+      heightPct: Math.round((d.revenue / maxRevenue) * 100),
+    }));
+
     return NextResponse.json({
       success: true,
       data: {
@@ -77,7 +131,8 @@ export async function GET() {
         lowStock,
         topProducts,
         pendingReturns,
-        pendingEnquiries
+        pendingEnquiries,
+        weeklySales,
       }
     });
   } catch (error) {

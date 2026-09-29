@@ -1,5 +1,15 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 // Default settings if none stored in DB yet
 const DEFAULTS = {
@@ -39,6 +49,7 @@ export async function GET() {
 // POST/PUT: Save shipping & tax settings (upsert)
 export async function POST(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const body = await request.json();
 
     // Only allow known setting keys to be saved

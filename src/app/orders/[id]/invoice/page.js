@@ -49,7 +49,11 @@ export default function OrderInvoicePage() {
   }
 
   const items = order.items || [];
-  const subtotal = order.pricing?.subtotal || order.subtotal || items.reduce((acc, it) => acc + (it.price * (it.qty || 1)), 0);
+  const subtotal = order.pricing?.subtotal || order.subtotal || items.reduce((acc, it) => {
+    const q = it.quantity || it.qty || 1;
+    const p = it.unitPrice !== undefined ? it.unitPrice : (it.price || 0);
+    return acc + (it.lineTotal || (p * q));
+  }, 0);
   const discount = order.pricing?.discount || order.discount || 0;
   const shipping = order.pricing?.shipping ?? order.shipping ?? 0;
   const codCharge = order.pricing?.codCharge ?? order.codCharge ?? 0;
@@ -184,22 +188,27 @@ export default function OrderInvoicePage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((it, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '0.7rem 0.8rem', color: '#64748b' }}>{idx + 1}</td>
-                <td style={{ padding: '0.7rem 0.8rem' }}>
-                  <strong>{it.name}</strong>
-                  {it.color && <span style={{ color: '#64748b', fontSize: '0.78rem' }}> • {it.color}</span>}
-                </td>
-                <td style={{ padding: '0.7rem 0.8rem', color: '#64748b' }}>6404</td>
-                <td style={{ padding: '0.7rem 0.8rem', textAlign: 'center' }}>UK {it.size}</td>
-                <td style={{ padding: '0.7rem 0.8rem', textAlign: 'center' }}>{it.qty || 1}</td>
-                <td style={{ padding: '0.7rem 0.8rem', textAlign: 'right' }}>₹{it.price?.toLocaleString('en-IN')}</td>
-                <td style={{ padding: '0.7rem 0.8rem', textAlign: 'right', fontWeight: 600 }}>
-                  ₹{((it.price || 0) * (it.qty || 1)).toLocaleString('en-IN')}
-                </td>
-              </tr>
-            ))}
+            {items.map((it, idx) => {
+              const q = it.quantity || it.qty || 1;
+              const unitPrice = it.unitPrice !== undefined ? it.unitPrice : (it.price !== undefined ? it.price : 0);
+              const lineTotal = it.lineTotal !== undefined ? it.lineTotal : (unitPrice * q);
+              return (
+                <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <td style={{ padding: '0.7rem 0.8rem', color: '#64748b' }}>{idx + 1}</td>
+                  <td style={{ padding: '0.7rem 0.8rem' }}>
+                    <strong>{it.name}</strong>
+                    {it.color && <span style={{ color: '#64748b', fontSize: '0.78rem' }}> • {it.color}</span>}
+                  </td>
+                  <td style={{ padding: '0.7rem 0.8rem', color: '#64748b' }}>6404</td>
+                  <td style={{ padding: '0.7rem 0.8rem', textAlign: 'center' }}>UK {it.size}</td>
+                  <td style={{ padding: '0.7rem 0.8rem', textAlign: 'center' }}>{q}</td>
+                  <td style={{ padding: '0.7rem 0.8rem', textAlign: 'right' }}>₹{unitPrice.toLocaleString('en-IN')}</td>
+                  <td style={{ padding: '0.7rem 0.8rem', textAlign: 'right', fontWeight: 600 }}>
+                    ₹{lineTotal.toLocaleString('en-IN')}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 

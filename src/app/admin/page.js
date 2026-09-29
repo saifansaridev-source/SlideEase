@@ -59,7 +59,8 @@ export default function AdminDashboard() {
     lowStock = [], 
     topProducts = [], 
     pendingReturns = 0, 
-    pendingEnquiries = 0 
+    pendingEnquiries = 0,
+    weeklySales = [],
   } = stats || {};
 
   const handleExportOrders = async () => {
@@ -182,19 +183,30 @@ export default function AdminDashboard() {
 
       {/* Chart & Recent Orders */}
       <section className="admin-grid-2col" style={{ marginTop: '2rem' }}>
-        {/* Sales Chart Mockup */}
+        {/* Real Weekly Sales Chart */}
         <div className="admin-card">
-          <div className="admin-card-header">
-            <h3>Weekly Sales Overview</h3>
+          <div className="admin-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Weekly Sales Revenue (Last 7 Days)</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Paid &amp; COD orders only</span>
           </div>
-          <div className="admin-chart" id="sales-chart" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '220px', padding: '1rem 0' }}>
-            <div className="chart-bar" style={{ height: '65%' }} data-label="Mon" data-value="₹42K"></div>
-            <div className="chart-bar" style={{ height: '45%' }} data-label="Tue" data-value="₹31K"></div>
-            <div className="chart-bar" style={{ height: '80%' }} data-label="Wed" data-value="₹58K"></div>
-            <div className="chart-bar" style={{ height: '55%' }} data-label="Thu" data-value="₹38K"></div>
-            <div className="chart-bar" style={{ height: '90%' }} data-label="Fri" data-value="₹68K"></div>
-            <div className="chart-bar" style={{ height: '70%' }} data-label="Sat" data-value="₹51K"></div>
-            <div className="chart-bar" style={{ height: '95%' }} data-label="Sun" data-value="₹72K"></div>
+          <div id="sales-chart" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: '220px', padding: '1rem 0', gap: '0.4rem' }}>
+            {weeklySales.length === 0 ? (
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', flexDirection: 'column', gap: '0.5rem' }}>
+                <span style={{ fontSize: '2rem' }}>📊</span>
+                <span>No order data for this period.</span>
+              </div>
+            ) : (
+              weeklySales.map((day) => (
+                <div
+                  key={day.date}
+                  className="chart-bar"
+                  title={`${day.label} — ₹${day.revenue.toLocaleString('en-IN')} (${day.orders} orders)`}
+                  style={{ height: `${Math.max(day.heightPct, day.revenue > 0 ? 4 : 0)}%` }}
+                  data-label={day.label}
+                  data-value={day.revenue > 0 ? `₹${Math.round(day.revenue / 1000)}K` : '₹0'}
+                />
+              ))
+            )}
           </div>
         </div>
 

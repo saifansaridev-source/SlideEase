@@ -117,7 +117,9 @@ export async function calculateAuthoritativePricing({
       image: product.image || (Array.isArray(product.images) ? product.images[0] : ''),
       size: sizeStr,
       quantity: qty,
+      qty: qty,
       unitPrice,
+      price: unitPrice,
       unitMrp,
       lineTotal,
       lineMrpTotal,
@@ -133,7 +135,7 @@ export async function calculateAuthoritativePricing({
   let freeItemInfo = null;
 
   // Count qualifying paid footwear items
-  const totalFootwearUnits = validatedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalFootwearUnits = validatedItems.reduce((sum, item) => sum + (item.quantity || item.qty || 1), 0);
 
   // If customer has 2 or more eligible paid items, they qualify for 1 free footwear item in the B2G1 promotion
   if (totalFootwearUnits >= 2 && b2g1FreeProductId && b2g1FreeSize) {
@@ -163,7 +165,10 @@ export async function calculateAuthoritativePricing({
           category: freeProd.category,
           size: freeSizeStr,
           quantity: 1,
+          qty: 1,
           unitPrice: 0,
+          price: 0,
+          lineTotal: 0,
           originalPrice: freeVal,
           isFreeB2G1Item: true,
           image: freeProd.image,

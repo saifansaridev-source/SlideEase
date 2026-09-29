@@ -6,14 +6,12 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import CartDrawer from './CartDrawer';
 import PromoBar from './PromoBar';
-import StyleQuizModal from './StyleQuizModal';
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { getCartCount, isCartOpen, setIsCartOpen, isMenuOpen, setIsMenuOpen, wishlist = [] } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -157,16 +155,6 @@ export default function Header() {
 
           {/* Action Utilities */}
           <div className="header-actions">
-            {/* Style Quiz button */}
-            <button 
-              className="circle-header-pill" 
-              id="open-quiz-header-btn" 
-              onClick={() => setIsQuizOpen(true)}
-              style={{ display: 'inline-flex', background: 'rgba(201,169,97,0.12)', border: '1px solid rgba(201,169,97,0.4)', color: 'var(--primary-color)' }}
-            >
-              <span style={{ color: 'var(--accent-dark)' }}>✦</span> Style Quiz
-            </button>
-
             {/* Search bar */}
             <div className="search-bar-container" id="header-search-box">
               <form onSubmit={handleSearchSubmit} className="search-input-wrapper">
@@ -257,9 +245,6 @@ export default function Header() {
 
       {/* Cart Drawer Component */}
       <CartDrawer />
-
-      {/* Style Quiz Modal */}
-      <StyleQuizModal isOpen={isQuizOpen} onClose={() => setIsQuizOpen(false)} />
 
       {/* Backdrop for overlays */}
       <div 

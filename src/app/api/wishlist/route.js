@@ -20,14 +20,10 @@ export async function GET() {
     const db = await getDb();
     const user = await db.collection('users').findOne({ email: sessionData.email.toLowerCase() });
 
-    if (!user) {
-      return NextResponse.json({ success: false, authenticated: false, wishlist: [] });
-    }
-
     return NextResponse.json({
       success: true,
       authenticated: true,
-      wishlist: user.wishlist || [],
+      wishlist: user?.wishlist || [],
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -55,7 +51,11 @@ export async function POST(request) {
       // Sync full wishlist array
       await db.collection('users').updateOne(
         { email: sessionData.email.toLowerCase() },
-        { $set: { wishlist: body.wishlist, updatedAt: new Date() } }
+        {
+          $set: { wishlist: body.wishlist, updatedAt: new Date() },
+          $setOnInsert: { email: sessionData.email.toLowerCase(), role: 'customer', createdAt: new Date() }
+        },
+        { upsert: true }
       );
       return NextResponse.json({ success: true, wishlist: body.wishlist });
     }
@@ -74,13 +74,52 @@ export async function POST(request) {
 
       await db.collection('users').updateOne(
         { email: sessionData.email.toLowerCase() },
-        { $set: { wishlist: currentWishlist, updatedAt: new Date() } }
+        {
+          $set: { wishlist: currentWishlist, updatedAt: new Date() },
+          $setOnInsert: { email: sessionData.email.toLowerCase(), role: 'customer', createdAt: new Date() }
+        },
+        { upsert: true }
       );
 
       return NextResponse.json({ success: true, wishlist: currentWishlist });
     }
 
     return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('slidex_session');
+
+    if (!sessionCookie) {
+      return NextResponse.json({ success: false, authenticated: false });
+    }
+
+    const sessionData = verifySession(sessionCookie.value);
+    if (!sessionData || !sessionData.email) {
+      return NextResponse.json({ success: false, authenticated: false });
+    }
+
+    const body = await request.json();
+    const { productId } = body;
+    if (!productId) {
+      return NextResponse.json({ success: false, error: 'productId required' }, { status: 400 });
+    }
+
+    const db = await getDb();
+    await db.collection('users').updateOne(
+      { email: sessionData.email.toLowerCase() },
+      { 
+        $pull: { wishlist: productId },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    return NextResponse.json({ success: true, message: 'Item removed from wishlist.' });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

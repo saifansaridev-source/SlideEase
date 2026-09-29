@@ -9,6 +9,8 @@ import CookieConsent from '@/components/CookieConsent';
 import PromoPopup from '@/components/PromoPopup';
 import SplitScreenIntro from '@/components/SplitScreenIntro';
 import { CartProvider } from '@/context/CartContext';
+import { CompareProvider } from '@/context/CompareContext';
+import CompareBar from '@/components/CompareBar';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
 
@@ -107,15 +109,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </noscript>
         )}
         <CartProvider>
-          <SplitScreenIntro />
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <WhatsAppButton />
-          <BackToTopButton />
-          <LiveChatWidget />
-          <CookieConsent />
-          <PromoPopup />
+          <CompareProvider>
+            <SplitScreenIntro />
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <WhatsAppButton />
+            <BackToTopButton />
+            <LiveChatWidget />
+            <CookieConsent />
+            <PromoPopup />
+            <CompareBar />
+          </CompareProvider>
         </CartProvider>
       </body>
     </html>

@@ -21,6 +21,20 @@ export async function GET(request) {
     const search = searchParams.get('q');
     const color = searchParams.get('color');
     const material = searchParams.get('material');
+    const idsParam = searchParams.get('ids');
+
+    // Support ?ids=id1,id2 for compare page
+    if (idsParam) {
+      const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean);
+      const { ObjectId } = await import('mongodb');
+      const orFilter = ids.map(id => {
+        const conditions = [{ id: id }];
+        if (ObjectId.isValid(id)) conditions.push({ _id: new ObjectId(id) });
+        return { $or: conditions };
+      });
+      const matched = await db.collection('products').find({ $or: orFilter.flatMap(f => f.$or) }).toArray();
+      return NextResponse.json({ success: true, data: matched });
+    }
     
     let filter = {};
     

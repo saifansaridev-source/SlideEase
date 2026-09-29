@@ -1,6 +1,16 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 async function recalculateProductRating(db, productId) {
   try {
@@ -22,6 +32,7 @@ async function recalculateProductRating(db, productId) {
 
 export async function GET() {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const db = await getDb();
     const reviews = await db.collection('reviews').find({}).sort({ createdAt: -1 }).toArray();
     return NextResponse.json({ success: true, data: reviews });
@@ -32,6 +43,7 @@ export async function GET() {
 
 export async function PATCH(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { id, status } = await request.json();
     if (!id || !status) {
       return NextResponse.json({ success: false, error: 'Review ID and status required' }, { status: 400 });
@@ -60,6 +72,7 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
+    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) {

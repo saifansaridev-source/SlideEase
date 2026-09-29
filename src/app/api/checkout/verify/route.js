@@ -106,36 +106,76 @@ export async function POST(request) {
       const qtyToDeduct = item.quantity || 1;
       const sizeKey = String(item.size).trim();
 
-      const filter = {
+      const prodDoc = await db.collection('products').findOne({
         $or: [
           { id: item.id },
           ...(ObjectId.isValid(item.id) ? [{ _id: new ObjectId(item.id) }] : [])
-        ],
-        [`sizeStock.${sizeKey}`]: { $gte: qtyToDeduct },
-        stockQty: { $gte: qtyToDeduct }
-      };
+        ]
+      });
 
-      const update = {
-        $inc: {
-          [`sizeStock.${sizeKey}`]: -qtyToDeduct,
-          stockQty: -qtyToDeduct
-        },
-        $set: {
-          updatedAt: new Date().toISOString()
-        }
-      };
-
-      const updateResult = await db.collection('products').updateOne(filter, update);
-
-      if (updateResult.matchedCount === 0) {
-        // Rollback all prior decrements
+      if (!prodDoc) {
         for (const rolled of decrementedItems) {
           await db.collection('products').updateOne(
-            { id: rolled.id },
+            { $or: [{ id: rolled.id }, ...(ObjectId.isValid(rolled.id) ? [{ _id: new ObjectId(rolled.id) }] : [])] },
             { 
               $inc: { 
-                [`sizeStock.${rolled.size}`]: rolled.quantity, 
-                stockQty: rolled.quantity 
+                [`sizeStock.${rolled.size}`]: rolled.quantity,
+                ...(rolled.hadStockQty ? { stockQty: rolled.quantity } : {})
+              } 
+            }
+          );
+        }
+        return NextResponse.json({
+          success: false,
+          error: `Product "${item.name}" was not found in catalog.`
+        }, { status: 409 });
+      }
+
+      const hasSizeStock = prodDoc.sizeStock && typeof prodDoc.sizeStock[sizeKey] === 'number';
+      const availableSizeQty = hasSizeStock ? prodDoc.sizeStock[sizeKey] : (typeof prodDoc.stockQty === 'number' ? prodDoc.stockQty : 50);
+
+      if (availableSizeQty < qtyToDeduct) {
+        for (const rolled of decrementedItems) {
+          await db.collection('products').updateOne(
+            { $or: [{ id: rolled.id }, ...(ObjectId.isValid(rolled.id) ? [{ _id: new ObjectId(rolled.id) }] : [])] },
+            { 
+              $inc: { 
+                [`sizeStock.${rolled.size}`]: rolled.quantity,
+                ...(rolled.hadStockQty ? { stockQty: rolled.quantity } : {})
+              } 
+            }
+          );
+        }
+        return NextResponse.json({
+          success: false,
+          error: `Insufficient stock for "${item.name}" (Size UK ${sizeKey}). The item became unavailable during checkout.`
+        }, { status: 409 });
+      }
+
+      const updateFilter = {
+        _id: prodDoc._id,
+        ...(hasSizeStock ? { [`sizeStock.${sizeKey}`]: { $gte: qtyToDeduct } } : {})
+      };
+
+      const hasStockQty = typeof prodDoc.stockQty === 'number';
+      const incPayload = {
+        ...(hasSizeStock ? { [`sizeStock.${sizeKey}`]: -qtyToDeduct } : {}),
+        ...(hasStockQty ? { stockQty: -qtyToDeduct } : {})
+      };
+
+      const updateResult = await db.collection('products').updateOne(updateFilter, {
+        $inc: incPayload,
+        $set: { updatedAt: new Date().toISOString() }
+      });
+
+      if (updateResult.matchedCount === 0) {
+        for (const rolled of decrementedItems) {
+          await db.collection('products').updateOne(
+            { $or: [{ id: rolled.id }, ...(ObjectId.isValid(rolled.id) ? [{ _id: new ObjectId(rolled.id) }] : [])] },
+            { 
+              $inc: { 
+                [`sizeStock.${rolled.size}`]: rolled.quantity,
+                ...(rolled.hadStockQty ? { stockQty: rolled.quantity } : {})
               } 
             }
           );
@@ -151,6 +191,7 @@ export async function POST(request) {
         id: item.id,
         size: sizeKey,
         quantity: qtyToDeduct,
+        hadStockQty: hasStockQty,
       });
     }
 

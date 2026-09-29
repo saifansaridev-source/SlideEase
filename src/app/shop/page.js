@@ -233,6 +233,48 @@ function ShopContent() {
         </div>
       </section>
 
+      {/* ── ACTIVE FILTER CHIPS ─────────────────────────────────────────── */}
+      {(() => {
+        const activeFilters = [
+          category !== 'all' && { key: 'category', label: `Gender: ${category === 'mens' ? "Men's" : "Women's"}` },
+          type !== 'all'     && { key: 'type',     label: `Style: ${type}` },
+          price !== 'all'    && { key: 'price',    label: `Price: ${price}` },
+          color !== 'all'    && { key: 'color',    label: `Color: ${color}` },
+          material !== 'all' && { key: 'material', label: `Material: ${material}` },
+          stock !== 'all'    && { key: 'stock',    label: `Status: ${stock}` },
+          q                  && { key: 'q',        label: `Search: "${q}"` },
+        ].filter(Boolean);
+        if (!activeFilters.length) return null;
+        return (
+          <section className="container" style={{ padding: '0 1.5rem 1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {activeFilters.length} filter{activeFilters.length > 1 ? 's' : ''} active:
+              </span>
+              {activeFilters.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => updateQuery(f.key, 'all')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.28rem 0.7rem', borderRadius: '999px', background: 'var(--primary-color)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+                >
+                  {f.label}
+                  <span style={{ fontSize: '1rem', lineHeight: 1, opacity: 0.8 }}>×</span>
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  startTransition(() => router.push(pathname));
+                }}
+                style={{ fontSize: '0.78rem', color: 'var(--danger-color)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginLeft: '0.25rem', textDecoration: 'underline' }}
+              >
+                Clear all
+              </button>
+            </div>
+          </section>
+        );
+      })()}
+
       {/* ── PRODUCT GRID ────────────────────────────────────────────────── */}
       <section
         className="container"

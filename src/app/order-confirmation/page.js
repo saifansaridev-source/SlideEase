@@ -148,24 +148,29 @@ function OrderConfirmationContent() {
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-                {(order.items || []).map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.8rem', borderBottom: '1px solid var(--border-color)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', backgroundColor: 'var(--accent-light)' }}>
-                        <img src={item.image || '/og_image.png'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, color: 'var(--primary-color)' }}>{item.name}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                          Size: {item.size} • Qty: {item.qty}
+                {(order.items || []).map((item, idx) => {
+                  const qty = item.quantity || item.qty || 1;
+                  const unitPrice = item.unitPrice !== undefined ? item.unitPrice : (item.price !== undefined ? item.price : 0);
+                  const lineTotal = item.lineTotal !== undefined ? item.lineTotal : (unitPrice * qty);
+                  return (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.8rem', borderBottom: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '4px', overflow: 'hidden', backgroundColor: 'var(--accent-light)' }}>
+                          <img src={item.image || '/og_image.png'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--primary-color)' }}>{item.name}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            Size: {item.size} • Qty: {qty}
+                          </div>
                         </div>
                       </div>
+                      <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>
+                        ₹{lineTotal.toLocaleString('en-IN')}
+                      </span>
                     </div>
-                    <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>
-                      ₹{(item.price * item.qty).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.9rem' }}>
@@ -284,7 +289,7 @@ function OrderConfirmationContent() {
                 Continue Shopping
               </Link>
               <Link
-                href={`/orders/${order.orderNumber || order.orderId || order._id}/invoice`}
+                href={`/orders/${order._id || order.orderId || order.orderNumber}/invoice`}
                 target="_blank"
                 className="btn btn-outline"
                 style={{ padding: '0.8rem 2rem' }}
