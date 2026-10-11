@@ -68,8 +68,10 @@ export async function POST(request) {
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
 
-      // STRICT: Must match HMAC SHA-256 exactly
-      if (generated_signature !== razorpay_signature) {
+      // STRICT: Must match HMAC SHA-256 in constant time (protects against timing attacks)
+      const sigBuffer = Buffer.from(razorpay_signature, 'utf8');
+      const genBuffer = Buffer.from(generated_signature, 'utf8');
+      if (sigBuffer.length !== genBuffer.length || !crypto.timingSafeEqual(sigBuffer, genBuffer)) {
         return NextResponse.json({ 
           success: false, 
           error: 'Razorpay HMAC SHA-256 signature verification failed. Payment cannot be marked as Paid.' 
@@ -277,6 +279,7 @@ export async function POST(request) {
         : 'Payment verified and order confirmed successfully!'
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const isConflict = error.message?.includes('Insufficient stock') || error.message?.includes('not found') || error.message?.includes('unavailable');
+    return NextResponse.json({ success: false, error: error.message }, { status: isConflict ? 409 : 500 });
   }
 }

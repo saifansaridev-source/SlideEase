@@ -41,7 +41,7 @@ export default function OrderInvoicePage() {
         <h2 style={{ color: '#ef4444' }}>Unable to load invoice</h2>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem' }}>
           <button onClick={() => window.history.back()} style={{ color: '#2563eb', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>← Back</button>
-          <Link href="/account" style={{ color: '#2563eb', fontWeight: 600 }}>My Account</Link>
+          <Link href="/dashboard" style={{ color: '#2563eb', fontWeight: 600 }}>My Account</Link>
           <Link href="/shop" style={{ color: '#64748b', fontWeight: 500 }}>Return to Store</Link>
         </div>
       </div>
@@ -65,12 +65,19 @@ export default function OrderInvoicePage() {
   const cgst = Math.round(totalGst / 2);
   const sgst = totalGst - cgst;
 
+  const isCancelled = order.status?.toLowerCase() === 'cancelled';
+  const isFailed = order.payment?.status?.toLowerCase() === 'failed';
+  const isCancelledOrFailed = isCancelled || isFailed;
+  const isCod = (order.payment?.method === 'COD' || order.paymentMethod === 'COD');
+  const isPaid = order.payment?.status === 'Paid';
+  const isUnpaidOnline = !isPaid && !isCod && !isCancelledOrFailed;
+
   const invoiceNum = `INV-2026-${order.orderNumber || order.orderId || String(order._id).slice(-6)}`;
-  const orderDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {
+  const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
     year: 'numeric'
-  });
+  }) : 'N/A';
 
   const customer = order.customer || {};
   const customerName = `${customer.firstName || customer.firstname || ''} ${customer.lastName || customer.lastname || ''}`.trim() || order.firstName || 'Valued Customer';
@@ -86,14 +93,14 @@ export default function OrderInvoicePage() {
       
       {/* Top action toolbar (hidden on print) */}
       <div className="no-print" style={{ maxWidth: '820px', margin: '0 auto 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link href="/admin/orders" style={{ textDecoration: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>
-          ← Back to Orders
+        <Link href="/dashboard" style={{ textDecoration: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 600 }}>
+          ← Back to Account
         </Link>
         <div style={{ display: 'flex', gap: '0.8rem' }}>
           <button 
             onClick={() => window.print()}
             style={{
-              backgroundColor: '#1e293b',
+              backgroundColor: isCancelledOrFailed ? '#ef4444' : isUnpaidOnline ? '#d97706' : '#1e293b',
               color: '#fff',
               border: 'none',
               padding: '0.6rem 1.2rem',
@@ -106,7 +113,7 @@ export default function OrderInvoicePage() {
               gap: '0.4rem'
             }}
           >
-            🖨️ Print / Save as PDF
+            🖨️ {isUnpaidOnline ? 'Print Proforma Invoice' : 'Print / Save as PDF'}
           </button>
         </div>
       </div>
@@ -123,9 +130,94 @@ export default function OrderInvoicePage() {
           borderRadius: '8px',
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           color: '#1e293b',
-          lineHeight: 1.5
+          lineHeight: 1.5,
+          position: 'relative',
         }}
       >
+        {/* VOID WATERMARK IF CANCELLED OR FAILED */}
+        {isCancelledOrFailed && (
+          <div style={{
+            position: 'absolute',
+            top: '40%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-30deg)',
+            fontSize: '5.5rem',
+            fontWeight: 900,
+            color: 'rgba(239, 68, 68, 0.14)',
+            pointerEvents: 'none',
+            letterSpacing: '10px',
+            textTransform: 'uppercase',
+            zIndex: 1,
+            userSelect: 'none',
+          }}>
+            VOID / CANCELLED
+          </div>
+        )}
+
+        {/* UNPAID PROFORMA WATERMARK IF PENDING ONLINE PAYMENT */}
+        {isUnpaidOnline && (
+          <div style={{
+            position: 'absolute',
+            top: '40%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-30deg)',
+            fontSize: '4.5rem',
+            fontWeight: 900,
+            color: 'rgba(217, 119, 6, 0.12)',
+            pointerEvents: 'none',
+            letterSpacing: '8px',
+            textTransform: 'uppercase',
+            zIndex: 1,
+            userSelect: 'none',
+          }}>
+            PROFORMA / UNPAID
+          </div>
+        )}
+
+        {/* Warning banner for cancelled / failed orders */}
+        {isCancelledOrFailed && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '2px solid #ef4444',
+            color: '#991b1b',
+            padding: '0.85rem 1.2rem',
+            borderRadius: '6px',
+            marginBottom: '1.5rem',
+            fontWeight: 600,
+            fontSize: '0.88rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+          }}>
+            <span>⚠️</span>
+            <span>
+              <strong>NOTICE:</strong> This order has been {isCancelled ? 'cancelled' : 'marked with failed payment'}. This document is void and does NOT represent an active invoice or receipt of payment.
+            </span>
+          </div>
+        )}
+
+        {/* Warning banner for unpaid online orders */}
+        {isUnpaidOnline && (
+          <div style={{
+            backgroundColor: '#fffbeb',
+            border: '2px solid #f59e0b',
+            color: '#92400e',
+            padding: '0.85rem 1.2rem',
+            borderRadius: '6px',
+            marginBottom: '1.5rem',
+            fontWeight: 600,
+            fontSize: '0.88rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+          }}>
+            <span>⏳</span>
+            <span>
+              <strong>PROFORMA NOTICE:</strong> Payment for this order is pending verification. This document is a proforma invoice and does not certify completed payment.
+            </span>
+          </div>
+        )}
+
         {/* Header: Company & Tax Details */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '1.5rem' }}>
           <div>
@@ -141,8 +233,19 @@ export default function OrderInvoicePage() {
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'inline-block', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '0.3rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
-              ORIGINAL TAX INVOICE
+            <div style={{
+              display: 'inline-block',
+              backgroundColor: isCancelledOrFailed ? '#fee2e2' : isUnpaidOnline ? '#fef3c7' : '#f8fafc',
+              border: isCancelledOrFailed ? '1px solid #f87171' : isUnpaidOnline ? '1px solid #fbbf24' : '1px solid #e2e8f0',
+              padding: '0.3rem 0.8rem',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: isCancelledOrFailed ? '#b91c1c' : isUnpaidOnline ? '#b45309' : '#3b82f6',
+              letterSpacing: '0.5px',
+              marginBottom: '0.5rem'
+            }}>
+              {isCancelledOrFailed ? 'VOID / CANCELLED DOCUMENT' : isUnpaidOnline ? 'PROFORMA INVOICE (UNPAID)' : isPaid ? 'TAX INVOICE / PAID' : 'TAX INVOICE — COD'}
             </div>
             <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{invoiceNum}</div>
             <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.2rem' }}>Date: <strong>{orderDate}</strong></div>
@@ -166,8 +269,16 @@ export default function OrderInvoicePage() {
 
           <div style={{ backgroundColor: '#f8fafc', padding: '1rem 1.2rem', borderRadius: '6px', fontSize: '0.85rem' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', marginBottom: '0.4rem' }}>Order & Logistics Details:</div>
-            <div><strong>Payment Mode:</strong> {order.paymentMethod || order.payment?.method || 'Razorpay Online'}</div>
-            <div style={{ marginTop: '0.3rem' }}><strong>Payment Status:</strong> {order.payment?.status || (order.status === 'Paid' ? 'Paid' : 'Confirmed')}</div>
+            <div><strong>Payment Mode:</strong> {isCod ? 'Cash on Delivery (COD)' : (order.paymentMethod || order.payment?.method || 'Razorpay Online')}</div>
+            <div style={{ marginTop: '0.3rem' }}>
+              <strong>Payment Status:</strong>{' '}
+              <span style={{
+                fontWeight: 700,
+                color: isCancelledOrFailed ? '#b91c1c' : isPaid ? '#15803d' : '#b45309'
+              }}>
+                {isCancelled ? 'Cancelled' : isFailed ? 'Failed' : isPaid ? 'Paid Online' : isCod ? `Pending (Due upon delivery: ₹${total.toLocaleString('en-IN')})` : (order.payment?.status || 'Pending Verification')}
+              </span>
+            </div>
             <div style={{ marginTop: '0.3rem' }}><strong>Courier:</strong> {order.courierName || 'Delhivery Express'}</div>
             <div style={{ marginTop: '0.3rem' }}><strong>AWB / Tracking #:</strong> {order.trackingNumber || 'Pending Dispatch'}</div>
             <div style={{ marginTop: '0.3rem' }}><strong>Place of Supply:</strong> {customerState}</div>

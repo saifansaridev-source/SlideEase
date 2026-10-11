@@ -25,6 +25,16 @@ const nextConfig = {
         destination: '/shipping-returns',
         permanent: true,
       },
+      {
+        source: '/account',
+        destination: '/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/account/:path*',
+        destination: '/dashboard',
+        permanent: true,
+      },
     ];
   },
 };

@@ -55,11 +55,6 @@ export function verifySession(token) {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
   if (parts.length !== 2) {
-    // If legacy raw JSON cookie was stored in older dev passes, parse safely as fallback
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed && (parsed.email || parsed.role)) return parsed;
-    } catch (e) {}
     return null;
   }
 

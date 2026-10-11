@@ -24,7 +24,9 @@ export async function POST(request) {
       .update(rawBody)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    const sigBuffer = Buffer.from(signature, 'utf8');
+    const expBuffer = Buffer.from(expectedSignature, 'utf8');
+    if (sigBuffer.length !== expBuffer.length || !crypto.timingSafeEqual(sigBuffer, expBuffer)) {
       return NextResponse.json({ success: false, error: 'Invalid webhook signature.' }, { status: 400 });
     }
 
@@ -72,6 +74,21 @@ export async function POST(request) {
             console.warn('Webhook email dispatch error:', err.message);
           }
         }
+      }
+    } else if (event === 'payment.failed') {
+      const paymentEntity = payload.payload?.payment?.entity;
+      const razorpayOrderId = paymentEntity?.order_id;
+      if (razorpayOrderId) {
+        await db.collection('orders').updateOne(
+          { 'payment.razorpayOrderId': razorpayOrderId, 'payment.status': { $ne: 'Paid' } },
+          {
+            $set: {
+              'payment.status': 'Failed',
+              'payment.failureReason': paymentEntity?.error_description || 'Payment failed at provider',
+              updatedAt: new Date(),
+            },
+          }
+        );
       }
     }
 

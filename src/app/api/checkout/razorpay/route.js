@@ -82,9 +82,12 @@ export async function POST(request) {
       pricing: authoritativePricing ? authoritativePricing.pricing : null,
     });
   } catch (error) {
+    const errorMsg = error.statusCode === 401
+      ? 'Razorpay API credentials rejected (401 Authentication failed). Please verify your NEXT_PUBLIC_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env.local.'
+      : (error.message || 'Failed to create Razorpay order.');
     return NextResponse.json({ 
       success: false, 
-      error: error.message || 'Failed to create Razorpay order.' 
+      error: errorMsg 
     }, { status: 400 });
   }
 }

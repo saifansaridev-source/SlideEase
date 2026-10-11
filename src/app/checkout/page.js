@@ -161,10 +161,15 @@ export default function CheckoutPage() {
 
     // 2. RAZORPAY ONLINE PAYMENT FLOW
     try {
+      // Pass complete order items and metadata so the server calculates authoritative pricing
       const orderRes = await fetch('/api/checkout/razorpay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          items: orderData.items,
+          couponCode: couponCode || null,
+          shippingMethod,
+          giftWrap,
           amount: totalVal,
         }),
       });
@@ -176,10 +181,23 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (typeof window === 'undefined' || !window.Razorpay) {
-        setErrorMsg('Payment gateway script failed to load. Please refresh and retry.');
-        setIsProcessing(false);
-        return;
+      // Ensure Razorpay SDK is available, dynamically loading if necessary
+      if (typeof window !== 'undefined' && !window.Razorpay) {
+        const scriptLoaded = await new Promise((resolve) => {
+          if (window.Razorpay) return resolve(true);
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.async = true;
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+
+        if (!scriptLoaded || !window.Razorpay) {
+          setErrorMsg('Payment gateway script failed to load. Please check your connection and retry.');
+          setIsProcessing(false);
+          return;
+        }
       }
 
       const options = {
@@ -191,7 +209,7 @@ export default function CheckoutPage() {
         image: '/og_image.png',
         order_id: razorpayOrder.order.id,
         prefill: {
-          name: `${firstName} ${lastName}`,
+          name: `${firstName} ${lastName}`.trim(),
           email: email,
           contact: phone,
         },
@@ -201,6 +219,7 @@ export default function CheckoutPage() {
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
+            setErrorMsg('Payment window closed. You can retry payment or select Cash on Delivery.');
           },
         },
         handler: async function (response) {
@@ -241,14 +260,14 @@ export default function CheckoutPage() {
       });
       paymentObject.open();
     } catch (err) {
-      setErrorMsg('Error connecting to Razorpay. ' + err.message);
+      setErrorMsg('Error connecting to Razorpay: ' + err.message);
       setIsProcessing(false);
     }
   };
 
   return (
     <div style={{ backgroundColor: 'var(--bg-light)', minHeight: '90vh', paddingBottom: '5rem' }}>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
 
       {/* Page Hero & Step Tracker */}
       <section

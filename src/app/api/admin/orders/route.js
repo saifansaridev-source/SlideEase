@@ -4,9 +4,24 @@ import { MOCK_ORDERS, isConnectionError } from '@/lib/dbFallback';
 import { sendShippingUpdateEmail } from '@/lib/email';
 import { ObjectId } from 'mongodb';
 
-// GET: Fetch all checkout orders
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
+import { restoreInventory } from '@/lib/inventory';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
+
+// GET: Fetch all checkout orders (Admin authenticated)
 export async function GET(request) {
   try {
+    if (!await requireAdmin()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized administrative access.' }, { status: 401 });
+    }
     const db = await getDb();
     
     const { searchParams } = new URL(request.url);
@@ -50,9 +65,12 @@ export async function GET(request) {
   }
 }
 
-// PUT: Update order fulfillment status, tracking, notes, cancellation/refund
+// PUT: Update order fulfillment status, tracking, notes, cancellation/refund (Admin authenticated)
 export async function PUT(request) {
   try {
+    if (!await requireAdmin()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized administrative access.' }, { status: 401 });
+    }
     const body = await request.json();
     const { 
       orderId, 
@@ -91,19 +109,8 @@ export async function PUT(request) {
 
     // Inventory Restoration on Order Cancellation
     if (status && status.toLowerCase() === 'cancelled' && !currentOrder.stockRestored) {
-      for (const item of (currentOrder.items || [])) {
-        if (item.id && item.size) {
-          const qty = item.quantity || item.qty || 1;
-          await db.collection('products').updateOne(
-            { id: item.id },
-            { 
-              $inc: { 
-                [`sizeStock.${item.size}`]: qty, 
-                stockQty: qty 
-              } 
-            }
-          );
-        }
+      if (currentOrder.items && currentOrder.items.length > 0) {
+        await restoreInventory(db, currentOrder.items);
       }
       setFields.stockRestored = true;
     }

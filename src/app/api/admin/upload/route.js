@@ -37,8 +37,26 @@ function uploadToCloudinary(buffer, fileName) {
   });
 }
 
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export async function POST(request) {
   try {
+    if (!await requireAdmin()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized administrative access.' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const files = formData.getAll('files');
     const singleFile = formData.get('file');
@@ -50,6 +68,23 @@ export async function POST(request) {
 
     if (allFiles.length === 0) {
       return NextResponse.json({ success: false, error: 'No image files received in upload request' }, { status: 400 });
+    }
+
+    // Validate MIME types and file sizes
+    for (const f of allFiles) {
+      if (!f || typeof f === 'string') continue;
+      if (f.type && !ALLOWED_MIME_TYPES.includes(f.type)) {
+        return NextResponse.json({
+          success: false,
+          error: `Invalid file type "${f.type}". Only JPEG, PNG, WebP, GIF, and SVG images are permitted.`
+        }, { status: 400 });
+      }
+      if (f.size && f.size > MAX_FILE_SIZE) {
+        return NextResponse.json({
+          success: false,
+          error: `File size exceeds 10MB limit (${Math.round(f.size / 1024 / 1024)}MB).`
+        }, { status: 400 });
+      }
     }
 
     const uploadedUrls = [];

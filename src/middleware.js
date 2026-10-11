@@ -23,11 +23,6 @@ async function verifySessionToken(token) {
 
   const parts = token.split('.');
   if (parts.length !== 2) {
-    // Check if legacy raw JSON format (only for dev backward-compatibility if role exists)
-    try {
-      const parsed = JSON.parse(token);
-      if (parsed && (parsed.role === 'admin' || parsed.email)) return parsed;
-    } catch (e) {}
     return null;
   }
 

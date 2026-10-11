@@ -1,13 +1,32 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_STATS, isConnectionError } from '@/lib/dbFallback';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth';
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const sc = cookieStore.get('slidex_session');
+  if (!sc) return null;
+  const s = verifySession(sc.value);
+  return s?.role === 'admin' ? s : null;
+}
 
 export async function GET() {
   try {
+    if (!await requireAdmin()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized administrative access.' }, { status: 401 });
+    }
     const db = await getDb();
     
-    // 1. Calculate Authoritative Total Revenue (Sum of pricing.total or legacy total)
+    // 1. Calculate Authoritative Total Revenue (ONLY verified 'Paid' orders, excluding cancelled)
     const revenueStats = await db.collection('orders').aggregate([
+      {
+        $match: {
+          'payment.status': 'Paid',
+          status: { $nin: ['cancelled', 'Cancelled'] }
+        }
+      },
       {
         $group: {
           _id: null,
@@ -19,8 +38,10 @@ export async function GET() {
     
     // 2. Count Total Orders & Breakdown
     const totalOrders = await db.collection('orders').countDocuments();
-    const paidOrders = await db.collection('orders').countDocuments({ 'payment.status': 'Paid' });
+    const paidOrders = await db.collection('orders').countDocuments({ 'payment.status': 'Paid', status: { $nin: ['cancelled', 'Cancelled'] } });
     const codOrders = await db.collection('orders').countDocuments({ 'payment.method': 'COD' });
+    const cancelledOrders = await db.collection('orders').countDocuments({ status: { $in: ['cancelled', 'Cancelled'] } });
+    const pendingOrders = await db.collection('orders').countDocuments({ 'payment.status': { $in: ['Pending', 'Pending (COD)'] }, status: { $nin: ['cancelled', 'Cancelled'] } });
     
     // 3. Count Total Registered Customers
     const totalCustomers = await db.collection('users').countDocuments();
@@ -83,10 +104,8 @@ export async function GET() {
         {
           $match: {
             createdAt: { $gte: sevenDaysAgo },
-            $or: [
-              { 'payment.status': 'Paid' },
-              { 'payment.method': 'COD' },
-            ],
+            'payment.status': 'Paid',
+            status: { $nin: ['cancelled', 'Cancelled'] }
           },
         },
         {
@@ -125,6 +144,8 @@ export async function GET() {
         totalOrders,
         paidOrders,
         codOrders,
+        cancelledOrders,
+        pendingOrders,
         totalCustomers,
         totalProducts,
         recentOrders,

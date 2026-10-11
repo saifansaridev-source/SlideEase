@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -20,7 +20,7 @@ export default function OrderTrackingPage() {
   const [verifyInput, setVerifyInput] = useState("");
   const [verifying, setVerifying] = useState(false);
 
-  const fetchOrder = (customParam = "") => {
+  const fetchOrder = useCallback((customParam = "") => {
     if (!orderId) return;
     setLoading(true);
     setError("");
@@ -42,11 +42,11 @@ export default function OrderTrackingPage() {
         setLoading(false);
         setVerifying(false);
       });
-  };
+  }, [orderId]);
 
   useEffect(() => {
     fetchOrder();
-  }, [orderId]);
+  }, [fetchOrder]);
 
   const handleVerifySubmit = (e) => {
     e.preventDefault();
@@ -95,7 +95,7 @@ export default function OrderTrackingPage() {
     <div style={{ textAlign: "center", padding: "6rem" }}>
       <h2 style={{ color: "var(--primary-color)", marginBottom: "0.5rem" }}>Order Not Found</h2>
       <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}>{error || "We could not locate this order."}</p>
-      <Link href="/account/orders" className="btn btn-primary">View My Orders</Link>
+      <Link href="/dashboard" className="btn btn-primary">View My Orders</Link>
     </div>
   );
 
