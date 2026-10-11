@@ -42,13 +42,22 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Calculated order total must be greater than zero.' }, { status: 400 });
     }
 
-    const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    // Strip surrounding quotes that some env editors accidentally include
+    const key_id = (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').replace(/^["']|["']$/g, '').trim();
+    const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').replace(/^["']|["']$/g, '').trim();
 
     if (!key_id || !key_secret) {
       return NextResponse.json({
         success: false,
-        error: 'Razorpay API keys are not configured on the server. Please check your environment variables.'
+        error: 'Razorpay API keys are not configured on the server. Set NEXT_PUBLIC_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment.'
+      }, { status: 500 });
+    }
+
+    // Detect placeholder values that were never replaced with real credentials
+    if (key_secret.startsWith('REPLACE_WITH') || key_secret.includes('TestSecretKey') || key_secret.length < 20) {
+      return NextResponse.json({
+        success: false,
+        error: 'Razorpay key secret appears to be a placeholder. Go to Razorpay Dashboard → Settings → API Keys to get your real Key Secret and update RAZORPAY_KEY_SECRET in your environment.'
       }, { status: 500 });
     }
 

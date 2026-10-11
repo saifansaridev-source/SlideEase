@@ -24,7 +24,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').replace(/^["']|["']$/g, '').trim();
     const db = await getDb();
 
     // 1. Idempotency Check: Prevent duplicate orders on retries/refreshes
