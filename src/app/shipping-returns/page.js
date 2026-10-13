@@ -1,19 +1,26 @@
 import React from 'react';
 import Link from 'next/link';
+import { getCmsPage } from '@/lib/cms';
 
-export const metadata = {
-  title: 'Shipping & Returns Policy | SlideEase Footwear',
-  description: 'Review our India-wide delivery timelines, express shipping, and 30-day hassle-free returns and exchange policy at SlideEase Footwear.',
-};
+export async function generateMetadata() {
+  const cmsPage = await getCmsPage('shipping-returns');
+  return {
+    title: cmsPage?.metaTitle || 'Shipping & Returns Policy | SlideEase Footwear',
+    description: cmsPage?.metaDesc || 'Review our India-wide delivery timelines, express shipping, and 30-day hassle-free returns and exchange policy at SlideEase Footwear.',
+  };
+}
 
-export default function ShippingReturnsPage() {
+export default async function ShippingReturnsPage() {
+  const cmsPage = await getCmsPage('shipping-returns');
+  const heroTitle = cmsPage?.isDbDriven && cmsPage?.title ? cmsPage.title : 'Shipping & Returns Policy';
+
   return (
     <>
       <nav className="breadcrumb-nav" aria-label="Breadcrumb">
         <div className="container">
           <ol className="breadcrumb-list">
             <li><Link href="/">Home</Link></li>
-            <li className="breadcrumb-active">Shipping & Returns</li>
+            <li className="breadcrumb-active">{heroTitle}</li>
           </ol>
         </div>
       </nav>
@@ -21,15 +28,21 @@ export default function ShippingReturnsPage() {
       <section className="page-hero" style={{ backgroundImage: "url('/og_image.png')", minHeight: '280px', height: '32vh' }}>
         <div className="page-hero-overlay"></div>
         <div className="page-hero-content">
-          <span className="page-hero-tagline">Fulfilment & Satisfaction</span>
-          <h1 className="page-hero-title">Shipping & Returns Policy</h1>
+          <span className="page-hero-tagline">Fulfilment &amp; Satisfaction</span>
+          <h1 className="page-hero-title">{heroTitle}</h1>
           <p className="page-hero-desc">Everything you need to know about dispatch timelines, delivery, exchanges, and hassle-free returns.</p>
         </div>
       </section>
 
-      <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
-        <div className="container" style={{ maxWidth: '920px' }}>
-          <div className="legal-content">
+      {cmsPage?.isDbDriven && cmsPage?.content ? (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container legal-content" style={{ maxWidth: '920px' }} dangerouslySetInnerHTML={{ __html: cmsPage.content }} />
+        </section>
+      ) : (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container" style={{ maxWidth: '920px' }}>
+            <div className="legal-content">
+
 
             <div className="legal-toc">
               <h3>Table of Contents</h3>
@@ -184,7 +197,7 @@ export default function ShippingReturnsPage() {
             <div className="legal-section" id="contact-support">
               <h2>8. Customer Assistance</h2>
               <p>
-                Need help with a shipment, exchange, or return? Our dedicated support team is available Monday through Saturday, 9:30 AM to 6:30 PM IST.
+                Need help with a shipment, exchange, or return? Our dedicated support team is available Monday through Saturday, 9:30 AM to 6:30 PM IST at <a href="mailto:support@slideease.in" style={{ color: 'var(--accent-color)', fontWeight: 700 }}>support@slideease.in</a>.
               </p>
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
                 <Link href="/contact" className="btn btn-primary" style={{ padding: '0.75rem 1.75rem' }}>
@@ -199,9 +212,11 @@ export default function ShippingReturnsPage() {
               </div>
             </div>
 
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
+

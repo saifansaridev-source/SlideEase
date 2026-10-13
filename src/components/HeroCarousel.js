@@ -13,7 +13,7 @@ export default function HeroCarousel() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const res = await fetch('/api/hero-banner');
+        const res = await fetch('/api/hero-banner', { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.banner?.slides && data.banner.slides.length > 0) {
           setSlides(data.banner.slides);
@@ -67,7 +67,7 @@ export default function HeroCarousel() {
     <section className="hero-carousel" id="hero-banner-section" aria-label="Hero Slideshow">
       {activeSlides.map((slide, idx) => {
         const hasImage = Boolean(slide.image);
-        const bg = hasImage 
+        const bgImage = hasImage 
           ? `url('${slide.image}')` 
           : neutralPlaceholders[idx % neutralPlaceholders.length];
 
@@ -76,10 +76,11 @@ export default function HeroCarousel() {
             key={slide.id || idx}
             className={`carousel-slide ${activeSlide === idx ? 'active' : ''}`}
             style={{ 
-              backgroundImage: hasImage ? bg : undefined,
-              background: !hasImage ? bg : undefined,
+              backgroundImage: bgImage,
+              backgroundColor: '#0b111a',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
               display: activeSlide === idx ? 'block' : 'none',
               textAlign: slide.textAlign || 'left',
             }}
@@ -87,7 +88,7 @@ export default function HeroCarousel() {
             aria-label={slide.heading || slide.tagline}
           >
             <div className="carousel-overlay" style={{ 
-              background: hasImage 
+              backgroundColor: hasImage 
                 ? `rgba(15, 22, 34, ${(slide.overlayOpacity || 65) / 100})` 
                 : 'transparent' 
             }}></div>

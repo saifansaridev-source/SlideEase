@@ -241,27 +241,29 @@ export async function calculateAuthoritativePricing({
   const discountedSubtotal = Math.max(0, subtotal - totalDiscount);
 
   // 5. Shipping Fee Calculation
+  const freeThreshold = parseFloat(settings.freeShippingThreshold) || 999;
+  const flatRate = parseFloat(settings.shippingFlatRate) || 79;
+  const expressCharge = parseFloat(settings.expressDeliveryCharge) || 149;
+  const codCharge = parseFloat(settings.codCharge) || 49;
+  const isFreeShippingEligible = Boolean(settings.freeShippingEnabled) && (discountedSubtotal >= freeThreshold);
+
   let shippingFee = 0;
-  if (shippingMethod === 'express' && settings.expressEnabled) {
-    shippingFee = settings.expressDeliveryCharge || 149;
+  if (shippingMethod === 'express' && Boolean(settings.expressEnabled)) {
+    shippingFee = expressCharge;
   } else {
-    if (settings.freeShippingEnabled && discountedSubtotal >= settings.freeShippingThreshold) {
-      shippingFee = 0;
-    } else {
-      shippingFee = settings.shippingFlatRate || 79;
-    }
+    shippingFee = isFreeShippingEligible ? 0 : flatRate;
   }
 
-  // 6. Gift Wrap Fee
-  const giftWrapFee = giftWrap ? 99 : 0;
+  // 6. Gift Wrap Fee (standard ₹49 across storefront and server)
+  const giftWrapFee = giftWrap ? 49 : 0;
 
   // 7. COD Fee
   let codFee = 0;
   if (isCod) {
     if (!settings.codEnabled) {
-      throw new Error('Cash on Delivery is currently disabled.');
+      throw new Error('Cash on Delivery is currently disabled by store policy.');
     }
-    codFee = settings.codCharge || 49;
+    codFee = codCharge;
   }
 
   // 8. Tax Calculation

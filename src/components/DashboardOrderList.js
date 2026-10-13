@@ -134,6 +134,12 @@ export default function DashboardOrderList({ initialOrders = [] }) {
               </div>
             )}
 
+            {ord.returnAwb && (
+              <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#e0f2fe', borderRadius: '6px', fontSize: '0.8rem', color: '#0369a1', marginBottom: '1rem', border: '1px solid #bae6fd' }}>
+                ↩️ Reverse Pickup Scheduled — AWB: <code style={{ backgroundColor: '#fff', padding: '0.1rem 0.4rem', borderRadius: '3px', border: '1px solid #7dd3fc', fontWeight: 700 }}>{ord.returnAwb}</code> &bull; Hand over packed footwear to courier executive.
+              </div>
+            )}
+
             {/* Total & Action */}
             <div style={{
               display: 'flex',

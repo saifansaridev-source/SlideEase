@@ -1,8 +1,11 @@
-﻿import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function requireAdmin() {
   const cookieStore = await cookies();

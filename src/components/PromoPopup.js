@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 
 function shouldShowPopup(popup) {
@@ -55,6 +55,7 @@ export default function PromoPopup() {
   const [currentPopup, setCurrentPopup] = useState(null);
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const [copyState, setCopyState] = useState('idle'); // 'idle' | 'copied'
 
   useEffect(() => {
     let cleanup = () => {};
@@ -123,8 +124,34 @@ export default function PromoPopup() {
     setTimeout(() => {
       setVisible(false);
       setCurrentPopup(null);
+      setCopyState('idle');
     }, 300);
   };
+
+  const handleCopyCoupon = useCallback(async (e, code) => {
+    // Prevent backdrop click from firing
+    e.stopPropagation();
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        // Fallback for older browsers / non-HTTPS
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 2000);
+    } catch {
+      setCopyState('idle');
+    }
+  }, []);
 
   if (!visible || !currentPopup) return null;
 
@@ -172,11 +199,34 @@ export default function PromoPopup() {
         {/* Accent top strip */}
         <div style={{ height: '4px', background: accent }} />
 
-        {/* Optional banner image */}
+        {/* Optional banner image — natural aspect, no fixed height crop */}
         {popup.image && (
-          <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
-            <img src={popup.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
+          <div style={{
+            width: '100%',
+            overflow: 'hidden',
+            position: 'relative',
+            maxHeight: '240px',
+            backgroundColor: 'rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <img
+              src={popup.image}
+              alt=""
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '240px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 55%)',
+              pointerEvents: 'none',
+            }} />
           </div>
         )}
 
@@ -194,11 +244,54 @@ export default function PromoPopup() {
             <p style={{ margin: '0 0 1.2rem', fontSize: '0.87rem', opacity: 0.82, lineHeight: 1.7 }}>{popup.description}</p>
           )}
 
-          {/* Coupon pill */}
+          {/* Coupon pill — click to copy */}
           {popup.showCouponCode && popup.couponCode && (
-            <div style={{ margin: '0 0 1.2rem', padding: '0.7rem 1.1rem', border: `1.5px dashed ${accent}`, borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Coupon Code</span>
-              <span style={{ fontWeight: 800, letterSpacing: '0.1em', color: accent, fontSize: '1rem' }}>{popup.couponCode}</span>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={`Copy coupon code ${popup.couponCode}`}
+              onClick={(e) => handleCopyCoupon(e, popup.couponCode)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCopyCoupon(e, popup.couponCode); }}
+              style={{
+                margin: '0 0 1.2rem',
+                padding: '0.7rem 1.1rem',
+                border: `1.5px dashed ${accent}`,
+                borderRadius: '8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                backgroundColor: copyState === 'copied' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                outline: 'none',
+                userSelect: 'none',
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = copyState === 'copied' ? 'rgba(255,255,255,0.08)' : 'transparent'}
+              onFocus={e => e.currentTarget.style.boxShadow = `0 0 0 2px ${accent}`}
+              onBlur={e => e.currentTarget.style.boxShadow = 'none'}
+            >
+              <span style={{ fontSize: '0.78rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Coupon Code
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontWeight: 800, letterSpacing: '0.1em', color: accent, fontSize: '1rem' }}>
+                  {popup.couponCode}
+                </span>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '20px',
+                  background: copyState === 'copied' ? 'rgba(21,128,61,0.25)' : 'rgba(255,255,255,0.1)',
+                  color: copyState === 'copied' ? '#4ade80' : `${textColor}99`,
+                  transition: 'all 0.25s ease',
+                  letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {copyState === 'copied' ? '✓ Copied!' : '⎘ Copy'}
+                </span>
+              </div>
             </div>
           )}
 

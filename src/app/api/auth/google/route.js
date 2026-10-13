@@ -4,17 +4,15 @@ import { cookies } from 'next/headers';
 import { signSession } from '@/lib/auth';
 import { OAuth2Client } from 'google-auth-library';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 /**
  * POST /api/auth/google
  *
- * Accepts a Google ID token (credential) from the frontend, validates it
- * server-side using google-auth-library, then upserts the user in MongoDB
- * and issues a signed session cookie — exactly like the email/password flow.
- *
- * Body: { credential: "<google_id_token>" }
+ * Accepts a Google ID token (credential) from Google Identity Services,
+ * validates it server-side using google-auth-library (cryptographic signature,
+ * issuer, audience, and expiry), then upserts the customer user in MongoDB
+ * and issues an HTTP-only signed session cookie.
  */
 export async function POST(request) {
   try {
@@ -38,18 +36,16 @@ export async function POST(request) {
       );
     }
 
-    // ── 2. Verify Google credentials are configured ─────────────────────────
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      console.error('GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is not configured.');
+    // ── 2. Verify Google client ID configuration ────────────────────────────
+    if (!GOOGLE_CLIENT_ID) {
+      console.error('GOOGLE_CLIENT_ID / NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured.');
       return NextResponse.json(
-        { success: false, error: 'Google Sign-In is not configured on the server. Contact support.' },
+        { success: false, error: 'Google Sign-In is not configured on the server. Please check environment configuration.' },
         { status: 500 }
       );
     }
 
-    // ── 3. Verify the Google ID token server-side ──────────────────────────
-    //    Uses google-auth-library OAuth2Client — validates signature, issuer,
-    //    audience, and expiration. Never trust a bare email from the browser.
+    // ── 3. Cryptographically verify the Google ID token server-side ────────
     const client = new OAuth2Client(GOOGLE_CLIENT_ID);
     let ticket;
     try {
@@ -67,7 +63,7 @@ export async function POST(request) {
 
     const payload = ticket.getPayload();
 
-    // ── 4. Validate required claims ────────────────────────────────────────
+    // ── 4. Validate claims and email verification ─────────────────────────
     if (!payload) {
       return NextResponse.json(
         { success: false, error: 'Google token payload is empty.' },
@@ -75,7 +71,6 @@ export async function POST(request) {
       );
     }
 
-    // Require a verified email address from Google
     if (!payload.email_verified) {
       return NextResponse.json(
         {
@@ -88,44 +83,36 @@ export async function POST(request) {
 
     const googleEmail = payload.email.toLowerCase().trim();
     const googleName = payload.name || googleEmail.split('@')[0];
-    const googleSub = payload.sub; // Unique Google user ID
+    const googleSub = payload.sub; // Unique immutable Google user identifier
 
     // ── 5. Upsert the user in MongoDB ──────────────────────────────────────
-    //    Policy:
-    //    a) If a user with this email already exists → link (update googleSub)
-    //    b) If no user → create a new customer-role account
-    //    Never elevate role to admin from Google data.
+    // Security policy: Never promote role to admin via Google OAuth.
+    // Preserve existing role if already present; new users always get 'customer'.
     const db = await getDb();
-
     let user = await db.collection('users').findOne({ email: googleEmail });
 
     if (user) {
-      // Existing account: update Google sub if not already stored.
-      // Keep existing role — do NOT promote any account via Google login.
       if (!user.googleSub || user.googleSub !== googleSub) {
         await db.collection('users').updateOne(
           { _id: user._id },
           {
             $set: {
               googleSub,
-              // Update name only if not already set
               ...(user.name ? {} : { name: googleName }),
               updatedAt: new Date(),
             },
           }
         );
-        // Refresh user object
         user = await db.collection('users').findOne({ _id: user._id });
       }
     } else {
-      // New account: create customer record (no passwordHash — Google-only)
       const newUser = {
         name: googleName,
         email: googleEmail,
         googleSub,
-        passwordHash: null, // Not a password account
-        role: 'customer',   // Always customer — never admin from Google
-        points: 100,        // Welcome bonus
+        passwordHash: null,
+        role: 'customer',   // Enforce customer role
+        points: 100,        // Welcome loyalty bonus
         cart: [],
         wishlist: [],
         createdAt: new Date(),
@@ -136,7 +123,6 @@ export async function POST(request) {
     }
 
     // ── 6. Create session cookie ───────────────────────────────────────────
-    //    Reuse the same signSession / cookie format as email/password login.
     const sessionToken = signSession({
       userId: user._id.toString(),
       email: user.email,

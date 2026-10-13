@@ -1,19 +1,26 @@
 import React from 'react';
 import Link from 'next/link';
+import { getCmsPage } from '@/lib/cms';
 
-export const metadata = {
-  title: 'Privacy Policy | SlideEase Footwear',
-  description: 'SlideEase Footwear Privacy Policy — how we collect, use, and protect your personal data. GDPR and CCPA compliant.',
-};
+export async function generateMetadata() {
+  const cmsPage = await getCmsPage('privacy');
+  return {
+    title: cmsPage?.metaTitle || 'Privacy Policy | SlideEase Footwear',
+    description: cmsPage?.metaDesc || 'SlideEase Footwear Privacy Policy — how we collect, use, and protect your personal data. GDPR and CCPA compliant.',
+  };
+}
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const cmsPage = await getCmsPage('privacy');
+  const heroTitle = cmsPage?.isDbDriven && cmsPage?.title ? cmsPage.title : 'Privacy Policy';
+
   return (
     <>
       <nav className="breadcrumb-nav" aria-label="Breadcrumb">
         <div className="container">
           <ol className="breadcrumb-list">
             <li><Link href="/">Home</Link></li>
-            <li className="breadcrumb-active">Privacy Policy</li>
+            <li className="breadcrumb-active">{heroTitle}</li>
           </ol>
         </div>
       </nav>
@@ -22,13 +29,19 @@ export default function PrivacyPage() {
         <div className="page-hero-overlay"></div>
         <div className="page-hero-content">
           <span className="page-hero-tagline">Your Data</span>
-          <h1 className="page-hero-title">Privacy Policy</h1>
-          <p className="page-hero-desc">Last updated: July 1, 2026 | GDPR & CCPA Compliant</p>
+          <h1 className="page-hero-title">{heroTitle}</h1>
+          <p className="page-hero-desc">Last updated: July 1, 2026 | GDPR &amp; CCPA Compliant</p>
         </div>
       </section>
 
-      <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
-        <div className="container legal-content" style={{ maxWidth: '900px' }}>
+      {cmsPage?.isDbDriven && cmsPage?.content ? (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container legal-content" style={{ maxWidth: '900px' }} dangerouslySetInnerHTML={{ __html: cmsPage.content }} />
+        </section>
+      ) : (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container legal-content" style={{ maxWidth: '900px' }}>
+
 
           {/* Essential Extracts */}
           <div style={{ backgroundColor: 'var(--primary-light, #f0f9ff)', borderLeft: '4px solid var(--primary-color)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'left' }}>
@@ -118,12 +131,13 @@ export default function PrivacyPage() {
 
           <div className="legal-section" id="pp-4">
             <h2>4. Data Sharing & Third Parties</h2>
-            <p>We do <strong>not sell</strong> your personal data to third parties. We may share your data with:</p>
+            <p>We do <strong>not sell</strong> your personal data to third parties. We only share essential operational data with verified service partners:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-              <li><strong>Payment Processors:</strong> Stripe, Razorpay for secure payment processing.</li>
-              <li><strong>Shipping Partners:</strong> Courier companies for order delivery.</li>
-              <li><strong>Analytics Providers:</strong> Google Analytics for website performance analysis.</li>
-              <li><strong>Legal Requirements:</strong> When required by law or to protect our legal rights.</li>
+              <li><strong>Payment Gateway:</strong> Razorpay for PCI-DSS compliant secure checkout and verification. Card credentials are never handled or stored on SlideEase servers.</li>
+              <li><strong>Logistics Partners:</strong> Shiprocket, Delhivery, and Blue Dart for order fulfillment, live tracking, and reverse pickup logistics.</li>
+              <li><strong>Evidence Photos:</strong> Customer-uploaded product photographs are securely stored on private cloud storage solely to verify returns and process exchange/refund eligibility.</li>
+              <li><strong>Transactional Communications:</strong> Resend API for sending order confirmations, dispatch notices, and return status notifications.</li>
+              <li><strong>Legal Compliance:</strong> When required by applicable statutory authorities under Indian law.</li>
             </ul>
           </div>
 
@@ -131,57 +145,57 @@ export default function PrivacyPage() {
             <h2>5. Data Security</h2>
             <p>We implement industry-standard security measures to protect your data:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-              <li>256-bit SSL/TLS encryption for all data in transit</li>
-              <li>AES-256 encryption for sensitive data at rest</li>
-              <li>Regular security audits and vulnerability assessments</li>
-              <li>PCI-DSS compliant payment processing</li>
-              <li>Role-based access controls for employee data access</li>
-              <li>CSRF and XSS protection on all forms</li>
+              <li>TLS 1.3 encryption for all data in transit across HTTPS</li>
+              <li>HMAC SHA-256 cryptographically verified sessions and webhook authentication</li>
+              <li>Timing-safe comparison checks protecting against timing attacks</li>
+              <li>PCI-DSS compliant payment processing via Razorpay</li>
+              <li>Role-based access controls for administrative dashboard operations</li>
+              <li>Server-side file validation and MIME filtering for customer uploads</li>
             </ul>
           </div>
 
           <div className="legal-section" id="pp-6">
             <h2>6. Data Retention</h2>
-            <p>We retain your personal data for as long as necessary to fulfill the purposes outlined in this policy, unless a longer retention period is required by law. Account data is retained until you request deletion. Order data is retained for 7 years for tax and audit purposes.</p>
+            <p>We retain your personal data for as long as necessary to fulfill orders, process warranty or return requests, and comply with tax and accounting requirements.</p>
           </div>
 
           <div className="legal-section" id="pp-7">
-            <h2>7. Your Rights (GDPR/CCPA)</h2>
-            <p>Under GDPR (EU residents) and CCPA (California residents), you have the following rights:</p>
+            <h2>7. Your Rights (GDPR/CCPA & Indian Digital Personal Data Protection)</h2>
+            <p>You have the right to access, review, correct, or request deletion of your personal account information at any time.</p>
             <div className="rights-grid">
-              <div className="right-card"><h4>🔍 Right to Access</h4><p>Request a copy of all personal data we hold about you.</p></div>
-              <div className="right-card"><h4>✏️ Right to Rectification</h4><p>Request correction of inaccurate or incomplete data.</p></div>
-              <div className="right-card"><h4>🗑️ Right to Erasure</h4><p>Request deletion of your personal data ("Right to be Forgotten").</p></div>
-              <div className="right-card"><h4>📦 Right to Portability</h4><p>Receive your data in a machine-readable format.</p></div>
-              <div className="right-card"><h4>🚫 Right to Object</h4><p>Object to processing of your data for marketing.</p></div>
-              <div className="right-card"><h4>⏸️ Right to Restrict</h4><p>Request restriction of processing under certain conditions.</p></div>
+              <div className="right-card"><h4>🔍 Right to Access</h4><p>Request a copy of personal information and order history.</p></div>
+              <div className="right-card"><h4>✏️ Right to Rectification</h4><p>Request correction of inaccurate shipping or profile data.</p></div>
+              <div className="right-card"><h4>🗑️ Right to Erasure</h4><p>Request deletion of your account and profile records.</p></div>
+              <div className="right-card"><h4>📦 Right to Portability</h4><p>Export your order and address data upon request.</p></div>
             </div>
-            <p style={{ marginTop: '1rem' }}>To exercise any of these rights, contact us at <strong>privacy@your-domain.com</strong>. We will respond within 30 days.</p>
+            <p style={{ marginTop: '1rem' }}>To exercise any of these rights, contact our Data Grievance Officer at <strong>support@slideease.in</strong>.</p>
           </div>
 
           <div className="legal-section" id="pp-8">
             <h2>8. Children's Privacy</h2>
-            <p>Our services are not directed to individuals under 18 years of age. We do not knowingly collect personal information from children. If we discover that we have collected data from a child, we will delete it promptly.</p>
+            <p>Our website is intended for general audiences. We do not knowingly collect personal data from minors under 18 years of age.</p>
           </div>
 
           <div className="legal-section" id="pp-9">
             <h2>9. Changes to This Policy</h2>
-            <p>We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting a notice on our website and updating the "Last Updated" date. Continued use of our services after changes constitutes acceptance of the updated policy.</p>
+            <p>We may update this Privacy Policy periodically. Any modifications will be posted directly with an updated revision date.</p>
           </div>
 
           <div className="legal-section" id="pp-10">
             <h2>10. Contact Us</h2>
-            <p>For any privacy-related inquiries:</p>
+            <p>For any privacy, order, or customer assistance inquiries:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-              <li><strong>Data Protection Officer:</strong> privacy@your-domain.com</li>
-              <li><strong>General Support:</strong> support@your-domain.com</li>
-              <li><strong>Phone:</strong> +91 22 4567 8900</li>
-              <li><strong>Address:</strong> 1002 Bldg No 1d, Kopari, Powai, Mumbai 400076, India</li>
+              <li><strong>Customer Support & Returns:</strong> support@slideease.in</li>
+              <li><strong>General Inquiries:</strong> contact@slideease.in</li>
+              <li><strong>Administrative Operations:</strong> admin@slideease.in</li>
+              <li><strong>Corporate Address:</strong> Powai, Mumbai 400076, Maharashtra, India</li>
             </ul>
           </div>
 
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
     </>
   );
 }
+

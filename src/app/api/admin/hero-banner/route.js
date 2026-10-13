@@ -2,6 +2,9 @@ import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { DEFAULT_HERO_SLIDES } from '@/lib/cms-defaults';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const db = await getDb();

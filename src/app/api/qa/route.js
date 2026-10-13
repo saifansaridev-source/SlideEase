@@ -1,8 +1,11 @@
-﻿import { getDb } from "@/lib/mongodb";
+import { getDb } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getSession() {
   try {
@@ -25,7 +28,14 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json({ success: true, questions: questions.map((q) => ({ ...q, _id: q._id.toString() })) });
+    return NextResponse.json({
+      success: true,
+      questions: questions.map((q) => ({ ...q, _id: q._id.toString() }))
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      }
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -34,7 +44,8 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const session = await getSession();
-    const { productId, question } = await request.json();
+    const body = await request.json();
+    const { productId, question, customerName } = body;
     if (!productId) return NextResponse.json({ success: false, error: "productId required" }, { status: 400 });
     if (!question || question.trim().length < 5)
       return NextResponse.json({ success: false, error: "Question must be at least 5 characters." }, { status: 400 });
@@ -47,6 +58,7 @@ export async function POST(request) {
       question: question.trim().substring(0, 500),
       answer: null,
       askedBy: session?.email || "guest",
+      customerName: (customerName && customerName.trim()) || session?.name || "Customer",
       answeredBy: null,
       status: "pending",
       createdAt: new Date(),
@@ -54,7 +66,11 @@ export async function POST(request) {
     };
 
     const result = await db.collection("questions").insertOne(doc);
-    return NextResponse.json({ success: true, id: result.insertedId.toString(), message: "Your question has been submitted and will be answered shortly." });
+    return NextResponse.json({
+      success: true,
+      id: result.insertedId.toString(),
+      message: "Your question has been submitted successfully and will appear once answered by our team."
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

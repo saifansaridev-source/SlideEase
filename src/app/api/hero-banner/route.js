@@ -2,6 +2,9 @@ import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { DEFAULT_HERO_SLIDES } from '@/lib/cms-defaults';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const db = await getDb();
@@ -22,6 +25,10 @@ export async function GET() {
         heroImage2: bannerConfig?.heroImage2 || savedSlides[1]?.image || '',
         heroImage3: bannerConfig?.heroImage3 || savedSlides[2]?.image || '',
         slides: savedSlides,
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
       }
     });
   } catch (error) {

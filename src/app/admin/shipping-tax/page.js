@@ -60,10 +60,11 @@ export default function AdminShippingTax() {
       });
       const json = await res.json();
       if (json.success) {
-        setMsg('Shipping & Tax settings saved successfully.');
-        setTimeout(() => setMsg(''), 4000);
+        setMsg('✓ Shipping & Tax settings saved and synchronized with storefront checkout.');
+        if (json.data) setSettings(prev => ({ ...prev, ...json.data }));
+        setTimeout(() => setMsg(''), 4500);
       } else {
-        setErr(json.error);
+        setErr(json.error || 'Failed to save settings.');
       }
     } finally {
       setSaving(false);
@@ -115,7 +116,7 @@ export default function AdminShippingTax() {
                   type={type}
                   className="form-input"
                   value={settings[key] ?? ''}
-                  onChange={e => handleChange(key, type === 'number' ? parseFloat(e.target.value) : e.target.value)}
+                  onChange={e => handleChange(key, type === 'number' ? (e.target.value === '' ? '' : parseFloat(e.target.value)) : e.target.value)}
                   min={type === 'number' ? 0 : undefined}
                 />
                 {help && <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>{help}</small>}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -162,6 +162,72 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
       })
       .catch(() => { });
   }, [product.id]);
+
+  /* ── 10. Product Q&A State ── */
+  const [qaList, setQaList] = useState([]);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaAuthor, setQaAuthor] = useState('');
+  const [qaQuestion, setQaQuestion] = useState('');
+  const [qaSubmitting, setQaSubmitting] = useState(false);
+  const [qaNotice, setQaNotice] = useState({ text: '', type: 'success' });
+
+  const fetchQuestions = useCallback(() => {
+    setQaLoading(true);
+    fetch(`/api/qa?productId=${product.id}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && Array.isArray(json.questions)) {
+          setQaList(json.questions);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setQaLoading(false));
+  }, [product.id]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
+
+  const handleQuestionSubmit = async (e) => {
+    e.preventDefault();
+    if (!qaQuestion.trim() || qaQuestion.trim().length < 5) {
+      setQaNotice({ text: 'Question must be at least 5 characters.', type: 'error' });
+      return;
+    }
+    if (qaQuestion.length > 500) {
+      setQaNotice({ text: 'Question must not exceed 500 characters.', type: 'error' });
+      return;
+    }
+
+    setQaSubmitting(true);
+    setQaNotice({ text: '', type: 'success' });
+    try {
+      const res = await fetch('/api/qa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          customerName: qaAuthor.trim() || 'Verified Shopper',
+          question: qaQuestion.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQaNotice({
+          text: '✓ Your question has been submitted! Our artisan care team will review and answer it shortly.',
+          type: 'success'
+        });
+        setQaQuestion('');
+        setQaAuthor('');
+      } else {
+        setQaNotice({ text: data.error || 'Failed to submit question.', type: 'error' });
+      }
+    } catch {
+      setQaNotice({ text: 'Network error submitting question.', type: 'error' });
+    } finally {
+      setQaSubmitting(false);
+    }
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -841,6 +907,135 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
 
               <button type="submit" className="btn btn-primary" style={{ padding: '0.85rem 2rem' }}>
                 Submit Customer Review
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 4.5: PRODUCT Q&A (QUESTIONS & ANSWERS) ────────────────── */}
+      <section className="product-qa-section section-padding" id="product-qa-section" style={{ backgroundColor: '#ffffff', borderTop: '1px solid var(--border-color)' }}>
+        <div className="container" style={{ maxWidth: '960px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+            <div>
+              <span className="craft-eyebrow" style={{ display: 'block', marginBottom: '0.4rem' }}>✦ Customer Inquiries</span>
+              <h2 className="section-title" style={{ fontSize: '1.8rem', textAlign: 'left', margin: 0 }}>Questions &amp; Answers</h2>
+              <p className="section-subtitle" style={{ textAlign: 'left', margin: '0.4rem 0 0' }}>
+                Have questions regarding sizing, fit, or the artisanal craft? Ask our master shoemakers.
+              </p>
+            </div>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-dark)', background: '#faf5ea', padding: '0.4rem 0.85rem', borderRadius: '20px', border: '1px solid rgba(201,169,97,0.3)' }}>
+              {qaList.length} {qaList.length === 1 ? 'Answered Question' : 'Answered Questions'}
+            </span>
+          </div>
+
+          {/* List of answered questions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '3rem' }}>
+            {qaLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading questions &amp; answers...</div>
+            ) : qaList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem', background: '#faf8f5', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
+                <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 500 }}>No questions asked yet for this pair.</p>
+                <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem' }}>Be the first to ask about fit, styling, or materials below!</p>
+              </div>
+            ) : (
+              qaList.map((item, idx) => (
+                <div key={item._id || idx} style={{ background: '#faf8f5', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: 'var(--primary-color)', color: '#fff', fontSize: '0.75rem', fontWeight: 800 }}>Q</span>
+                      <strong style={{ fontSize: '0.98rem', color: 'var(--primary-color)' }}>{item.question}</strong>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {item.customerName || 'Customer'} • {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : ''}
+                    </span>
+                  </div>
+
+                  {item.answer ? (
+                    <div style={{ marginLeft: '1.9rem', padding: '0.9rem 1.1rem', background: '#ffffff', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--accent-dark)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-dark)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>SlideEase Verified Answer</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-dark)', lineHeight: 1.6 }}>{item.answer}</p>
+                    </div>
+                  ) : (
+                    <div style={{ marginLeft: '1.9rem', fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      Pending answer from our workshop team.
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Ask a Question Box */}
+          <div style={{ background: '#fdfbf7', border: '1px solid rgba(201, 169, 97, 0.35)', borderRadius: 'var(--radius-md)', padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', color: 'var(--primary-color)', margin: '0 0 0.4rem' }}>
+              Ask a Question About {product.name}
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1.5rem' }}>
+              Our design &amp; fit specialists typically answer customer questions within 24 business hours.
+            </p>
+
+            {qaNotice.text && (
+              <div style={{
+                padding: '0.85rem 1.2rem',
+                backgroundColor: qaNotice.type === 'error' ? '#fee2e2' : '#dcfce7',
+                color: qaNotice.type === 'error' ? '#b91c1c' : '#15803d',
+                borderRadius: 'var(--radius-sm)',
+                marginBottom: '1.2rem',
+                fontSize: '0.88rem',
+                fontWeight: 600
+              }}>
+                {qaNotice.text}
+              </div>
+            )}
+
+            <form onSubmit={handleQuestionSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label htmlFor="qa-customer-name" style={{ display: 'block', fontWeight: 600, fontSize: '0.82rem', marginBottom: '0.35rem', color: 'var(--primary-color)' }}>
+                    Your Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="qa-customer-name"
+                    value={qaAuthor}
+                    onChange={(e) => setQaAuthor(e.target.value)}
+                    placeholder="e.g. Rahul K."
+                    style={{ width: '100%', padding: '0.7rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', background: '#fff', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1.2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label htmlFor="qa-question-text" style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--primary-color)' }}>
+                    Your Question *
+                  </label>
+                  <span style={{ fontSize: '0.75rem', color: qaQuestion.length > 500 ? '#dc2626' : 'var(--text-muted)' }}>
+                    {qaQuestion.length}/500
+                  </span>
+                </div>
+                <textarea
+                  id="qa-question-text"
+                  value={qaQuestion}
+                  onChange={(e) => setQaQuestion(e.target.value)}
+                  placeholder="e.g. Does this pair run true to size for wider feet? Is the memory foam footbed water-resistant?"
+                  rows={3}
+                  required
+                  style={{ width: '100%', padding: '0.75rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem', background: '#fff', resize: 'vertical', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={qaSubmitting}
+                className="btn btn-primary"
+                style={{ padding: '0.75rem 1.8rem', fontSize: '0.88rem' }}
+              >
+                {qaSubmitting ? 'Submitting Question...' : 'Submit Question'}
               </button>
             </form>
           </div>

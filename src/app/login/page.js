@@ -4,18 +4,24 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Script from 'next/script';
+import { useAuth } from '@/context/AuthContext';
 
 // ─── Google Sign-In Button (GIS) ─────────────────────────────────────────────
 function GoogleSignInButton({ onSuccess, onError, label = 'Continue with Google', disabled = false }) {
-  const btnRef = useRef(null);
+  const btnContainerRef = useRef(null);
   const [gisReady, setGisReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  const callbackRef = useRef(null);
 
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+  // Keep a stable ref to callbacks so the GIS credential callback always has fresh closures
+  callbackRef.current = { onSuccess, onError };
+
   const handleGoogleCallback = async (response) => {
+    const { onSuccess: successCb, onError: errorCb } = callbackRef.current;
     if (!response?.credential) {
-      onError('Google sign-in was cancelled or returned no credential. Please try again.');
+      errorCb('Google sign-in was cancelled or returned no credential. Please try again.');
       setLoading(false);
       return;
     }
@@ -28,50 +34,60 @@ function GoogleSignInButton({ onSuccess, onError, label = 'Continue with Google'
       });
       const data = await res.json();
       if (data.success) {
-        onSuccess(data.user);
+        successCb(data.user);
       } else {
-        onError(data.error || 'Google sign-in failed. Please try again.');
+        errorCb(data.error || 'Google sign-in failed. Please try again.');
       }
     } catch (err) {
-      onError('Network error during Google sign-in. Please check your connection.');
+      errorCb('Network error during Google sign-in. Please check your connection.');
     } finally {
       setLoading(false);
     }
   };
 
-  const initializeGIS = () => {
-    if (!GOOGLE_CLIENT_ID || typeof window === 'undefined' || !window.google?.accounts?.id) return;
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCallback,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-    setGisReady(true);
-  };
+  const callbackFnRef = useRef(handleGoogleCallback);
+  callbackFnRef.current = handleGoogleCallback;
 
-  const handleClick = () => {
-    if (disabled || loading || !gisReady) return;
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
-          if (btnRef.current) {
-            btnRef.current.style.display = 'block';
-            window.google.accounts.id.renderButton(btnRef.current, {
-              type: 'standard',
-              theme: 'outline',
-              size: 'large',
-              text: label.toLowerCase().includes('sign up') ? 'signup_with' : 'signin_with',
-              shape: 'rectangular',
-              width: 380,
-            });
-            const innerBtn = btnRef.current.querySelector('div[role="button"]');
-            if (innerBtn) innerBtn.click();
-          }
-        }
+  const renderGis = () => {
+    if (!GOOGLE_CLIENT_ID || typeof window === 'undefined' || !window.google?.accounts?.id) return;
+
+    try {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => callbackFnRef.current(response),
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        // Do NOT use ux_mode: 'popup' — let GIS decide (avoids popup-blocked errors)
       });
+
+      if (btnContainerRef.current) {
+        btnContainerRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(btnContainerRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: label.toLowerCase().includes('sign up') ? 'signup_with' : 'signin_with',
+          shape: 'rectangular',
+          width: 380,
+          logo_alignment: 'left',
+        });
+      }
+
+      setGisReady(true);
+
+      // NOTE: We intentionally do NOT call window.google.accounts.id.prompt() here.
+      // One Tap is not needed when we have an explicit Sign-In button, and prompt()
+      // causes [GSI_LOGGER] popup-blocked errors in browsers that block cross-origin popups.
+    } catch (e) {
+      console.warn('GIS init error:', e.message);
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      renderGis();
+    }
+  }, [label, GOOGLE_CLIENT_ID]);
 
   if (!GOOGLE_CLIENT_ID) return null;
 
@@ -80,53 +96,63 @@ function GoogleSignInButton({ onSuccess, onError, label = 'Continue with Google'
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
-        onLoad={initializeGIS}
-        onReady={initializeGIS}
+        onLoad={renderGis}
+        onReady={renderGis}
       />
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled || loading || !gisReady}
-        aria-label={label}
+      <div
         style={{
           width: '100%',
-          padding: '0.75rem 1rem',
-          borderRadius: '8px',
-          border: '1px solid #dadce0',
-          backgroundColor: (disabled || loading || !gisReady) ? '#f8f9fa' : '#ffffff',
-          color: '#3c4043',
-          fontSize: '0.9rem',
-          fontWeight: 600,
-          fontFamily: 'inherit',
-          cursor: (disabled || loading || !gisReady) ? 'not-allowed' : 'pointer',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.65rem',
-          transition: 'all 0.2s ease',
-          boxShadow: (disabled || loading || !gisReady) ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
-          opacity: (disabled || loading) ? 0.7 : 1,
-          boxSizing: 'border-box',
+          minHeight: '44px',
+          opacity: disabled ? 0.6 : 1,
+          pointerEvents: disabled ? 'none' : 'auto',
         }}
       >
-        {loading ? (
-          <>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5f6368" strokeWidth="2" strokeLinecap="round"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
-            Connecting to Google...
-          </>
-        ) : (
-          <>
+        {loading && (
+          <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round"><path d="M21 12a9 9 0 11-6.219-8.56" /></svg>
+            Signing in with Google...
+          </div>
+        )}
+        <div
+          ref={btnContainerRef}
+          style={{
+            width: '100%',
+            display: loading ? 'none' : 'flex',
+            justifyContent: 'center',
+          }}
+        />
+        {!gisReady && !loading && (
+          <div
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              border: '1px solid #dadce0',
+              backgroundColor: '#ffffff',
+              color: '#3c4043',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.65rem',
+              boxSizing: 'border-box',
+            }}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {label}
-          </>
+            Loading Google Sign-In...
+          </div>
         )}
-      </button>
-      <div ref={btnRef} style={{ display: 'none' }} aria-hidden="true" />
+      </div>
     </>
   );
 }
@@ -147,6 +173,7 @@ function LoginContent() {
   const redirectPath = searchParams.get('redirect');
   const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const { user: currentAuthUser, refreshUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -154,6 +181,14 @@ function LoginContent() {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
+
+  // If already authenticated, redirect to destination
+  useEffect(() => {
+    if (!authLoading && currentAuthUser) {
+      const dest = redirectPath || (currentAuthUser.role === 'admin' ? '/admin' : '/dashboard');
+      router.replace(dest);
+    }
+  }, [currentAuthUser, authLoading, redirectPath, router]);
 
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -187,10 +222,11 @@ function LoginContent() {
     setPwdColor(['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#15803d'][score]);
   }, [regPassword]);
 
-  const handleGoogleSuccess = (user) => {
+  const handleGoogleSuccess = async (user) => {
     if (activeTab === 'login') { setLoginSuccess('Google sign-in successful! Redirecting...'); setLoginError(''); }
     else { setRegSuccess('Google sign-in successful! Redirecting...'); setRegError(''); }
-    setTimeout(() => { router.push(redirectPath || (user?.role === 'admin' ? '/admin' : '/dashboard')); router.refresh(); }, 800);
+    try { await refreshUser(); } catch {}
+    setTimeout(() => { router.push(redirectPath || (user?.role === 'admin' ? '/admin' : '/dashboard')); router.refresh(); }, 500);
   };
   const handleGoogleError = (msg) => {
     if (activeTab === 'login') setLoginError(msg);
@@ -205,7 +241,8 @@ function LoginContent() {
       const data = await res.json();
       if (data.success) {
         setLoginSuccess('Authentication successful! Directing to your account...');
-        setTimeout(() => { router.push(redirectPath || (data.user?.role === 'admin' ? '/admin' : '/dashboard')); router.refresh(); }, 750);
+        try { await refreshUser(); } catch {}
+        setTimeout(() => { router.push(redirectPath || (data.user?.role === 'admin' ? '/admin' : '/dashboard')); router.refresh(); }, 500);
       } else {
         setLoginError(data.error || 'Invalid email address or password.');
       }
@@ -226,7 +263,8 @@ function LoginContent() {
         const loginRes = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: regEmail, password: regPassword }) });
         const loginData = await loginRes.json();
         if (loginData.success) {
-          setTimeout(() => { router.push(redirectPath || '/dashboard'); router.refresh(); }, 1200);
+          try { await refreshUser(); } catch {}
+          setTimeout(() => { router.push(redirectPath || '/dashboard'); router.refresh(); }, 800);
         } else { setActiveTab('login'); }
       } else {
         setRegError(data.error || 'Registration failed. This email may already exist.');
@@ -234,6 +272,30 @@ function LoginContent() {
     } catch { setRegError('A network error occurred. Please try again.'); }
     finally { setRegLoading(false); }
   };
+
+  if (!authLoading && currentAuthUser) {
+    return (
+      <div className="auth-page-container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1.5rem', background: 'radial-gradient(ellipse at top, #faf6ee 0%, #f4eee1 100%)' }}>
+        <div className="auth-card" style={{ width: '100%', maxWidth: '440px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid rgba(201, 169, 97, 0.25)', boxShadow: '0 20px 45px -15px rgba(10, 22, 40, 0.08)', padding: '2.5rem 2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>👋</div>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: 'var(--primary-color)', margin: '0 0 0.5rem 0' }}>
+            Already Signed In
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '0 0 1.5rem 0' }}>
+            You are logged in as <strong>{currentAuthUser.name}</strong> ({currentAuthUser.email}).
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <Link href={redirectPath || (currentAuthUser.role === 'admin' ? '/admin' : '/dashboard')} className="btn btn-primary" style={{ padding: '0.75rem 1.25rem', borderRadius: '8px', textDecoration: 'none' }}>
+              Go to Account Dashboard →
+            </Link>
+            <Link href="/" className="btn btn-outline" style={{ padding: '0.75rem 1.25rem', borderRadius: '8px', textDecoration: 'none' }}>
+              Return to Storefront
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page-container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1.5rem', background: 'radial-gradient(ellipse at top, #faf6ee 0%, #f4eee1 100%)' }}>

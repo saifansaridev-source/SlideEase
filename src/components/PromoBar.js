@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const PROMO_MESSAGES = [
   <>Complimentary Pan-India Express Delivery on Bespoke Orders • Code <strong>SLIDEEASE10</strong></>,
@@ -13,18 +14,7 @@ const PROMO_MESSAGES = [
 export default function PromoBar() {
   const pathname = usePathname();
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [userState, setUserState] = useState(null);
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setUserState(data.user);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const { user: userState } = useAuth();
 
   useEffect(() => {
     const timer = setInterval(() => {

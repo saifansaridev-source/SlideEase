@@ -1,26 +1,35 @@
 import React from 'react';
 import Link from 'next/link';
 import { getDb } from '@/lib/mongodb';
+import { getCmsPage } from '@/lib/cms';
 
-export const metadata = {
-  title: 'About Us | SlideEase — Handcrafted Vegan Indian Footwear',
-  description: "Learn about SlideEase's mission to blend traditional Indian craftsmanship with cruelty-free vegan materials. Our story, values, and artisan partnerships.",
-};
+export async function generateMetadata() {
+  const cmsPage = await getCmsPage('about');
+  return {
+    title: cmsPage?.metaTitle || 'About Us | SlideEase — Handcrafted Vegan Indian Footwear',
+    description: cmsPage?.metaDesc || "Learn about SlideEase's mission to blend traditional Indian craftsmanship with cruelty-free vegan materials. Our story, values, and artisan partnerships.",
+  };
+}
 
 async function getAboutData() {
   try {
     const db = await getDb();
     const doc = await db.collection('settings').findOne({ _id: 'cms_sections' });
     return {
-      heroImage: doc?.aboutHeroImage || '/og_image.png'
+      heroImage: doc?.aboutHeroImage || '/og_image.png',
+      walkLightImage: doc?.walkLightImage || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&auto=format&fit=crop&q=80',
     };
   } catch (e) {
-    return { heroImage: '/og_image.png' };
+    return {
+      heroImage: '/og_image.png',
+      walkLightImage: 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&auto=format&fit=crop&q=80',
+    };
   }
 }
 
 export default async function AboutPage() {
-  const { heroImage } = await getAboutData();
+  const { heroImage, walkLightImage } = await getAboutData();
+  const cmsPage = await getCmsPage('about');
 
   return (
     <>
@@ -80,7 +89,7 @@ export default async function AboutPage() {
               </div>
             </div>
             <div className="brand-story-image">
-              <img src="https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&auto=format&fit=crop&q=80" alt="Artisan crafting footwear" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: 1.25, borderRadius: 'var(--radius-md)' }} />
+              <img src={walkLightImage} alt="Artisan crafting footwear" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: 1.25, borderRadius: 'var(--radius-md)' }} />
             </div>
           </div>
         </div>

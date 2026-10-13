@@ -8,11 +8,12 @@ import LiveChatWidget from '@/components/LiveChatWidget';
 import CookieConsent from '@/components/CookieConsent';
 import PromoPopup from '@/components/PromoPopup';
 import SplitScreenIntro from '@/components/SplitScreenIntro';
+import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { CompareProvider } from '@/context/CompareContext';
 import CompareBar from '@/components/CompareBar';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://slideease.in';
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
@@ -108,20 +109,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             />
           </noscript>
         )}
-        <CartProvider>
-          <CompareProvider>
-            <SplitScreenIntro />
-            <Header />
-            <main>{children}</main>
-            <Footer />
-            <WhatsAppButton />
-            <BackToTopButton />
-            <LiveChatWidget />
-            <CookieConsent />
-            <PromoPopup />
-            <CompareBar />
-          </CompareProvider>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <CompareProvider>
+              <SplitScreenIntro />
+              <Header />
+              <main>{children}</main>
+              <Footer />
+              <WhatsAppButton />
+              <BackToTopButton />
+              <LiveChatWidget />
+              <CookieConsent />
+              <PromoPopup />
+              <CompareBar />
+            </CompareProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

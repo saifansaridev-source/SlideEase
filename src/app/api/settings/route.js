@@ -7,6 +7,8 @@ const PUBLIC_DEFAULTS = {
   supportEmail: 'support@slideease.in',
   supportPhone: '+91 98200 12345',
   whatsappNumber: '919820012345',
+  address: 'Unit 402, Heritage Crafts Complex, Lower Parel, Mumbai, Maharashtra - 400013',
+  gstNumber: '27AABCS1429B1Z8',
   maintenanceMode: false,
   freeShippingThreshold: 999,
   shippingFlatRate: 79,
@@ -25,6 +27,8 @@ export async function GET() {
       supportEmail: generalDoc.supportEmail,
       supportPhone: generalDoc.supportPhone,
       whatsappNumber: generalDoc.whatsappNumber,
+      address: generalDoc.address || PUBLIC_DEFAULTS.address,
+      gstNumber: generalDoc.gstNumber || PUBLIC_DEFAULTS.gstNumber,
       maintenanceMode: generalDoc.maintenanceMode,
     } : {};
 

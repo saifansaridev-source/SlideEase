@@ -29,14 +29,15 @@ export async function POST(request) {
 
     // 1. Idempotency Check: Prevent duplicate orders on retries/refreshes
     if (!isCod && razorpay_payment_id) {
-      const existingOrder = await db.collection('orders').findOne({
-        'payment.razorpayPaymentId': razorpay_payment_id
+      const existingPaidOrder = await db.collection('orders').findOne({
+        'payment.razorpayPaymentId': razorpay_payment_id,
+        'payment.status': 'Paid',
       });
-      if (existingOrder) {
+      if (existingPaidOrder) {
         return NextResponse.json({
           success: true,
-          orderId: existingOrder._id.toString(),
-          orderNumber: existingOrder.orderNumber,
+          orderId: existingPaidOrder._id.toString(),
+          orderNumber: existingPaidOrder.orderNumber,
           message: 'Payment already processed and order confirmed.',
           isExisting: true,
         });
@@ -88,8 +89,24 @@ export async function POST(request) {
       orderStatus = 'Processing';
     }
 
+    // Check if the order was already marked Paid by webhook
+    if (razorpay_order_id) {
+      const webhookConfirmedOrder = await db.collection('orders').findOne({
+        'payment.razorpayOrderId': razorpay_order_id,
+        'payment.status': 'Paid',
+      });
+      if (webhookConfirmedOrder) {
+        return NextResponse.json({
+          success: true,
+          orderId: webhookConfirmedOrder._id.toString(),
+          orderNumber: webhookConfirmedOrder.orderNumber,
+          message: 'Payment verified and order confirmed successfully!',
+          isExisting: true,
+        });
+      }
+    }
+
     // 3. BACKEND-AUTHORITATIVE PRICING RECALCULATION
-    // Re-verify all item prices, promotions, shipping, taxes, and coupon codes from DB
     const authoritativePricing = await calculateAuthoritativePricing({
       items: orderData.items,
       couponCode: orderData.couponCode || (orderData.coupon?.code),
@@ -100,11 +117,9 @@ export async function POST(request) {
       b2g1FreeSize: orderData.b2g1FreeSize,
     });
 
-    // 4. ATOMIC INVENTORY DEDUCTION (Phase 4)
-    // Decrement sizeStock and stockQty atomically. Rollback if any product is sold out.
+    // 4. ATOMIC INVENTORY DEDUCTION
     const decrementedItems = [];
     for (const item of authoritativePricing.items) {
-      // Exclude free items if marked
       const qtyToDeduct = item.quantity || 1;
       const sizeKey = String(item.size).trim();
 
@@ -205,42 +220,106 @@ export async function POST(request) {
       );
     }
 
-    // 6. Generate human-friendly order number
-    const orderNumber = `SE-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    // 6. Check for existing pending order draft (created during /api/checkout/razorpay)
+    let orderId;
+    let orderNumber;
+    let orderRecord;
 
-    const newOrder = {
-      orderNumber,
-      customer: {
-        firstName: orderData.firstName || orderData.firstname || '',
-        lastName: orderData.lastName || orderData.lastname || '',
-        email: (orderData.email || '').toLowerCase().trim(),
-        phone: orderData.phone || '',
-        address: orderData.address || '',
-        city: orderData.city || '',
-        state: orderData.state || '',
-        zip: orderData.zip || '',
-      },
-      items: authoritativePricing.items,
-      pricing: authoritativePricing.pricing,
-      coupon: authoritativePricing.coupon,
-      b2g1: authoritativePricing.b2g1,
-      giftWrapMessage: orderData.giftWrapMessage || '',
-      payment: {
-        method: isCod ? 'COD' : (orderData.paymentMethod || 'Razorpay Online'),
-        status: paymentStatus,
-        verified: paymentVerified,
-        razorpayOrderId: razorpay_order_id || null,
-        razorpayPaymentId: razorpay_payment_id || null,
-        paidAt: paymentVerified ? new Date() : null,
-      },
-      status: orderStatus,
-      fulfillmentStatus: 'Unfulfilled',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const existingPendingOrder = razorpay_order_id
+      ? await db.collection('orders').findOne({ 'payment.razorpayOrderId': razorpay_order_id })
+      : null;
 
-    const insertResult = await db.collection('orders').insertOne(newOrder);
-    const orderId = insertResult.insertedId.toString();
+    if (existingPendingOrder) {
+      orderId = existingPendingOrder._id.toString();
+      orderNumber = existingPendingOrder.orderNumber;
+
+      const customerPayload = {
+        firstName: orderData.firstName || orderData.firstname || existingPendingOrder.customer?.firstName || '',
+        lastName: orderData.lastName || orderData.lastname || existingPendingOrder.customer?.lastName || '',
+        email: (orderData.email || existingPendingOrder.customer?.email || '').toLowerCase().trim(),
+        phone: orderData.phone || existingPendingOrder.customer?.phone || '',
+        address: orderData.address || existingPendingOrder.customer?.address || '',
+        city: orderData.city || existingPendingOrder.customer?.city || '',
+        state: orderData.state || existingPendingOrder.customer?.state || 'Maharashtra',
+        zip: orderData.zip || existingPendingOrder.customer?.zip || '',
+      };
+
+      await db.collection('orders').updateOne(
+        { _id: existingPendingOrder._id },
+        {
+          $set: {
+            customer: customerPayload,
+            items: authoritativePricing.items,
+            pricing: authoritativePricing.pricing,
+            coupon: authoritativePricing.coupon,
+            b2g1: authoritativePricing.b2g1,
+            giftWrapMessage: orderData.giftWrapMessage || existingPendingOrder.giftWrapMessage || '',
+            payment: {
+              method: isCod ? 'COD' : (orderData.paymentMethod || 'Razorpay Online'),
+              status: paymentStatus,
+              verified: paymentVerified,
+              razorpayOrderId: razorpay_order_id || null,
+              razorpayPaymentId: razorpay_payment_id || null,
+              paidAt: paymentVerified ? new Date() : null,
+            },
+            status: orderStatus,
+            fulfillmentStatus: 'Unfulfilled',
+            updatedAt: new Date(),
+          }
+        }
+      );
+
+      orderRecord = {
+        ...existingPendingOrder,
+        orderNumber,
+        customer: customerPayload,
+        items: authoritativePricing.items,
+        pricing: authoritativePricing.pricing,
+        payment: {
+          method: isCod ? 'COD' : 'Razorpay Online',
+          status: paymentStatus,
+          verified: paymentVerified,
+          razorpayPaymentId,
+        },
+      };
+    } else {
+      orderNumber = `SE-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+
+      const newOrder = {
+        orderNumber,
+        customer: {
+          firstName: orderData.firstName || orderData.firstname || '',
+          lastName: orderData.lastName || orderData.lastname || '',
+          email: (orderData.email || '').toLowerCase().trim(),
+          phone: orderData.phone || '',
+          address: orderData.address || '',
+          city: orderData.city || '',
+          state: orderData.state || 'Maharashtra',
+          zip: orderData.zip || '',
+        },
+        items: authoritativePricing.items,
+        pricing: authoritativePricing.pricing,
+        coupon: authoritativePricing.coupon,
+        b2g1: authoritativePricing.b2g1,
+        giftWrapMessage: orderData.giftWrapMessage || '',
+        payment: {
+          method: isCod ? 'COD' : (orderData.paymentMethod || 'Razorpay Online'),
+          status: paymentStatus,
+          verified: paymentVerified,
+          razorpayOrderId: razorpay_order_id || null,
+          razorpayPaymentId: razorpay_payment_id || null,
+          paidAt: paymentVerified ? new Date() : null,
+        },
+        status: orderStatus,
+        fulfillmentStatus: 'Unfulfilled',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const insertResult = await db.collection('orders').insertOne(newOrder);
+      orderId = insertResult.insertedId.toString();
+      orderRecord = newOrder;
+    }
 
     // 7. If customer is authenticated, clear cart and award loyalty points
     try {
@@ -249,9 +328,9 @@ export async function POST(request) {
       if (sessionCookie) {
         const session = verifySession(sessionCookie.value);
         if (session && session.email) {
-          const earnedPoints = Math.floor(newOrder.pricing.total / 50); // 1 pt per ₹50 spent
+          const earnedPoints = Math.floor(orderRecord.pricing.total / 50); // 1 pt per ₹50 spent
           await db.collection('users').updateOne(
-            { email: session.email },
+            { email: session.email.toLowerCase().trim() },
             { 
               $set: { cart: [] },
               $inc: { points: earnedPoints },
@@ -265,7 +344,7 @@ export async function POST(request) {
 
     // 8. Dispatch transactional order confirmation email
     try {
-      await sendOrderConfirmationEmail(newOrder);
+      await sendOrderConfirmationEmail(orderRecord);
     } catch (emailErr) {
       console.warn('Order confirmation email trigger failed:', emailErr.message);
     }

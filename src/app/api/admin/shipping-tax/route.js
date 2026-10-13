@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function requireAdmin() {
   const cookieStore = await cookies();
   const sc = cookieStore.get('slidex_session');
@@ -32,7 +35,6 @@ const DEFAULTS = {
 export async function GET() {
   try {
     const db = await getDb();
-
     const doc = await db.collection('settings').findOne({ key: 'shipping_tax' });
 
     if (!doc) {
@@ -40,23 +42,82 @@ export async function GET() {
     }
 
     const { _id, key, ...data } = doc;
-    return NextResponse.json({ success: true, data: { ...DEFAULTS, ...data } });
+    const cleanData = {
+      ...DEFAULTS,
+      ...data,
+      freeShippingThreshold: parseFloat(data.freeShippingThreshold ?? DEFAULTS.freeShippingThreshold),
+      shippingFlatRate: parseFloat(data.shippingFlatRate ?? DEFAULTS.shippingFlatRate),
+      expressDeliveryCharge: parseFloat(data.expressDeliveryCharge ?? DEFAULTS.expressDeliveryCharge),
+      codCharge: parseFloat(data.codCharge ?? DEFAULTS.codCharge),
+      taxRate: parseFloat(data.taxRate ?? DEFAULTS.taxRate),
+      cgstRate: parseFloat(data.cgstRate ?? DEFAULTS.cgstRate),
+      sgstRate: parseFloat(data.sgstRate ?? DEFAULTS.sgstRate),
+      taxIncludedInPrice: Boolean(data.taxIncludedInPrice ?? DEFAULTS.taxIncludedInPrice),
+      codEnabled: Boolean(data.codEnabled ?? DEFAULTS.codEnabled),
+      expressEnabled: Boolean(data.expressEnabled ?? DEFAULTS.expressEnabled),
+      freeShippingEnabled: Boolean(data.freeShippingEnabled ?? DEFAULTS.freeShippingEnabled),
+      standardDeliveryDays: String(data.standardDeliveryDays || DEFAULTS.standardDeliveryDays),
+      expressDeliveryDays: String(data.expressDeliveryDays || DEFAULTS.expressDeliveryDays),
+    };
+
+    return NextResponse.json({ success: true, data: cleanData });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// POST/PUT: Save shipping & tax settings (upsert)
+// POST: Save shipping & tax settings (upsert)
 export async function POST(request) {
   try {
-    if (!await requireAdmin()) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!await requireAdmin()) {
+      return NextResponse.json({ success: false, error: 'Unauthorized administrative access.' }, { status: 401 });
+    }
     const body = await request.json();
 
-    // Only allow known setting keys to be saved
-    const allowed = Object.keys(DEFAULTS);
+    const NUMERIC_FIELDS = [
+      'freeShippingThreshold',
+      'shippingFlatRate',
+      'expressDeliveryCharge',
+      'codCharge',
+      'taxRate',
+      'cgstRate',
+      'sgstRate',
+    ];
+
+    const BOOLEAN_FIELDS = [
+      'freeShippingEnabled',
+      'expressEnabled',
+      'codEnabled',
+      'taxIncludedInPrice',
+    ];
+
+    const STRING_FIELDS = [
+      'standardDeliveryDays',
+      'expressDeliveryDays',
+    ];
+
     const update = {};
-    for (const k of allowed) {
-      if (body[k] !== undefined) update[k] = body[k];
+
+    for (const k of NUMERIC_FIELDS) {
+      if (body[k] !== undefined) {
+        const val = parseFloat(body[k]);
+        if (isNaN(val) || val < 0) {
+          return NextResponse.json({ success: false, error: `Invalid numeric value for "${k}". Must be 0 or greater.` }, { status: 400 });
+        }
+        update[k] = val;
+      }
+    }
+
+    for (const k of BOOLEAN_FIELDS) {
+      if (body[k] !== undefined) {
+        update[k] = Boolean(body[k]);
+      }
+    }
+
+    for (const k of STRING_FIELDS) {
+      if (body[k] !== undefined) {
+        update[k] = String(body[k]).trim();
+      }
     }
 
     const db = await getDb();
@@ -67,7 +128,15 @@ export async function POST(request) {
       { upsert: true }
     );
 
-    return NextResponse.json({ success: true, message: 'Shipping & Tax settings saved.' });
+    // Fetch the updated document to confirm persistence
+    const savedDoc = await db.collection('settings').findOne({ key: 'shipping_tax' });
+    const { _id, key, ...cleanSaved } = savedDoc || {};
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Shipping & Tax settings saved successfully.',
+      data: cleanSaved
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

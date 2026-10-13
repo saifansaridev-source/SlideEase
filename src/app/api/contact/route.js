@@ -38,7 +38,14 @@ export async function POST(request) {
 
     const result = await db.collection('inquiries').insertOne(inquiry);
 
-    // Send acknowledgement email safely
+    // Dispatch notifications safely
+    try {
+      const { sendContactInquiryNotification } = await import('@/lib/email');
+      await sendContactInquiryNotification(inquiry);
+    } catch (e) {
+      console.warn('Contact inquiry notification non-fatal error:', e.message);
+    }
+
     try {
       await sendEmail({
         to: cleanEmail,

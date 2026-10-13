@@ -73,10 +73,18 @@ function PopupPreview({ popup }) {
       {/* Top accent strip */}
       <div style={{ height: '4px', background: popup.accentColor || '#b8973e' }} />
 
-      {/* Image (if any) */}
+      {/* Image (if any) — natural aspect, no crop */}
       {popup.image && (
-        <div style={{ height: '180px', overflow: 'hidden' }}>
-          <img src={popup.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{
+          width: '100%',
+          maxHeight: '240px',
+          overflow: 'hidden',
+          backgroundColor: 'rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <img src={popup.image} alt="" style={{ width: '100%', height: 'auto', maxHeight: '240px', objectFit: 'contain', display: 'block' }} />
         </div>
       )}
 

@@ -38,8 +38,28 @@ export async function GET(request) {
     
     let filter = {};
     
+    const subcategory = searchParams.get('subcategory');
+    
     if (category && category !== 'all') {
-      filter.category = category;
+      if (category === 'mens' || category === 'womens') {
+        filter.category = category;
+      } else {
+        filter.$or = [
+          { category: category },
+          { subcategory: category },
+          { type: category }
+        ];
+      }
+    }
+    if (subcategory && subcategory !== 'all') {
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { subcategory: subcategory },
+          { type: subcategory },
+          { slug: subcategory }
+        ]
+      });
     }
     if (type && type !== 'all') {
       filter.type = type;

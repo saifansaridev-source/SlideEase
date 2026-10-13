@@ -3,7 +3,7 @@ import { getDb } from '@/lib/mongodb';
 import { DEFAULT_BLOGS } from '@/lib/blog-defaults';
 
 export default async function sitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://slideease.in';
 
   // Generate URLs dynamically for all catalog footwear items
   const productUrls = PRODUCTS.map((product) => ({

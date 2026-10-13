@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com';
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://slideease.in';
   
   return {
     rules: [

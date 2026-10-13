@@ -7,7 +7,7 @@ import Script from 'next/script';
 import { useCart } from '@/context/CartContext';
 
 export default function CheckoutPage() {
-  const { cart, getSubtotal, discount, couponCode, clearCart } = useCart();
+  const { cart, getSubtotal, discount, couponCode, applyCoupon, removeCoupon, clearCart } = useCart();
   const router = useRouter();
 
   // Redirect if cart is empty
@@ -30,6 +30,11 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [paymentMethod, setPaymentMethod] = useState('razorpay'); // 'razorpay' | 'cod'
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Coupon browsing state
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [couponApplyMsg, setCouponApplyMsg] = useState(null); // { type: 'success'|'error', text }
   const [errorMsg, setErrorMsg] = useState('');
 
   // Admin-controlled shipping settings (loaded from DB via API)
@@ -53,8 +58,8 @@ export default function CheckoutPage() {
     setGiftWrap(savedGiftWrap);
     setGiftMessage(savedGiftMsg);
 
-    // Load admin-controlled shipping settings
-    fetch('/api/shipping-settings')
+    // Load admin-controlled shipping settings with cache: 'no-store'
+    fetch('/api/shipping-settings', { cache: 'no-store' })
       .then(r => r.json())
       .then(json => {
         if (json.success && json.data) {
@@ -62,6 +67,16 @@ export default function CheckoutPage() {
         }
       })
       .catch(() => { });
+
+    // Load public active coupons for display
+    setCouponsLoading(true);
+    fetch('/api/coupons')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setAvailableCoupons(json.coupons || []);
+      })
+      .catch(() => {})
+      .finally(() => setCouponsLoading(false));
 
     // Pre-fill user profile if logged in
     fetch('/api/auth/me')
@@ -81,14 +96,21 @@ export default function CheckoutPage() {
       .catch(() => { });
   }, []);
 
-  const FREE_SHIPPING_THRESHOLD = shippingSettings.freeShippingEnabled ? shippingSettings.freeShippingThreshold : Infinity;
+  const freeThreshold = parseFloat(shippingSettings.freeShippingThreshold) || 999;
+  const flatRate = parseFloat(shippingSettings.shippingFlatRate) || 79;
+  const expressCharge = parseFloat(shippingSettings.expressDeliveryCharge) || 149;
+  const codCharge = parseFloat(shippingSettings.codCharge) || 49;
+
   const subtotal = getSubtotal();
   const discountVal = Math.round(subtotal * discount);
+  const discountedSubtotal = Math.max(0, subtotal - discountVal);
+  const isFreeEligible = Boolean(shippingSettings.freeShippingEnabled) && (discountedSubtotal >= freeThreshold);
+
   const giftWrapVal = giftWrap ? 49 : 0;
-  const standardShippingVal = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (shippingSettings.shippingFlatRate || 79);
-  const shippingVal = shippingMethod === 'express' ? (shippingSettings.expressDeliveryCharge || 149) : standardShippingVal;
-  const codAdditional = paymentMethod === 'cod' ? (shippingSettings.codCharge || 49) : 0;
-  const totalVal = Math.max(0, subtotal - discountVal + giftWrapVal + shippingVal + codAdditional);
+  const standardShippingVal = isFreeEligible ? 0 : flatRate;
+  const shippingVal = (shippingMethod === 'express' && Boolean(shippingSettings.expressEnabled)) ? expressCharge : standardShippingVal;
+  const codAdditional = paymentMethod === 'cod' ? (Boolean(shippingSettings.codEnabled) ? codCharge : 0) : 0;
+  const totalVal = Math.max(0, discountedSubtotal + giftWrapVal + shippingVal + codAdditional);
 
   const orderData = {
     firstName,
@@ -171,6 +193,7 @@ export default function CheckoutPage() {
           shippingMethod,
           giftWrap,
           amount: totalVal,
+          orderData,
         }),
       });
 
@@ -458,10 +481,125 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 3. Shipping Method Selection */}
+            {/* 3. Available Coupons */}
             <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span>3.</span> Shipping Option
+                <span>3.</span> Available Coupons
+                {couponCode && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.78rem', fontWeight: 700, padding: '0.2rem 0.65rem', borderRadius: '20px', background: 'rgba(21,128,61,0.1)', color: '#15803d' }}>
+                    ✓ {couponCode} applied
+                  </span>
+                )}
+              </h2>
+
+              {couponApplyMsg && (
+                <div style={{
+                  padding: '0.65rem 1rem',
+                  borderRadius: '6px',
+                  marginBottom: '1rem',
+                  fontSize: '0.87rem',
+                  fontWeight: 600,
+                  backgroundColor: couponApplyMsg.type === 'success' ? 'rgba(21,128,61,0.08)' : 'rgba(185,28,28,0.08)',
+                  color: couponApplyMsg.type === 'success' ? '#15803d' : '#b91c1c',
+                  borderLeft: `3px solid ${couponApplyMsg.type === 'success' ? '#15803d' : '#b91c1c'}`,
+                }}>
+                  {couponApplyMsg.text}
+                </div>
+              )}
+
+              {couponsLoading ? (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem 0' }}>Loading available coupons…</p>
+              ) : availableCoupons.length === 0 ? (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem 0' }}>No active coupons available at this time.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {availableCoupons.map(c => {
+                    const isApplied = couponCode === c.code;
+                    const cartSubtotal = getSubtotal();
+                    const eligible = cartSubtotal >= (c.minOrder || 0);
+                    return (
+                      <div
+                        key={c.code}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '0.6rem',
+                          padding: '0.9rem 1rem',
+                          borderRadius: '8px',
+                          border: isApplied
+                            ? '2px solid #15803d'
+                            : '1.5px dashed var(--border-color)',
+                          backgroundColor: isApplied ? 'rgba(21,128,61,0.05)' : eligible ? 'transparent' : 'rgba(0,0,0,0.02)',
+                          opacity: !eligible ? 0.65 : 1,
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 800, letterSpacing: '0.07em', fontSize: '0.92rem', color: 'var(--primary-color)', fontFamily: 'monospace' }}>
+                              {c.code}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '0.18rem 0.55rem', borderRadius: '20px', background: 'rgba(184,151,62,0.12)', color: 'var(--accent-dark, #8a6820)' }}>
+                              {c.label}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            {c.minOrderLabel}
+                            {!eligible && ` — add ₹${Math.ceil((c.minOrder || 0) - cartSubtotal)} more to unlock`}
+                          </span>
+                        </div>
+                        {isApplied ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              removeCoupon();
+                              setCouponApplyMsg({ type: 'info', text: `Coupon ${c.code} removed.` });
+                              setTimeout(() => setCouponApplyMsg(null), 3000);
+                            }}
+                            style={{ padding: '0.4rem 0.9rem', borderRadius: '6px', border: '1.5px solid #15803d', background: 'transparent', color: '#15803d', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            ✓ Applied — Remove
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={!eligible}
+                            onClick={async () => {
+                              const result = await applyCoupon(c.code);
+                              if (result.success) {
+                                setCouponApplyMsg({ type: 'success', text: result.message });
+                              } else {
+                                setCouponApplyMsg({ type: 'error', text: result.message });
+                              }
+                              setTimeout(() => setCouponApplyMsg(null), 4000);
+                            }}
+                            style={{
+                              padding: '0.4rem 0.9rem',
+                              borderRadius: '6px',
+                              border: '1.5px solid var(--primary-color)',
+                              background: eligible ? 'var(--primary-color)' : 'transparent',
+                              color: eligible ? '#fff' : 'var(--text-muted)',
+                              fontWeight: 700,
+                              fontSize: '0.82rem',
+                              cursor: eligible ? 'pointer' : 'not-allowed',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Apply
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 4. Shipping Method Selection */}
+            <div className="checkout-card">
+              <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span>4.</span> Shipping Option
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -488,7 +626,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <span style={{ fontWeight: 700, color: standardShippingVal === 0 ? 'var(--success-color)' : 'var(--primary-color)' }}>
-                    {standardShippingVal === 0 ? 'FREE' : '₹99'}
+                    {standardShippingVal === 0 ? 'FREE' : `₹${flatRate}`}
                   </span>
                 </label>
 
@@ -514,15 +652,15 @@ export default function CheckoutPage() {
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Guaranteed Delivery: 1–2 Business Days</div>
                     </div>
                   </div>
-                  <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>₹149</span>
+                  <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>₹{expressCharge}</span>
                 </label>
               </div>
             </div>
 
-            {/* 4. Payment Selection */}
+            {/* 5. Payment Selection */}
             <div className="checkout-card">
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', color: 'var(--primary-color)', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span>4.</span> Payment Gateway
+                <span>5.</span> Payment Gateway
               </h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>

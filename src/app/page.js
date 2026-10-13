@@ -27,7 +27,7 @@ export default function Home() {
       .catch(() => {});
 
     // 2. Fetch admin-managed section images
-    fetch('/api/settings/cms-sections')
+    fetch('/api/settings/cms-sections', { cache: 'no-store' })
       .then((r) => r.json())
       .then((res) => {
         if (res.success && res.images) {
@@ -477,9 +477,9 @@ export default function Home() {
           <div className="trust-badges-grid">
             <div className="trust-badge-item">
               <div className="trust-badge-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  <polyline points="9 12 11 14 15 10"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
                 </svg>
               </div>
               <h4 className="trust-badge-title">PETA Approved</h4>
@@ -488,10 +488,12 @@ export default function Home() {
 
             <div className="trust-badge-item">
               <div className="trust-badge-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/>
-                  <path d="M18 15v4a2 2 0 0 1-2 2H6"/>
-                  <circle cx="18" cy="6" r="3"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18"/>
+                  <path d="M3 15h18"/>
+                  <path d="M9 3v18"/>
+                  <path d="M15 3v18"/>
                 </svg>
               </div>
               <h4 className="trust-badge-title">Indian Heritage</h4>
@@ -500,9 +502,9 @@ export default function Home() {
 
             <div className="trust-badge-item">
               <div className="trust-badge-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="1" y="3" width="15" height="13"/>
-                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
                   <circle cx="5.5" cy="18.5" r="2.5"/>
                   <circle cx="18.5" cy="18.5" r="2.5"/>
                 </svg>
@@ -513,9 +515,11 @@ export default function Home() {
 
             <div className="trust-badge-item">
               <div className="trust-badge-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.6rem' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 0 1 15.55-6.36L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                  <path d="M21 12a9 9 0 0 1-15.55 6.36L3 16"/>
+                  <path d="M3 21v-5h5"/>
                 </svg>
               </div>
               <h4 className="trust-badge-title">Easy Exchange</h4>

@@ -44,28 +44,54 @@ function ShopContent() {
   const [isPending, startTransition] = useTransition();
 
   /* ── URL params (all 7 filter dimensions) ── */
-  const category = searchParams.get('category') || 'all';
-  const type     = searchParams.get('type')     || 'all';
-  const price    = searchParams.get('price')    || 'all';
-  const color    = searchParams.get('color')    || 'all';
-  const material = searchParams.get('material') || 'all';
-  const stock    = searchParams.get('stock')    || 'all';
-  const sort     = searchParams.get('sort')     || 'default';
-  const q        = searchParams.get('q')        || '';
+  const category    = searchParams.get('category') || 'all';
+  const subcategory = searchParams.get('subcategory') || 'all';
+  const type        = searchParams.get('type')     || 'all';
+  const price       = searchParams.get('price')    || 'all';
+  const color       = searchParams.get('color')    || 'all';
+  const material    = searchParams.get('material') || 'all';
+  const stock       = searchParams.get('stock')    || 'all';
+  const sort        = searchParams.get('sort')     || 'default';
+  const q           = searchParams.get('q')        || '';
 
   /* ── Fetch state ── */
-  const [products,   setProducts]   = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [isFallback, setIsFallback] = useState(false);
+  const [products,       setProducts]       = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [isFallback,     setIsFallback]     = useState(false);
+  const [weavingGuildsImage, setWeavingGuildsImage] = useState(
+    'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80'
+  );
+
+  useEffect(() => {
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && Array.isArray(j.data)) {
+          setCategoriesList(j.data);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/settings/cms-sections', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.images?.weavingGuildsImage) {
+          setWeavingGuildsImage(res.images.weavingGuildsImage);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   /* ── Fetch /api/products; client-side post-filter for price/color/material/stock ── */
   const fetchProducts = useCallback(() => {
     setLoading(true);
     const p = new URLSearchParams();
-    if (category !== 'all') p.set('category', category);
-    if (type     !== 'all') p.set('type',     type);
-    if (sort !== 'default') p.set('sort',     sort);
-    if (q)                  p.set('q',        q);
+    if (category    !== 'all') p.set('category', category);
+    if (subcategory !== 'all') p.set('subcategory', subcategory);
+    if (type        !== 'all') p.set('type',     type);
+    if (sort        !== 'default') p.set('sort', sort);
+    if (q)                     p.set('q',        q);
 
     fetch('/api/products?' + p.toString())
       .then(r => r.json())
@@ -110,7 +136,7 @@ function ShopContent() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [category, type, price, color, material, stock, sort, q]);
+  }, [category, subcategory, type, price, color, material, stock, sort, q]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -131,9 +157,18 @@ function ShopContent() {
     womens: "Women's Footwear Collection",
   };
 
+  /* ── Dynamic Category Tabs & Options ── */
+  const categoryTabs = categoriesList.filter(c => !c.parent).length > 0 
+    ? [['all', 'All Products'], ...categoriesList.filter(c => !c.parent).map(c => [c.slug, c.name])]
+    : [['all','All Products'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]];
+
+  const categoryFilterOpts = categoriesList.filter(c => !c.parent).length > 0
+    ? [['all', 'All Genders'], ...categoriesList.filter(c => !c.parent).map(c => [c.slug, c.name])]
+    : [['all','All Genders'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]];
+
   /* ── Filter / sort option definitions ── */
   const row1Filters = [
-    { label: 'Gender:',  id: 'filter-category', val: category, key: 'category', opts: [['all','All Genders'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]] },
+    { label: 'Gender:',  id: 'filter-category', val: category, key: 'category', opts: categoryFilterOpts },
     { label: 'Style:',   id: 'filter-type',     val: type,     key: 'type',     opts: [['all','All Styles'],['slides','Slides & Slip-Ons'],['sandals','Sandals & Flats'],['loafers','Premium Loafers']] },
     { label: 'Price:',   id: 'filter-price',    val: price,    key: 'price',    opts: [['all','All Prices'],['under-1000','Under ₹1000'],['1000-1500','₹1000–₹1500'],['1500-2000','₹1500–₹2000'],['above-2000','Above ₹2000']] },
     { label: 'Color:',   id: 'filter-color',    val: color,    key: 'color',    opts: [['all','All Colors'],['tan','Tan'],['black','Black'],['teal','Teal'],['red','Red'],['purple','Purple'],['gold','Gold'],['blue','Blue'],['pink','Pink'],['green','Green']] },
@@ -164,7 +199,7 @@ function ShopContent() {
       {/* ── CATEGORY TABS ───────────────────────────────────────────────── */}
       <section className="container" style={{ padding: '3rem 1.5rem 1rem' }} id="shop-tab-filters-section">
         <div className="shop-categories-tab">
-          {[['all','All Products'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]].map(([val, label]) => (
+          {categoryTabs.map(([val, label]) => (
             <button
               key={val}
               id={`tab-${val}`}
@@ -381,7 +416,7 @@ function ShopContent() {
           <div className="brand-story-grid">
             <div className="brand-story-image">
               <img
-                src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80"
+                src={weavingGuildsImage}
                 alt="Weaving and leather crafting details"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: '1.25' }}
               />

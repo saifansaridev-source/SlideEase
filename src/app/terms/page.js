@@ -1,19 +1,26 @@
 import React from 'react';
 import Link from 'next/link';
+import { getCmsPage } from '@/lib/cms';
 
-export const metadata = {
-  title: 'Terms of Service | SlideEase Footwear',
-  description: 'Read the Terms of Service for SlideEase Footwear. Understand the rules and conditions that govern your use of our e-commerce platform.',
-};
+export async function generateMetadata() {
+  const cmsPage = await getCmsPage('terms');
+  return {
+    title: cmsPage?.metaTitle || 'Terms of Service | SlideEase Footwear',
+    description: cmsPage?.metaDesc || 'Read the Terms of Service for SlideEase Footwear. Understand the rules and conditions that govern your use of our e-commerce platform.',
+  };
+}
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const cmsPage = await getCmsPage('terms');
+  const heroTitle = cmsPage?.isDbDriven && cmsPage?.title ? cmsPage.title : 'Terms of Service';
+
   return (
     <>
       <nav className="breadcrumb-nav" aria-label="Breadcrumb">
         <div className="container">
           <ol className="breadcrumb-list">
             <li><Link href="/">Home</Link></li>
-            <li className="breadcrumb-active">Terms of Service</li>
+            <li className="breadcrumb-active">{heroTitle}</li>
           </ol>
         </div>
       </nav>
@@ -22,13 +29,19 @@ export default function TermsPage() {
         <div className="page-hero-overlay"></div>
         <div className="page-hero-content">
           <span className="page-hero-tagline">Legal</span>
-          <h1 className="page-hero-title">Terms of Service</h1>
+          <h1 className="page-hero-title">{heroTitle}</h1>
           <p className="page-hero-desc">Last updated: July 1, 2026</p>
         </div>
       </section>
 
-      <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
-        <div className="container legal-content" style={{ maxWidth: '900px' }}>
+      {cmsPage?.isDbDriven && cmsPage?.content ? (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container legal-content" style={{ maxWidth: '900px' }} dangerouslySetInnerHTML={{ __html: cmsPage.content }} />
+        </section>
+      ) : (
+        <section className="section-padding" style={{ backgroundColor: 'var(--bg-white)' }}>
+          <div className="container legal-content" style={{ maxWidth: '900px' }}>
+
           
           {/* Essential Extracts */}
           <div style={{ backgroundColor: 'var(--primary-light, #f0f9ff)', borderLeft: '4px solid var(--primary-color)', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem', textAlign: 'left' }}>
@@ -128,8 +141,10 @@ export default function TermsPage() {
             </ul>
           </div>
 
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
     </>
   );
 }
+

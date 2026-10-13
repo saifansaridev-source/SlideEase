@@ -415,6 +415,35 @@ export default function AdminVisualCMS() {
               <ImageUploadSlot id={`slot-${key}`} label={label} value={images[key]} onChange={val => handleImageChange(key, val)} />
             </div>
           ))}
+
+          {/* Sales Page — Empowering Local Weaving Guilds */}
+          <div style={{ background: '#fff', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1.8rem', boxShadow: 'var(--shadow-sm)' }}>
+            <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.1rem', color: 'var(--primary-color)' }}>Sales Page — Empowering Local Weaving Guilds</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.2rem' }}>
+              Feature image shown in the "Empowering Local Weaving Guilds" banner on the Shop (/shop) page.
+            </p>
+            <ImageUploadSlot
+              id="slot-weavingGuildsImage"
+              label="Sales Page — Weaving Guilds"
+              value={images.weavingGuildsImage}
+              onChange={val => handleImageChange('weavingGuildsImage', val)}
+            />
+          </div>
+
+          {/* About Page — Walk Light, Walk Right */}
+          <div style={{ background: '#fff', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1.8rem', boxShadow: 'var(--shadow-sm)' }}>
+            <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.1rem', color: 'var(--primary-color)' }}>About Page — Walk Light, Walk Right</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.2rem' }}>
+              Right-side feature image in the "Walk Light, Walk Right" section on the About (/about) page.
+            </p>
+            <ImageUploadSlot
+              id="slot-walkLightImage"
+              label="About Page — Walk Light"
+              value={images.walkLightImage}
+              onChange={val => handleImageChange('walkLightImage', val)}
+            />
+          </div>
+
           <div style={{ gridColumn: '1 / -1', textAlign: 'right' }}>
             <button type="button" onClick={handleSaveImages} disabled={saving} className="btn btn-primary" style={{ padding: '0.7rem 1.8rem', fontWeight: 600 }}>
               {saving ? 'Saving...' : 'Save Page Images'}

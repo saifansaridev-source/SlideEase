@@ -155,6 +155,12 @@ export function CartProvider({ children }) {
     sessionStorage.removeItem('slidex_discount');
   };
 
+  const removeCoupon = () => {
+    setDiscount(0);
+    setCouponCode('');
+    sessionStorage.removeItem('slidex_discount');
+  };
+
   const applyCoupon = async (code) => {
     const upperCode = code.trim().toUpperCase();
     try {
@@ -204,6 +210,7 @@ export function CartProvider({ children }) {
         toggleWishlist,
         clearCart,
         applyCoupon,
+        removeCoupon,
         getSubtotal,
         getCartCount,
       }}

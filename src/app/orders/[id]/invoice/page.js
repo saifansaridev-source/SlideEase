@@ -8,19 +8,25 @@ export default function OrderInvoicePage() {
   const params = useParams();
   const orderId = params?.id;
   const [order, setOrder] = useState(null);
+  const [storeSettings, setStoreSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!orderId) return;
 
-    fetch(`/api/orders/${orderId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && (data.data || data.order)) {
-          setOrder(data.data || data.order);
+    Promise.all([
+      fetch(`/api/orders/${orderId}`).then((r) => r.json()),
+      fetch('/api/settings').then((r) => r.json()).catch(() => null),
+    ])
+      .then(([orderRes, settingsRes]) => {
+        if (orderRes?.success && (orderRes.data || orderRes.order)) {
+          setOrder(orderRes.data || orderRes.order);
         } else {
-          setError(data.error || 'Order not found');
+          setError(orderRes?.error || 'Order not found');
+        }
+        if (settingsRes?.success && settingsRes.data) {
+          setStoreSettings(settingsRes.data);
         }
       })
       .catch((err) => setError(err.message))
@@ -59,11 +65,25 @@ export default function OrderInvoicePage() {
   const codCharge = order.pricing?.codCharge ?? order.codCharge ?? 0;
   const total = order.pricing?.total || order.total || Math.max(0, subtotal - discount + shipping + codCharge);
 
-  // 18% GST (9% CGST + 9% SGST)
+  const customer = order.customer || {};
+  const customerName = `${customer.firstName || customer.firstname || ''} ${customer.lastName || customer.lastname || ''}`.trim() || order.firstName || 'Valued Customer';
+  const customerEmail = customer.email || order.email || order.userEmail || '';
+  const customerPhone = customer.phone || order.phone || '';
+  const customerAddress = customer.address || order.address || '';
+  const customerCity = customer.city || order.city || '';
+  const customerState = customer.state || order.state || 'Maharashtra';
+  const customerZip = customer.zip || order.zip || '';
+
+  // Inter-State vs Intra-State GST Compliance (Origin: Maharashtra, State Code 27)
+  const isInterState = customerState && customerState.toLowerCase().trim() !== 'maharashtra';
+  // 18% Total GST (Footwear standard rate):
+  // Intra-State: 9% CGST + 9% SGST
+  // Inter-State: 18% IGST
   const taxableValue = Math.round(total / 1.18);
   const totalGst = total - taxableValue;
-  const cgst = Math.round(totalGst / 2);
-  const sgst = totalGst - cgst;
+  const cgst = isInterState ? 0 : Math.round(totalGst / 2);
+  const sgst = isInterState ? 0 : (totalGst - cgst);
+  const igst = isInterState ? totalGst : 0;
 
   const isCancelled = order.status?.toLowerCase() === 'cancelled';
   const isFailed = order.payment?.status?.toLowerCase() === 'failed';
@@ -78,15 +98,6 @@ export default function OrderInvoicePage() {
     month: 'short',
     year: 'numeric'
   }) : 'N/A';
-
-  const customer = order.customer || {};
-  const customerName = `${customer.firstName || customer.firstname || ''} ${customer.lastName || customer.lastname || ''}`.trim() || order.firstName || 'Valued Customer';
-  const customerEmail = customer.email || order.email || order.userEmail || '';
-  const customerPhone = customer.phone || order.phone || '';
-  const customerAddress = customer.address || order.address || '';
-  const customerCity = customer.city || order.city || '';
-  const customerState = customer.state || order.state || 'Maharashtra';
-  const customerZip = customer.zip || order.zip || '';
 
   return (
     <div style={{ backgroundColor: '#f1f5f9', minHeight: '100vh', padding: '2rem 1rem' }}>
@@ -222,13 +233,12 @@ export default function OrderInvoicePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '1.5rem' }}>
           <div>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 0.4rem', color: '#0f172a', letterSpacing: '-0.5px' }}>
-              SLIDEEASE FOOTWEAR
+              {(storeSettings?.storeName || 'SlideEase Footwear').toUpperCase()}
             </h1>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Handcrafted Heritage & Vegan Orthotic Footwear</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{storeSettings?.storeTagline || 'Handcrafted Heritage & Vegan Orthotic Footwear'}</p>
             <p style={{ margin: '0.3rem 0 0', fontSize: '0.82rem', color: '#475569' }}>
-              Unit 402, Heritage Crafts Complex, Lower Parel<br />
-              Mumbai, Maharashtra - 400013, India<br />
-              <strong>GSTIN:</strong> 27AABCS1429B1Z8 | <strong>State Code:</strong> 27
+              {storeSettings?.address || 'Unit 402, Heritage Crafts Complex, Lower Parel, Mumbai, Maharashtra - 400013'}<br />
+              <strong>GSTIN:</strong> {storeSettings?.gstNumber || '27AABCS1429B1Z8'} | <strong>State Code:</strong> 27 (Maharashtra)
             </p>
           </div>
 
@@ -327,19 +337,30 @@ export default function OrderInvoicePage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem', marginTop: '1.5rem', borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem' }}>
           {/* Left: GST Details */}
           <div style={{ fontSize: '0.8rem', color: '#475569', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#1e293b' }}>GST Breakdown (18% Total):</div>
+            <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: '#1e293b' }}>
+              GST Breakdown (18% Total — {isInterState ? 'Inter-State Supply' : 'Intra-State Supply'}):
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
               <span>Taxable Goods Value:</span>
               <span>₹{taxableValue.toLocaleString('en-IN')}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
-              <span>Central GST (CGST @ 9%):</span>
-              <span>₹{cgst.toLocaleString('en-IN')}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
-              <span>State GST (SGST @ 9%):</span>
-              <span>₹{sgst.toLocaleString('en-IN')}</span>
-            </div>
+            {isInterState ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
+                <span>Integrated GST (IGST @ 18%):</span>
+                <span>₹{igst.toLocaleString('en-IN')}</span>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
+                  <span>Central GST (CGST @ 9%):</span>
+                  <span>₹{cgst.toLocaleString('en-IN')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
+                  <span>State GST (SGST @ 9%):</span>
+                  <span>₹{sgst.toLocaleString('en-IN')}</span>
+                </div>
+              </>
+            )}
             <div style={{ borderTop: '1px dashed #cbd5e1', marginTop: '0.4rem', paddingTop: '0.4rem', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
               <span>Total Tax Component:</span>
               <span>₹{totalGst.toLocaleString('en-IN')}</span>
@@ -387,7 +408,7 @@ export default function OrderInvoicePage() {
             <div>3. Subject to Mumbai jurisdiction only.</div>
           </div>
           <div style={{ textAlign: 'center', minWidth: '160px' }}>
-            <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '2.5rem' }}>For SlideEase Footwear Pvt. Ltd.</div>
+            <div style={{ fontWeight: 700, color: '#1e293b', marginBottom: '2.5rem' }}>For {storeSettings?.storeName || 'SlideEase Footwear'}</div>
             <div style={{ borderTop: '1px solid #94a3b8', paddingTop: '0.3rem' }}>Authorised Signatory</div>
           </div>
         </div>

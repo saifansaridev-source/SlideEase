@@ -127,13 +127,28 @@ export default function FaqPage() {
     setOpenIndex(openIndex === index ? -1 : index);
   };
 
+  const [cmsData, setCmsData] = useState(null);
+
+  React.useEffect(() => {
+    fetch('/api/admin/cms?slug=faq')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data?.hasOverride && json.data.published !== false) {
+          setCmsData(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const heroHeading = cmsData?.title || 'Frequently Asked Questions';
+
   return (
     <>
       <nav className="breadcrumb-nav" aria-label="Breadcrumb">
         <div className="container">
           <ol className="breadcrumb-list">
             <li><Link href="/">Home</Link></li>
-            <li className="breadcrumb-active">FAQs</li>
+            <li className="breadcrumb-active">{heroHeading}</li>
           </ol>
         </div>
       </nav>
@@ -142,30 +157,37 @@ export default function FaqPage() {
         <div className="page-hero-overlay"></div>
         <div className="page-hero-content">
           <span className="page-hero-tagline">Help Center</span>
-          <h1 className="page-hero-title">Frequently Asked Questions</h1>
+          <h1 className="page-hero-title">{heroHeading}</h1>
           <p className="page-hero-desc">Everything you need to know about SlideEase Footwear.</p>
         </div>
       </section>
 
-      {/* FAQ Category Tabs */}
-      <section className="container" style={{ padding: '3rem 1.5rem 1rem' }}>
-        <div className="shop-categories-tab" id="faq-category-tabs">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              className={`category-tab-btn ${selectedCat === cat.id ? 'active' : ''}`}
-              onClick={() => setSelectedCat(cat.id)}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </section>
+      {cmsData?.content ? (
+        <section className="section-padding">
+          <div className="container legal-content" style={{ maxWidth: '850px' }} dangerouslySetInnerHTML={{ __html: cmsData.content }} />
+        </section>
+      ) : (
+        <>
+          {/* FAQ Category Tabs */}
+          <section className="container" style={{ padding: '3rem 1.5rem 1rem' }}>
+            <div className="shop-categories-tab" id="faq-category-tabs">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`category-tab-btn ${selectedCat === cat.id ? 'active' : ''}`}
+                  onClick={() => setSelectedCat(cat.id)}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </section>
 
-      {/* FAQ Accordions */}
-      <section className="section-padding" style={{ paddingTop: '1rem' }}>
-        <div className="container" style={{ maxWidth: '850px' }}>
-          <div className="faq-accordion-container" id="faq-container">
+          {/* FAQ Accordions */}
+          <section className="section-padding" style={{ paddingTop: '1rem' }}>
+            <div className="container" style={{ maxWidth: '850px' }}>
+              <div className="faq-accordion-container" id="faq-container">
+
             {filteredFaqs.map((item, idx) => {
               // Find index of this item in the master list so openIndex remains correct
               const masterIndex = faqItems.findIndex(f => f.q === item.q);
@@ -194,8 +216,11 @@ export default function FaqPage() {
               <a href="mailto:support@your-domain.com" className="btn btn-outline">Email Us</a>
             </div>
           </div>
-        </div>
-      </section>
+          </div>
+        </section>
+      </>
+    )}
     </>
   );
 }
+
