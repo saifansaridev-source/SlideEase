@@ -619,11 +619,62 @@ export default function AdminOrders() {
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.85rem', marginTop: '0.5rem', fontWeight: 800, fontSize: '1rem', borderTop: '1px solid #cbd5e1' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid #cbd5e1', paddingTop: '0.75rem', marginTop: '0.75rem', fontSize: '0.8rem', color: '#475569' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Subtotal:</span>
+                    <span style={{ fontWeight: 600 }}>₹{(selectedOrder.pricing?.subtotal || selectedOrder.subtotal || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  {(selectedOrder.pricing?.discount > 0 || selectedOrder.discount > 0) && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
+                      <span>Discount ({selectedOrder.coupon?.code || selectedOrder.couponCode || 'Promo'}):</span>
+                      <span style={{ fontWeight: 600 }}>-₹{(selectedOrder.pricing?.discount || selectedOrder.discount || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Shipping Charge:</span>
+                    <span style={{ fontWeight: 600, color: (selectedOrder.pricing?.shipping === 0 || selectedOrder.shipping === 0) ? '#16a34a' : '#0f172a' }}>
+                      {(selectedOrder.pricing?.shipping === 0 || selectedOrder.shipping === 0) ? 'FREE (Qualified > ₹999)' : `₹${selectedOrder.pricing?.shipping || selectedOrder.shipping || 79}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.85rem', marginTop: '0.5rem', fontWeight: 800, fontSize: '1rem', borderTop: '2px solid #0f172a' }}>
                   <span>Grand Total:</span>
                   <span style={{ color: 'var(--accent-color)' }}>
                     ₹{(selectedOrder.pricing?.total || selectedOrder.total || 0).toLocaleString('en-IN')}
                   </span>
+                </div>
+              </div>
+            </div>
+
+            {/* AUTOMATED NOTIFICATIONS & 48-HOUR REVIEW REQUEST STATUS */}
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.25rem', marginBottom: '1.5rem', background: '#f8fafc' }}>
+              <h4 style={{ margin: '0 0 0.8rem', fontSize: '0.92rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"></path></svg>
+                Customer Notifications &amp; 48-Hour Review Automation Status
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', fontSize: '0.8rem' }}>
+                <div style={{ background: '#ffffff', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>WhatsApp Confirmation</div>
+                  <div style={{ fontWeight: 600, color: '#0f172a', marginTop: '0.2rem' }}>
+                    {selectedOrder.payment?.verified || selectedOrder.payment?.status === 'Paid' || selectedOrder.paymentMethod === 'COD' ? '✓ Dispatched (or Simulated)' : 'Pending Verification'}
+                  </div>
+                </div>
+                <div style={{ background: '#ffffff', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>Shipping Alert (AWB)</div>
+                  <div style={{ fontWeight: 600, color: selectedOrder.trackingNumber ? '#15803d' : '#64748b', marginTop: '0.2rem' }}>
+                    {selectedOrder.trackingNumber ? `✓ Synced (${selectedOrder.courierName || 'Courier'})` : 'Awaiting Dispatch'}
+                  </div>
+                </div>
+                <div style={{ background: '#ffffff', padding: '0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>48-Hour Review Request</div>
+                  <div style={{ fontWeight: 600, marginTop: '0.2rem', color: selectedOrder.reviewReminderSent ? '#15803d' : (selectedOrder.deliveredAt ? '#b45309' : '#64748b') }}>
+                    {selectedOrder.reviewReminderSent
+                      ? `✓ Sent on ${new Date(selectedOrder.reviewReminderSentAt || Date.now()).toLocaleDateString('en-IN')}`
+                      : (selectedOrder.deliveredAt
+                          ? `⏳ Scheduled (eligible 48h after delivery: ${new Date(new Date(selectedOrder.deliveredAt).getTime() + 48*3600*1000).toLocaleDateString('en-IN')})`
+                          : 'Awaiting Order Delivery')}
+                  </div>
                 </div>
               </div>
             </div>

@@ -38,20 +38,32 @@ export async function GET(request) {
       }, { status: 400 });
     }
     
-    // Normalize discount
+    // Normalize discount to a fraction (0.10 for 10%)
     let discountFraction = 0;
-    if (coupon.type === 'percentage' || (!coupon.type && coupon.discount < 1)) {
-      discountFraction = coupon.discount <= 1 ? coupon.discount : coupon.discount / 100;
+    const rawDisc = parseFloat(coupon.discount || 0);
+    if (coupon.type === 'fixed') {
+      // Fixed amount — return as-is, fraction not applicable
+      discountFraction = 0;
+    } else if (rawDisc > 0 && rawDisc <= 1) {
+      // Already a fraction e.g. 0.10 = 10%
+      discountFraction = rawDisc;
+    } else if (rawDisc > 1 && rawDisc <= 100) {
+      // Integer percentage e.g. 10 = 10%
+      discountFraction = rawDisc / 100;
     }
+
+    const displayLabel = coupon.type === 'fixed'
+      ? `₹${coupon.discount} off applied!`
+      : `${Math.round(discountFraction * 100)}% discount applied`;
 
     return NextResponse.json({ 
       success: true, 
       discount: discountFraction,
       type: coupon.type || 'percentage',
-      value: coupon.discount,
+      value: rawDisc,
       maxDiscount: coupon.maxDiscount || null,
       code: coupon.code,
-      message: `Promo code applied! ${coupon.type === 'flat' ? `₹${coupon.discount} off` : `${Math.round(discountFraction * 100)}% discount applied`}.`
+      message: `Promo code applied! ${displayLabel}.`
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -94,20 +106,30 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    // Normalize discount to a fraction (0.10 for 10%)
     let discountFraction = 0;
-    if (coupon.type === 'percentage' || (!coupon.type && coupon.discount < 1)) {
-      discountFraction = coupon.discount <= 1 ? coupon.discount : coupon.discount / 100;
+    const rawDiscPost = parseFloat(coupon.discount || 0);
+    if (coupon.type === 'fixed') {
+      discountFraction = 0;
+    } else if (rawDiscPost > 0 && rawDiscPost <= 1) {
+      discountFraction = rawDiscPost;
+    } else if (rawDiscPost > 1 && rawDiscPost <= 100) {
+      discountFraction = rawDiscPost / 100;
     }
+
+    const postDisplayLabel = coupon.type === 'fixed'
+      ? `₹${coupon.discount} off applied!`
+      : `${Math.round(discountFraction * 100)}% discount applied`;
 
     return NextResponse.json({ 
       success: true, 
       valid: true,
       discount: discountFraction,
       type: coupon.type || 'percentage',
-      value: coupon.discount,
+      value: rawDiscPost,
       maxDiscount: coupon.maxDiscount || null,
       code: coupon.code,
-      message: `Promo code applied! ${coupon.type === 'flat' ? `₹${coupon.discount} off` : `${Math.round(discountFraction * 100)}% discount applied`}.`
+      message: `Promo code applied! ${postDisplayLabel}.`
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

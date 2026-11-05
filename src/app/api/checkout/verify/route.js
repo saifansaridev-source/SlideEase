@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import { calculateAuthoritativePricing } from '@/lib/pricing';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { sendOrderConfirmationWhatsApp, sendOrderConfirmationSMS } from '@/lib/notifications';
 import { ObjectId } from 'mongodb';
 
 export async function POST(request) {
@@ -342,11 +343,23 @@ export async function POST(request) {
       // Non-blocking
     }
 
-    // 8. Dispatch transactional order confirmation email
+    // 8. Dispatch transactional order confirmation email & WhatsApp
     try {
       await sendOrderConfirmationEmail(orderRecord);
     } catch (emailErr) {
       console.warn('Order confirmation email trigger failed:', emailErr.message);
+    }
+
+    try {
+      await sendOrderConfirmationWhatsApp(orderRecord);
+    } catch (waErr) {
+      console.warn('Order confirmation WhatsApp trigger failed:', waErr.message);
+    }
+
+    try {
+      await sendOrderConfirmationSMS(orderRecord);
+    } catch (smsErr) {
+      console.warn('Order confirmation SMS trigger failed:', smsErr.message);
     }
 
     return NextResponse.json({

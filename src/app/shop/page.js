@@ -9,8 +9,8 @@ const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://your-domain.com' },
-    { '@type': 'ListItem', position: 2, name: 'Shop', item: 'https://your-domain.com/shop' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://slideease.in' },
+    { '@type': 'ListItem', position: 2, name: 'Shop', item: 'https://slideease.in/shop' },
   ],
 };
 

@@ -13,8 +13,8 @@ async function requireAdmin() {
 }
 
 const DEFAULT_COUPONS = [
-  { code: 'SLIDEEASE10', discount: 0.10, minOrder: 0, active: true },
-  { code: 'STARTUPINDIA', discount: 0.10, minOrder: 0, active: true },
+  { code: 'SLIDEEASE10', discount: 10, type: 'percentage', minOrder: 0, active: true, description: 'Welcome newsletter discount — 10% off first order' },
+  { code: 'STARTUPINDIA', discount: 10, type: 'percentage', minOrder: 0, active: true, description: 'Startup India promotional offer — 10% off' },
 ];
 
 // GET: Retrieve all coupons, seeding defaults if empty

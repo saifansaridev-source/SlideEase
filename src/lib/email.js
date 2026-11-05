@@ -511,7 +511,131 @@ export async function sendRefundCompletedEmail(returnDoc, refundRecord = {}) {
   });
 }
 
-// ─── 9. CONTACT FORM ENQUIRY EMAIL ──────────────────────────────────────────
+// ─── 10. NEWSLETTER WELCOME EMAIL ────────────────────────────────────────────
+export async function sendWelcomeNewsletterEmail(email, name = '') {
+  if (!email) return { success: false, error: 'No recipient email provided' };
+
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://slideease.in';
+  const shopUrl  = `${SITE_URL}/shop`;
+  const cleanName = (name || '').trim();
+  const firstName = cleanName ? cleanName.split(' ')[0] : '';
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Slideease! Your 10% off code is inside 🎟️</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <!-- Preheader Preview Text -->
+  <div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+    No hands. No bending. Just step in, slide on, and go.
+  </div>
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;">
+
+    <!-- Header -->
+    <div style="background-color:#1a2332;padding:36px 28px;text-align:center;">
+      <h1 style="color:#c9a961;font-size:28px;font-weight:800;margin:0;letter-spacing:3px;text-transform:uppercase;">SLIDEEASE</h1>
+      <p style="color:#a0aab4;font-size:12px;margin:8px 0 0;text-transform:uppercase;letter-spacing:2px;">Step In. Slide On. Conquer Your Day.</p>
+    </div>
+
+    <!-- Hero Welcome -->
+    <div style="padding:40px 32px 24px;text-align:center;background:#fdfbf7;border-bottom:1px solid #e9e5dc;">
+      <p style="font-size:14px;color:#a88742;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;">Welcome to the Movement</p>
+      <h2 style="font-size:26px;font-weight:800;color:#1a2332;margin:0 0 16px;line-height:1.25;">${greeting}</h2>
+      <p style="font-size:16px;color:#4b5563;line-height:1.7;margin:0 0 20px;">
+        You've just taken your first step toward effortless living.
+      </p>
+      <p style="font-size:15px;color:#6b7280;line-height:1.7;margin:0;">
+        At Slideease, we believe that your footwear should match your ambition—not slow you down. Whether you're an achiever rushing through a packed schedule of meetings, visits to religious places, and social stops, or you're looking for a pain-free, zero-bending solution for a loved one, we engineered Slideease for you.
+      </p>
+    </div>
+
+    <!-- Discount Code -->
+    <div style="padding:32px;background:#1a2332;text-align:center;">
+      <p style="color:#c9a961;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 10px;">Your Exclusive Welcome Gift</p>
+      <p style="color:#ffffff;font-size:15px;margin:0 0 18px;line-height:1.5;">As a thank you for joining our community, here is <strong>10% off</strong> your very first order.</p>
+      <div style="display:inline-block;background:#c9a961;border-radius:8px;padding:18px 40px;margin-bottom:24px;">
+        <p style="color:#1a2332;font-size:24px;font-weight:900;margin:0;letter-spacing:4px;font-family:monospace;">SLIDEEASE10</p>
+      </div>
+      <br>
+      <a href="${shopUrl}" style="display:inline-block;background:#ffffff;color:#1a2332;text-decoration:none;padding:16px 40px;border-radius:6px;font-weight:800;font-size:15px;letter-spacing:0.5px;margin-top:4px;">
+        CLAIM YOUR 10% OFF NOW →
+      </a>
+    </div>
+
+    <!-- Feature Cards -->
+    <div style="padding:36px 28px;background:#ffffff;">
+      <h3 style="text-align:center;color:#1a2332;font-size:18px;font-weight:800;margin:0 0 28px;text-transform:uppercase;letter-spacing:1px;">What Makes Slideease Different?</h3>
+
+      <!-- Feature 1 -->
+      <div style="background:#fdfbf7;border:1px solid #e9e5dc;border-radius:10px;padding:22px;margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="background:#1a2332;border-radius:50%;width:44px;height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:44px;text-align:center;">👟</div>
+          <div>
+            <h4 style="color:#1a2332;font-size:15px;font-weight:700;margin:0 0 6px;">Hands-Free Technology</h4>
+            <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0;">Step straight in. No hands, no tying laces, no bending down.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2 -->
+      <div style="background:#fdfbf7;border:1px solid #e9e5dc;border-radius:10px;padding:22px;margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="background:#1a2332;border-radius:50%;width:44px;height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:44px;text-align:center;">🛡️</div>
+          <div>
+            <h4 style="color:#1a2332;font-size:15px;font-weight:700;margin:0 0 6px;">Double-Layer Shield</h4>
+            <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0;">4 hours of water resistance and a 4cm height boost to handle unexpected puddles.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 3 -->
+      <div style="background:#fdfbf7;border:1px solid #e9e5dc;border-radius:10px;padding:22px;">
+        <div style="display:flex;align-items:flex-start;gap:16px;">
+          <div style="background:#1a2332;border-radius:50%;width:44px;height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:44px;text-align:center;">🦶</div>
+          <div>
+            <h4 style="color:#1a2332;font-size:15px;font-weight:700;margin:0 0 6px;">Wide-Toe Comfort</h4>
+            <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0;">Room for your toes to spread naturally for peak real-world stability.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Closing -->
+    <div style="padding:32px 28px;background:#f8f9fa;border-top:1px solid #e9e5dc;text-align:center;">
+      <p style="color:#4b5563;font-size:15px;line-height:1.7;margin:0 0 20px;">
+        Don't let traditional shoes pull you back. It's time to experience <strong>comfort at its peak.</strong>
+      </p>
+      <a href="${shopUrl}" style="display:inline-block;background:#1a2332;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-weight:700;font-size:14px;">
+        Shop Slideease Now
+      </a>
+      <p style="color:#9ca3af;font-size:13px;margin:28px 0 0;line-height:1.5;">
+        Stay moving,<br>
+        <strong style="color:#4b5563;">The Slideease Team</strong>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#1a2332;padding:24px;text-align:center;">
+      <p style="color:#6b7280;font-size:11px;margin:0 0 8px;">Slideease Footwear • support@slideease.in</p>
+      <p style="color:#4b5563;font-size:10px;margin:0;">You're receiving this email because you subscribed at slideease.in. © ${new Date().getFullYear()} Slideease Footwear.</p>
+    </div>
+
+  </div>
+</body>
+</html>`;
+
+  return await sendEmail({
+    to: email,
+    subject: 'Welcome to Slideease! Your 10% off code is inside 🎟️',
+    html,
+    text: 'Welcome to Slideease! Use code SLIDEEASE10 for 10% off your first order. No hands. No bending. Just step in, slide on, and go. Visit slideease.in to shop now.',
+  });
+}
+
 export async function sendContactInquiryNotification(inquiry) {
   const adminHtml = baseEmailTemplate({
     title: `New Inquiry from ${inquiry.name}`,

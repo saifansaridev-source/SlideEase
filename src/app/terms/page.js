@@ -72,7 +72,7 @@ export default async function TermsPage() {
 
           <div className="legal-section" id="tos-1">
             <h2>1. Acceptance of Terms</h2>
-            <p>By accessing and using the SlideEase Footwear website (&quot;https://your-domain.com&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to all the terms and conditions, you must not use our website or services.</p>
+            <p>By accessing and using the SlideEase Footwear website (&quot;https://slideease.in&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to all the terms and conditions, you must not use our website or services.</p>
             <p>These Terms apply to all visitors, users, customers, and others who access or use the Service. By using our Service, you acknowledge that you have read, understood, and agree to be bound by these Terms.</p>
           </div>
 
@@ -127,17 +127,17 @@ export default async function TermsPage() {
 
           <div className="legal-section" id="tos-10">
             <h2>10. Governing Law</h2>
-            <p>These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions. Any disputes shall be subject to the exclusive jurisdiction of the courts in Mumbai, Maharashtra, India.</p>
+            <p>These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions. Any disputes will be subject to the exclusive jurisdiction of the competent courts in [Insert Your City], India.</p>
           </div>
 
           <div className="legal-section" id="tos-11">
             <h2>11. Contact Information</h2>
             <p>If you have any questions about these Terms, please contact us:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-              <li><strong>Email:</strong> legal@your-domain.com</li>
-              <li><strong>Phone:</strong> +91 22 4567 8900</li>
-              <li><strong>Address:</strong> 1002 Bldg No 1d, Kopari, Powai, Mumbai 400076, India</li>
-              <li><strong>CIN:</strong> U47713MH2026PTC468787</li>
+              <li><strong>Email:</strong> legal@slideease.in (Support: support@slideease.in)</li>
+              <li><strong>Phone:</strong> +91 XXXXX XXXXX</li>
+              <li><strong>Address:</strong> Slideease Footwear Private Limited, [Insert Building/Plot No., Locality, City, State, Pin Code], India</li>
+              <li><strong>CIN:</strong> [Insert Corporate Identity Number (CIN)]</li>
             </ul>
           </div>
 

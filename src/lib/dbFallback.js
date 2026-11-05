@@ -6,8 +6,8 @@ export const MOCK_CATEGORIES = [
 ];
 
 export const MOCK_COUPONS = [
-  { code: 'SLIDEEASE10', discount: 0.10, minOrder: 0, active: true },
-  { code: 'STARTUPINDIA', discount: 0.10, minOrder: 0, active: true }
+  { code: 'SLIDEEASE10', discount: 10, type: 'percentage', minOrder: 0, active: true },
+  { code: 'STARTUPINDIA', discount: 10, type: 'percentage', minOrder: 0, active: true }
 ];
 
 export const MOCK_ORDERS = [

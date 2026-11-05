@@ -73,11 +73,13 @@ export default function CartPage() {
     : Infinity;
   const subtotal = getSubtotal();
   const discountVal = Math.round(subtotal * discount);
+  const discountedSubtotal = Math.max(0, subtotal - discountVal);
+  const isFreeEligible = Boolean(shippingSettings.freeShippingEnabled) && (discountedSubtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0);
   const giftWrapVal = giftWrap ? 49 : 0;
-  const shippingVal = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : (shippingSettings.shippingFlatRate || 79);
-  const totalVal = Math.max(0, subtotal - discountVal + giftWrapVal + shippingVal);
-  const freeShippingDiff = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const freeShippingProgress = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const shippingVal = isFreeEligible ? 0 : (shippingSettings.shippingFlatRate || 79);
+  const totalVal = Math.max(0, discountedSubtotal + giftWrapVal + shippingVal);
+  const freeShippingDiff = Math.max(0, FREE_SHIPPING_THRESHOLD - discountedSubtotal);
+  const freeShippingProgress = Math.min(100, Math.round((discountedSubtotal / FREE_SHIPPING_THRESHOLD) * 100));
 
   const accessories = [
     {
@@ -220,7 +222,7 @@ export default function CartPage() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', fontSize: '0.9rem' }}>
             <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
-              {subtotal >= FREE_SHIPPING_THRESHOLD ? (
+              {isFreeEligible && subtotal > 0 ? (
                 <span style={{ color: 'var(--success-color)' }}>🎉 Congratulations! You have unlocked FREE Express Delivery!</span>
               ) : (
                 <span>
@@ -228,7 +230,7 @@ export default function CartPage() {
                 </span>
               )}
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Threshold: ₹999</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Threshold: ₹{FREE_SHIPPING_THRESHOLD}</span>
           </div>
           <div style={{
             height: '8px',
@@ -240,7 +242,7 @@ export default function CartPage() {
             <div style={{
               width: `${freeShippingProgress}%`,
               height: '100%',
-              backgroundColor: subtotal >= FREE_SHIPPING_THRESHOLD ? 'var(--success-color)' : 'var(--accent-color)',
+              backgroundColor: isFreeEligible && subtotal > 0 ? 'var(--success-color)' : 'var(--accent-color)',
               transition: 'width 0.4s ease'
             }}></div>
           </div>

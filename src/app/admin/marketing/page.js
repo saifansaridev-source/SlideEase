@@ -41,9 +41,9 @@ export default function AdminMarketing() {
 
   const handleExportCSV = () => {
     if (subscribers.length === 0) return;
-    const header = 'Email,Subscribed On\n';
+    const header = 'Email,Name,Subscribed On,Welcome Email Status\n';
     const rows   = subscribers.map(s =>
-      `${s.email},${s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString('en-IN') : 'N/A'}`
+      `"${s.email}","${s.name || ''}",${s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString('en-IN') : 'N/A'},"${s.welcomeEmailStatus || (s.welcomeEmailSent ? 'delivered' : 'pending')}"`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
@@ -98,7 +98,7 @@ export default function AdminMarketing() {
           <input
             type="text"
             className="form-input"
-            placeholder="Search by email address..."
+            placeholder="Search by email address or name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ flex: 1 }}
@@ -123,41 +123,66 @@ export default function AdminMarketing() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Email Address</th>
+                <th>Subscriber Email</th>
+                <th>Name</th>
                 <th>Subscribed On</th>
+                <th>Welcome Email Status</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem' }}>Loading subscribers list...</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '3rem' }}>Loading subscribers list...</td></tr>
               ) : subscribers.length === 0 ? (
-                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No subscribers found{search ? ` matching "${search}"` : ''}.
                 </td></tr>
               ) : (
-                subscribers.map((sub, idx) => (
-                  <tr key={sub._id?.toString()}>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{idx + 1}</td>
-                    <td>
-                      <a href={`mailto:${sub.email}`} style={{ fontWeight: 600, color: 'var(--accent-color)', textDecoration: 'none' }}>
-                        {sub.email}
-                      </a>
-                    </td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                      {sub.subscribedAt ? new Date(sub.subscribedAt).toLocaleDateString('en-IN') : 'N/A'}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', color: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}
-                        onClick={() => handleDelete(sub._id)}
-                      >
-                        Unsubscribe
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                subscribers.map((sub, idx) => {
+                  const status = sub.welcomeEmailStatus || (sub.welcomeEmailSent ? 'delivered' : 'pending');
+                  const statusColor = status === 'delivered' ? '#15803d' : status === 'simulated' ? '#b45309' : '#64748b';
+                  const statusBg = status === 'delivered' ? '#dcfce7' : status === 'simulated' ? '#fef3c7' : '#f1f5f9';
+
+                  return (
+                    <tr key={sub._id?.toString()}>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{idx + 1}</td>
+                      <td>
+                        <a href={`mailto:${sub.email}`} style={{ fontWeight: 600, color: 'var(--accent-color)', textDecoration: 'none' }}>
+                          {sub.email}
+                        </a>
+                      </td>
+                      <td style={{ fontSize: '0.85rem', color: '#334155' }}>
+                        {sub.name || '—'}
+                      </td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        {sub.subscribedAt ? new Date(sub.subscribedAt).toLocaleDateString('en-IN') : 'N/A'}
+                      </td>
+                      <td>
+                        <span style={{
+                          backgroundColor: statusBg,
+                          color: statusColor,
+                          fontWeight: 700,
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '12px',
+                          fontSize: '0.72rem',
+                          display: 'inline-block',
+                          textTransform: 'capitalize'
+                        }}>
+                          {status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className="btn btn-outline"
+                          style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem', color: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}
+                          onClick={() => handleDelete(sub._id)}
+                        >
+                          Unsubscribe
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

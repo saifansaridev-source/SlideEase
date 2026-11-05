@@ -6,7 +6,7 @@ export async function generateMetadata() {
   const cmsPage = await getCmsPage('privacy');
   return {
     title: cmsPage?.metaTitle || 'Privacy Policy | SlideEase Footwear',
-    description: cmsPage?.metaDesc || 'SlideEase Footwear Privacy Policy — how we collect, use, and protect your personal data. GDPR and CCPA compliant.',
+    description: cmsPage?.metaDesc || 'SlideEase Footwear Privacy Policy — how we collect, use, and protect your personal data in accordance with applicable Indian data protection laws.',
   };
 }
 
@@ -30,7 +30,7 @@ export default async function PrivacyPage() {
         <div className="page-hero-content">
           <span className="page-hero-tagline">Your Data</span>
           <h1 className="page-hero-title">{heroTitle}</h1>
-          <p className="page-hero-desc">Last updated: July 1, 2026 | GDPR &amp; CCPA Compliant</p>
+          <p className="page-hero-desc">Last updated: July 1, 2026 | Indian Data Protection &amp; Privacy Standards</p>
         </div>
       </section>
 
@@ -133,7 +133,7 @@ export default async function PrivacyPage() {
             <h2>4. Data Sharing & Third Parties</h2>
             <p>We do <strong>not sell</strong> your personal data to third parties. We only share essential operational data with verified service partners:</p>
             <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }}>
-              <li><strong>Payment Gateway:</strong> Razorpay for PCI-DSS compliant secure checkout and verification. Card credentials are never handled or stored on SlideEase servers.</li>
+              <li><strong>Payment Gateway:</strong> Razorpay or Cashfree, where supported, for PCI-DSS compliant secure checkout and verification. Card credentials are never handled or stored on SlideEase servers.</li>
               <li><strong>Logistics Partners:</strong> Shiprocket, Delhivery, and Blue Dart for order fulfillment, live tracking, and reverse pickup logistics.</li>
               <li><strong>Evidence Photos:</strong> Customer-uploaded product photographs are securely stored on private cloud storage solely to verify returns and process exchange/refund eligibility.</li>
               <li><strong>Transactional Communications:</strong> Resend API for sending order confirmations, dispatch notices, and return status notifications.</li>
@@ -148,7 +148,7 @@ export default async function PrivacyPage() {
               <li>TLS 1.3 encryption for all data in transit across HTTPS</li>
               <li>HMAC SHA-256 cryptographically verified sessions and webhook authentication</li>
               <li>Timing-safe comparison checks protecting against timing attacks</li>
-              <li>PCI-DSS compliant payment processing via Razorpay</li>
+              <li>PCI-DSS compliant payment processing via Razorpay or Cashfree</li>
               <li>Role-based access controls for administrative dashboard operations</li>
               <li>Server-side file validation and MIME filtering for customer uploads</li>
             </ul>
@@ -188,7 +188,7 @@ export default async function PrivacyPage() {
               <li><strong>Customer Support & Returns:</strong> support@slideease.in</li>
               <li><strong>General Inquiries:</strong> contact@slideease.in</li>
               <li><strong>Administrative Operations:</strong> admin@slideease.in</li>
-              <li><strong>Corporate Address:</strong> Powai, Mumbai 400076, Maharashtra, India</li>
+              <li><strong>Corporate Address:</strong> Slideease Footwear Private Limited, [Insert Building/Plot No., Locality, City, State, Pin Code], India</li>
             </ul>
           </div>
 

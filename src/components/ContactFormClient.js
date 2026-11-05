@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ContactFormClient() {
   const [formData, setFormData] = useState({
@@ -14,6 +14,40 @@ export default function ContactFormClient() {
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [activeFaq, setActiveFaq] = useState(0);
+  const [storeSettings, setStoreSettings] = useState({
+    whatsappNumber: '',
+    supportPhone: '+91 98200 12345',
+    address: '',
+  });
+
+  // Load whatsapp number & address from public settings API
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data) {
+          setStoreSettings(prev => ({
+            ...prev,
+            whatsappNumber: json.data.whatsappNumber || prev.whatsappNumber,
+            supportPhone: json.data.supportPhone || prev.supportPhone,
+            address: json.data.address || prev.address,
+          }));
+        }
+      })
+      .catch(() => {}); // non-blocking — placeholders remain if API fails
+  }, []);
+
+  // Format WhatsApp number for display (e.g. 919820012345 → +91 98200 12345)
+  const formatWhatsApp = (raw) => {
+    if (!raw) return storeSettings.supportPhone;
+    const digits = String(raw).replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) {
+      const local = digits.slice(2);
+      return `+91 ${local.slice(0, 5)} ${local.slice(5)}`;
+    }
+    if (digits.length === 10) return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+    return `+${digits}`;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -92,7 +126,7 @@ export default function ContactFormClient() {
               </svg>
             </div>
             <h3 className="contact-card-h3">WhatsApp Concierge</h3>
-            <p className="contact-card-p" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>+91 22 4567 8900</p>
+            <p className="contact-card-p" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>{formatWhatsApp(storeSettings.whatsappNumber)}</p>
             <p className="contact-card-p" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Mon to Sat • 10:00 AM - 7:00 PM IST</p>
           </div>
 
@@ -105,7 +139,7 @@ export default function ContactFormClient() {
               </svg>
             </div>
             <h3 className="contact-card-h3">Email Support</h3>
-            <p className="contact-card-p" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>support@slideease.com</p>
+            <p className="contact-card-p" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>support@slideease.in</p>
             <p className="contact-card-p" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Responses within 24 business hours</p>
           </div>
 
@@ -122,8 +156,8 @@ export default function ContactFormClient() {
               </svg>
             </div>
             <h3 className="contact-card-h3">Registered Office</h3>
-            <p className="contact-card-p" style={{ fontSize: '0.85rem', lineHeight: 1.4, fontWeight: 600 }}>SlideEase Footwear Private Limited</p>
-            <p className="contact-card-p" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.45 }}>1002 Bldg No 1d Cts No 13, Kopari Aadi Shankarcharya, Mumbai, Maharashtra 400076</p>
+            <p className="contact-card-p" style={{ fontSize: '0.85rem', lineHeight: 1.4, fontWeight: 600 }}>Slideease Footwear Private Limited</p>
+            <p className="contact-card-p" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem', lineHeight: 1.45 }}>{storeSettings.address || '1002 Bldg No 1d CTS No 13, Kopari Aadi Shankarcharya, Mumbai, Maharashtra 400076'}</p>
           </div>
         </div>
       </section>
@@ -136,7 +170,7 @@ export default function ContactFormClient() {
           <div className="form-card" style={{ marginBottom: 0 }}>
             <h3 className="form-h3" style={{ marginBottom: '0.6rem' }}>Send Us a Direct Message</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-              Submissions are directly delivered to our Mumbai artisan desk for prompt assistance.
+              Submissions are directly delivered to our customer care team for prompt assistance.
             </p>
 
             {errorMsg && (

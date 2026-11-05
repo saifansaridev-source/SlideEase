@@ -26,7 +26,7 @@ export default function FaqPage() {
     {
       category: 'ordering',
       q: 'Can I modify or cancel my order after placing it?',
-      a: 'Yes, you can modify or cancel your order anytime before it has been shipped. Contact us via email at support@your-domain.com or call +91 22 4567 8900. Once shipped, cancellations are not possible, but you can return the product after delivery.',
+      a: 'Yes, you can modify or cancel your order anytime before it has been shipped. Contact us via email at support@slideease.in. Once shipped, cancellations are not possible, but you can return the product after delivery.',
     },
     {
       category: 'ordering',
@@ -213,7 +213,7 @@ export default function FaqPage() {
             <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Our customer support team is available Monday to Saturday, 9 AM to 6 PM.</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/contact" className="btn btn-primary">Contact Support</Link>
-              <a href="mailto:support@your-domain.com" className="btn btn-outline">Email Us</a>
+              <a href="mailto:support@slideease.in" className="btn btn-outline">Email Us</a>
             </div>
           </div>
           </div>

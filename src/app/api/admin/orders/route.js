@@ -2,6 +2,7 @@ import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { MOCK_ORDERS, isConnectionError } from '@/lib/dbFallback';
 import { sendShippingUpdateEmail } from '@/lib/email';
+import { sendOrderShippedWhatsApp, sendOrderDeliveredWhatsApp, sendOrderShippedSMS } from '@/lib/notifications';
 import { ObjectId } from 'mongodb';
 
 import { cookies } from 'next/headers';
@@ -100,7 +101,12 @@ export async function PUT(request) {
     }
 
     const setFields = { updatedAt: new Date().toISOString() };
-    if (status) setFields.status = status.toLowerCase();
+    if (status) {
+      setFields.status = status.toLowerCase();
+      if (status.toLowerCase() === 'delivered' && !currentOrder.deliveredAt) {
+        setFields.deliveredAt = new Date();
+      }
+    }
     if (courierName !== undefined) setFields.courierName = courierName.trim();
     if (trackingNumber !== undefined) setFields.trackingNumber = trackingNumber.trim();
     if (adminNotes !== undefined) setFields.adminNotes = adminNotes;
@@ -128,7 +134,7 @@ export async function PUT(request) {
     
     await db.collection('orders').updateOne(filter, updateDoc);
     
-    // If order was dispatched with tracking number, send shipping email to customer
+    // If order was dispatched with tracking number, send shipping email & WhatsApp to customer
     if (trackingNumber && (status === 'shipped' || currentOrder.status === 'shipped' || courierName)) {
       try {
         await sendShippingUpdateEmail(
@@ -137,6 +143,33 @@ export async function PUT(request) {
         );
       } catch (emailErr) {
         console.warn('Shipping email non-fatal error:', emailErr.message);
+      }
+
+      try {
+        await sendOrderShippedWhatsApp(
+          { ...currentOrder, ...setFields },
+          { trackingNumber, courier: courierName || currentOrder.courierName || 'Courier Partner' }
+        );
+      } catch (waErr) {
+        console.warn('Shipping WhatsApp non-fatal error:', waErr.message);
+      }
+
+      try {
+        await sendOrderShippedSMS(
+          { ...currentOrder, ...setFields },
+          { trackingNumber, courier: courierName || currentOrder.courierName || 'Courier Partner' }
+        );
+      } catch (smsErr) {
+        console.warn('Shipping SMS non-fatal error:', smsErr.message);
+      }
+    }
+
+    // If order was marked as delivered, send delivered WhatsApp alert
+    if (status && status.toLowerCase() === 'delivered') {
+      try {
+        await sendOrderDeliveredWhatsApp({ ...currentOrder, ...setFields });
+      } catch (delivErr) {
+        console.warn('Delivered WhatsApp non-fatal error:', delivErr.message);
       }
     }
 

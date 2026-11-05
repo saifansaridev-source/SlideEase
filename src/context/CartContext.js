@@ -38,6 +38,10 @@ export function CartProvider({ children }) {
     if (storedDiscount) {
       setDiscount(parseFloat(storedDiscount));
     }
+    const storedCouponCode = sessionStorage.getItem('slidex_coupon_code');
+    if (storedCouponCode) {
+      setCouponCode(storedCouponCode);
+    }
 
     // Check if user is logged in and fetch cart from MongoDB
     fetch('/api/cart')
@@ -153,23 +157,36 @@ export function CartProvider({ children }) {
     setDiscount(0);
     setCouponCode('');
     sessionStorage.removeItem('slidex_discount');
+    sessionStorage.removeItem('slidex_coupon_code');
   };
 
   const removeCoupon = () => {
     setDiscount(0);
     setCouponCode('');
     sessionStorage.removeItem('slidex_discount');
+    sessionStorage.removeItem('slidex_coupon_code');
   };
 
   const applyCoupon = async (code) => {
+    if (!code || !code.trim()) {
+      return { success: false, message: 'Please enter a coupon code.' };
+    }
+    const currentSubtotal = getSubtotal();
+    if (cart.length === 0 || currentSubtotal === 0) {
+      return { success: false, message: 'Your cart is empty. Add products before applying a coupon.' };
+    }
     const upperCode = code.trim().toUpperCase();
+    if (couponCode && couponCode === upperCode) {
+      return { success: false, message: 'This coupon is already applied to your cart.' };
+    }
     try {
-      const res = await fetch(`/api/coupons/validate?code=${upperCode}&subtotal=${getSubtotal()}`);
+      const res = await fetch(`/api/coupons/validate?code=${upperCode}&subtotal=${currentSubtotal}`);
       const data = await res.json();
       if (data.success) {
         setDiscount(data.discount);
         setCouponCode(upperCode);
         sessionStorage.setItem('slidex_discount', String(data.discount));
+        sessionStorage.setItem('slidex_coupon_code', upperCode);
         return { success: true, message: data.message };
       } else {
         return { success: false, message: data.error };
@@ -179,6 +196,7 @@ export function CartProvider({ children }) {
         setDiscount(0.10);
         setCouponCode(upperCode);
         sessionStorage.setItem('slidex_discount', '0.10');
+        sessionStorage.setItem('slidex_coupon_code', upperCode);
         return { success: true, message: 'Promo Code applied! 10% Discount applied.' };
       }
       return { success: false, message: 'Network error. Failed to validate coupon code.' };

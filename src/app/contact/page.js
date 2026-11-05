@@ -4,8 +4,8 @@ import { getDb } from '@/lib/mongodb';
 import ContactFormClient from '@/components/ContactFormClient';
 
 export const metadata = {
-  title: 'Contact Us | SlideEase — Handcrafted Vegan Indian Footwear',
-  description: 'Connect with SlideEase for customer care, bespoke footwear sizing advice, returns, or order tracking. WhatsApp concierge, email support, and Mumbai headquarters.',
+  title: 'Contact Us | SlideEase — Hands-Free Footwear Customer Care',
+  description: 'Get in touch with Slideease. Customer support for hands-free footwear sizing, order inquiries, returns, and assistance.',
 };
 
 async function getContactData() {
@@ -39,9 +39,9 @@ export default async function ContactPage() {
       <section className="page-hero" id="contact-hero-section" style={{ backgroundImage: `url('${heroImage}')` }}>
         <div className="page-hero-overlay"></div>
         <div className="page-hero-content">
-          <span className="page-hero-tagline">Get In Touch</span>
-          <h1 className="page-hero-title">Let's Walk Together</h1>
-          <p className="page-hero-desc">Have questions about shoe sizing, custom orders, or returns? Contact the SlideEase artisan support concierge.</p>
+          <span className="page-hero-tagline">✦ We're Here to Help</span>
+          <h1 className="page-hero-title">Get in Touch with Slideease</h1>
+          <p className="page-hero-desc">Have a question about our hands-free technology? Need help picking the right size? Our dedicated customer care team is here to ensure you experience peak comfort and seamless service.</p>
         </div>
       </section>
 
