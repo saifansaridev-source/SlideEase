@@ -61,7 +61,7 @@ export async function GET() {
 // POST: Add a new category
 export async function POST(request) {
   try {
-    const { name, slug, desc, parent, displayOrder } = await request.json();
+    const { name, slug, desc, parent, displayOrder, image } = await request.json();
     
     if (!name || !name.trim()) {
       return NextResponse.json({ success: false, error: 'Category Name is required' }, { status: 400 });
@@ -96,6 +96,7 @@ export async function POST(request) {
       name: name.trim(),
       slug: formattedSlug,
       desc: desc ? desc.trim() : '',
+      image: image ? image.trim() : '',
       parent: parentSlug,
       displayOrder: typeof displayOrder === 'number' ? displayOrder : 10,
       isActive: true,
@@ -119,7 +120,7 @@ export async function POST(request) {
 // PUT: Update an existing category
 export async function PUT(request) {
   try {
-    const { id, oldSlug, name, slug, desc, parent, displayOrder, isActive } = await request.json();
+    const { id, oldSlug, name, slug, desc, parent, displayOrder, isActive, image } = await request.json();
     
     if (!id && !oldSlug) {
       return NextResponse.json({ success: false, error: 'Category ID or slug is required for update' }, { status: 400 });
@@ -197,6 +198,7 @@ export async function PUT(request) {
       name: name.trim(),
       slug: newSlug,
       desc: desc !== undefined ? desc.trim() : currentCat.desc,
+      image: image !== undefined ? image.trim() : (currentCat.image || ''),
       parent: parentSlug,
       displayOrder: typeof displayOrder === 'number' ? displayOrder : (currentCat.displayOrder || 10),
       isActive: typeof isActive === 'boolean' ? isActive : true,
@@ -241,66 +243,107 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const slug = searchParams.get('slug');
     const force = searchParams.get('force') === 'true';
+    const reassignTo = searchParams.get('reassignTo');
     
-    if (!slug) {
-      return NextResponse.json({ success: false, error: 'Category slug parameter is required' }, { status: 400 });
+    if (!slug && !id) {
+      return NextResponse.json({ success: false, error: 'Category slug or ID parameter is required' }, { status: 400 });
     }
 
-    // Protect system core categories
-    if (slug === 'mens' || slug === 'womens') {
+    const db = await getDb();
+
+    // Check if category exists
+    let query = {};
+    if (id && ObjectId.isValid(id)) {
+      query._id = new ObjectId(id);
+    } else if (slug) {
+      query.slug = slug;
+    }
+
+    const category = await db.collection('categories').findOne(query);
+    if (!category) {
+      return NextResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
+    }
+
+    // Protect system core root categories
+    if (category.slug === 'mens' || category.slug === 'womens') {
       return NextResponse.json({ 
         success: false, 
         error: 'System standard root categories ("Men\'s Collection" and "Women\'s Collection") cannot be deleted as they define the store core architecture.' 
       }, { status: 403 });
     }
-    
-    const db = await getDb();
-
-    // Check if category exists
-    const category = await db.collection('categories').findOne({ slug });
-    if (!category) {
-      return NextResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
-    }
 
     // Check if any products are associated with this category
     const associatedProductsCount = await db.collection('products').countDocuments({
       $or: [
-        { category: slug },
-        { subcategory: slug },
+        { category: category.slug },
+        { subcategory: category.slug },
         ...(category.typeMapping ? [{ category: category.parent, type: category.typeMapping }] : [])
       ]
     });
 
-    if (associatedProductsCount > 0 && !force) {
+    if (associatedProductsCount > 0 && !force && !reassignTo) {
       return NextResponse.json({ 
         success: false, 
-        error: `Cannot delete category: ${associatedProductsCount} products are currently assigned to this category. Please reassign or remove these products before deleting.`,
-        productCount: associatedProductsCount
+        error: `Cannot delete category: ${associatedProductsCount} product(s) are currently assigned to this category. Please reassign or confirm reassignment before deleting.`,
+        productCount: associatedProductsCount,
+        requiresReassignment: true,
+        categoryName: category.name,
+        categorySlug: category.slug,
+        parent: category.parent
       }, { status: 409 });
+    }
+
+    // Safe product reassignment: NEVER delete products!
+    // Safely reassign associated products so they are preserved
+    if (associatedProductsCount > 0) {
+      const targetCategory = (reassignTo && reassignTo.trim()) 
+        ? reassignTo.trim() 
+        : (category.parent || 'mens');
+
+      // Update products where category was this deleted category
+      await db.collection('products').updateMany(
+        { category: category.slug },
+        { $set: { category: targetCategory, updatedAt: new Date() } }
+      );
+
+      // Unset subcategory for products where subcategory was this deleted category
+      await db.collection('products').updateMany(
+        { subcategory: category.slug },
+        { $set: { subcategory: null, updatedAt: new Date() } }
+      );
     }
     
     // Check if child categories exist
-    const childCats = await db.collection('categories').find({ parent: slug }).toArray();
+    const childCats = await db.collection('categories').find({ parent: category.slug }).toArray();
     
     // Perform delete
-    const result = await db.collection('categories').deleteOne({ slug });
+    const result = await db.collection('categories').deleteOne({ _id: category._id });
     if (result.deletedCount === 0) {
       return NextResponse.json({ success: false, error: 'Category not found or already deleted' }, { status: 404 });
     }
     
-    // Reassign child categories to deleted category's parent (or null)
+    // Reassign child categories to deleted category's parent (or null) so they are never orphaned
     if (childCats.length > 0) {
       await db.collection('categories').updateMany(
-        { parent: slug }, 
-        { $set: { parent: category.parent || null } }
+        { parent: category.slug }, 
+        { $set: { parent: category.parent || null, updatedAt: new Date() } }
       );
     }
     
     return NextResponse.json({ 
       success: true, 
-      message: `Category "${category.name}" deleted successfully.${childCats.length > 0 ? ` ${childCats.length} nested sub-categories moved up.` : ''}` 
+      message: `Category "${category.name}" deleted successfully.${
+        associatedProductsCount > 0 
+          ? ` ${associatedProductsCount} product(s) safely preserved and reassigned.` 
+          : ''
+      }${
+        childCats.length > 0 
+          ? ` ${childCats.length} nested sub-category(ies) moved up to parent.` 
+          : ''
+      }` 
     });
   } catch (error) {
     if (isConnectionError(error)) {

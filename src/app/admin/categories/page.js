@@ -27,6 +27,7 @@ export default function AdminCategories() {
   const [editName, setEditName] = useState('');
   const [editSlug, setEditSlug] = useState('');
   const [editDesc, setEditDesc] = useState('');
+  const [editImage, setEditImage] = useState('');
   const [editParent, setEditParent] = useState('');
   const [editDisplayOrder, setEditDisplayOrder] = useState('10');
   const [editMsg, setEditMsg] = useState('');
@@ -37,6 +38,8 @@ export default function AdminCategories() {
   const [deleteConfirmCat, setDeleteConfirmCat] = useState(null);
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reassignTarget, setReassignTarget] = useState('');
+  const [actionSuccessMsg, setActionSuccessMsg] = useState('');
 
   const fetchCategories = async () => {
     try {
@@ -159,6 +162,7 @@ export default function AdminCategories() {
     setEditName(cat.name || '');
     setEditSlug(cat.slug || '');
     setEditDesc(cat.desc || '');
+    setEditImage(cat.image || '');
     setEditParent(cat.parent || '');
     setEditDisplayOrder(String(cat.displayOrder || '10'));
     setEditMsg('');
@@ -182,6 +186,7 @@ export default function AdminCategories() {
           name: editName,
           slug: editSlug,
           desc: editDesc,
+          image: editImage,
           parent: editParent || null,
           displayOrder: parseInt(editDisplayOrder, 10) || 10,
         }),
@@ -190,12 +195,14 @@ export default function AdminCategories() {
 
       if (data.success) {
         setEditMsg('Category updated successfully!');
+        setActionSuccessMsg(`Category "${editName}" updated successfully.`);
+        setTimeout(() => setActionSuccessMsg(''), 5000);
         setTimeout(() => {
           setEditingCategory(null);
           fetchCategories();
-        }, 800);
+        }, 600);
       } else {
-        setEditError(data.error);
+        setEditError(data.error || 'Failed to update category.');
       }
     } catch (err) {
       setEditError('Network error. Failed to update category.');
@@ -207,24 +214,38 @@ export default function AdminCategories() {
   const openDeleteModal = (cat) => {
     setDeleteConfirmCat(cat);
     setDeleteError('');
+    // Default safe reassignment to category's parent, or 'mens' / 'womens'
+    setReassignTarget(cat.parent || 'mens');
   };
 
-  const handleExecuteDelete = async (force = false) => {
+  const handleExecuteDelete = async (force = true, target = reassignTarget) => {
     if (!deleteConfirmCat) return;
 
     try {
       setIsDeleting(true);
       setDeleteError('');
-      const res = await fetch(`/api/admin/categories?slug=${deleteConfirmCat.slug}${force ? '&force=true' : ''}`, {
+
+      const queryParams = new URLSearchParams();
+      if (deleteConfirmCat._id) queryParams.set('id', deleteConfirmCat._id);
+      if (deleteConfirmCat.slug) queryParams.set('slug', deleteConfirmCat.slug);
+      if (force) queryParams.set('force', 'true');
+      if (target && (deleteConfirmCat.productCount || 0) > 0) {
+        queryParams.set('reassignTo', target);
+      }
+
+      const res = await fetch(`/api/admin/categories?${queryParams.toString()}`, {
         method: 'DELETE',
       });
       const data = await res.json();
 
       if (data.success) {
+        const deletedName = deleteConfirmCat.name;
         setDeleteConfirmCat(null);
+        setActionSuccessMsg(data.message || `Category "${deletedName}" deleted successfully.`);
+        setTimeout(() => setActionSuccessMsg(''), 5000);
         fetchCategories(); // Reload table
       } else {
-        setDeleteError(data.error);
+        setDeleteError(data.error || 'Failed to delete category.');
       }
     } catch (err) {
       setDeleteError('Network error. Delete failed.');
@@ -258,6 +279,14 @@ export default function AdminCategories() {
           </button>
         </div>
       </div>
+
+      {/* Action Success Alert */}
+      {actionSuccessMsg && (
+        <div style={{ padding: '0.85rem 1.2rem', backgroundColor: '#ecfdf5', color: '#065f46', fontSize: '0.9rem', fontWeight: 600, borderRadius: '8px', marginBottom: '1.2rem', border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>✓ {actionSuccessMsg}</span>
+          <button onClick={() => setActionSuccessMsg('')} style={{ background: 'none', border: 'none', color: '#065f46', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+        </div>
+      )}
 
       <div className="admin-split-layout">
         
@@ -617,6 +646,17 @@ export default function AdminCategories() {
                 />
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Image / Banner URL (Optional)</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="e.g. /assets/slides.png"
+                  value={editImage}
+                  onChange={(e) => setEditImage(e.target.value)}
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button 
                   type="button" 
@@ -659,7 +699,7 @@ export default function AdminCategories() {
             background: '#ffffff',
             borderRadius: '8px',
             width: '100%',
-            maxWidth: '480px',
+            maxWidth: '500px',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
             overflow: 'hidden',
           }}>
@@ -683,9 +723,34 @@ export default function AdminCategories() {
               </p>
 
               {(deleteConfirmCat.productCount || 0) > 0 ? (
-                <div style={{ padding: '0.8rem', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '6px', color: '#9a3412', fontSize: '0.85rem', marginBottom: '1rem', lineHeight: 1.4 }}>
-                  <strong>Safety Notice:</strong> There are <strong>{deleteConfirmCat.productCount} products</strong> associated with this category.
-                  Deleting it could orphan these products. To proceed, please reassign those products first or confirm below.
+                <div style={{ padding: '0.9rem', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '6px', color: '#9a3412', fontSize: '0.85rem', marginBottom: '1.2rem', lineHeight: 1.45 }}>
+                  <div style={{ fontWeight: 700, marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    🛡️ Database Integrity Protection
+                  </div>
+                  There are <strong>{deleteConfirmCat.productCount} product(s)</strong> associated with this category.
+                  SlideEase preserves all existing products and customer orders. To prevent orphaned items, select which category to safely reassign them to:
+
+                  <div style={{ marginTop: '0.8rem' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#7c2d12', display: 'block', marginBottom: '0.3rem' }}>
+                      Reassign Products To:
+                    </label>
+                    <select 
+                      className="filter-select"
+                      value={reassignTarget}
+                      onChange={(e) => setReassignTarget(e.target.value)}
+                      style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', backgroundColor: '#ffffff' }}
+                    >
+                      <option value="mens">Men&apos;s Collection (Root - mens)</option>
+                      <option value="womens">Women&apos;s Collection (Root - womens)</option>
+                      {categories
+                        .filter(c => c.slug !== deleteConfirmCat.slug && c.slug !== 'mens' && c.slug !== 'womens')
+                        .map(c => (
+                          <option key={c.slug} value={c.slug}>
+                            {c.name} ({c.slug})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div style={{ padding: '0.8rem', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#166534', fontSize: '0.85rem', marginBottom: '1rem', lineHeight: 1.4 }}>
@@ -704,17 +769,23 @@ export default function AdminCategories() {
                   type="button" 
                   className="btn btn-outline" 
                   onClick={() => setDeleteConfirmCat(null)}
+                  disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button 
                   type="button" 
                   className="btn" 
-                  style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none', padding: '0.5rem 1rem' }}
-                  onClick={() => handleExecuteDelete(false)}
+                  style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none', padding: '0.55rem 1.1rem', fontWeight: 600 }}
+                  onClick={() => handleExecuteDelete(true, (deleteConfirmCat.productCount || 0) > 0 ? reassignTarget : '')}
                   disabled={isDeleting}
                 >
-                  {isDeleting ? 'Deleting...' : '🗑️ Delete Category'}
+                  {isDeleting 
+                    ? 'Processing...' 
+                    : (deleteConfirmCat.productCount || 0) > 0 
+                      ? '🛡️ Reassign & Delete Category' 
+                      : '🗑️ Delete Category'
+                  }
                 </button>
               </div>
             </div>

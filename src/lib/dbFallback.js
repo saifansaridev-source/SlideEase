@@ -1,8 +1,16 @@
 import { PRODUCTS } from '@/data/products';
 
 export const MOCK_CATEGORIES = [
-  { name: "Men's Collection", slug: 'mens', desc: 'Premium slides, loafers and slip-ons for men.' },
-  { name: "Women's Collection", slug: 'womens', desc: 'Handcrafted juttis, flats, sandals and mules.' }
+  { name: "Men's Collection", slug: 'mens', desc: 'Premium slides, loafers and slip-ons for men.', parent: null, displayOrder: 1 },
+  { name: "Women's Collection", slug: 'womens', desc: 'Handcrafted juttis, flats, sandals and mules.', parent: null, displayOrder: 2 },
+  { name: 'Artisan Loafers', slug: 'mens-loafers', desc: 'Premium artisan loafers and slip-ons for men.', parent: 'mens', displayOrder: 1, typeMapping: 'loafers' },
+  { name: 'Ergonomic Slides', slug: 'mens-slides', desc: 'Contoured footbed ergonomic everyday slides.', parent: 'mens', displayOrder: 2, typeMapping: 'slides' },
+  { name: 'Strappy Sandals', slug: 'mens-sandals', desc: 'Comfort cross and strappy sandals.', parent: 'mens', displayOrder: 3, typeMapping: 'sandals' },
+  { name: 'Casual Footwear', slug: 'mens-casual', desc: 'Relaxed everyday casual footwear for men.', parent: 'mens', displayOrder: 4, typeMapping: 'casual' },
+  { name: 'Kutch Juttis & Mojris', slug: 'womens-juttis', desc: 'Handcrafted heritage mirror-work juttis.', parent: 'womens', displayOrder: 1, typeMapping: 'sandals' },
+  { name: 'Ikat Slip-on Loafers', slug: 'womens-loafers', desc: 'Pochampally ikat woven loafers.', parent: 'womens', displayOrder: 2, typeMapping: 'loafers' },
+  { name: 'Paisley Comfort Sandals', slug: 'womens-sandals', desc: 'Handcrafted paisley comfort sandals and flats.', parent: 'womens', displayOrder: 3, typeMapping: 'sandals' },
+  { name: 'Floral Cork Slides', slug: 'womens-slides', desc: 'Natural cork footbed floral and mandala slides.', parent: 'womens', displayOrder: 4, typeMapping: 'slides' },
 ];
 
 export const MOCK_COUPONS = [

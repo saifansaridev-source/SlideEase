@@ -670,7 +670,7 @@ export default function AdminOrders() {
                   <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 700 }}>48-Hour Review Request</div>
                   <div style={{ fontWeight: 600, marginTop: '0.2rem', color: selectedOrder.reviewReminderSent ? '#15803d' : (selectedOrder.deliveredAt ? '#b45309' : '#64748b') }}>
                     {selectedOrder.reviewReminderSent
-                      ? `✓ Sent on ${new Date(selectedOrder.reviewReminderSentAt || Date.now()).toLocaleDateString('en-IN')}`
+                      ? `✓ Sent on ${selectedOrder.reviewReminderSentAt ? new Date(selectedOrder.reviewReminderSentAt).toLocaleDateString('en-IN') : 'Recent'}`
                       : (selectedOrder.deliveredAt
                           ? `⏳ Scheduled (eligible 48h after delivery: ${new Date(new Date(selectedOrder.deliveredAt).getTime() + 48*3600*1000).toLocaleDateString('en-IN')})`
                           : 'Awaiting Order Delivery')}

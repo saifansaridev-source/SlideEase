@@ -16,7 +16,10 @@ function GoogleSignInButton({ onSuccess, onError, label = 'Continue with Google'
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   // Keep a stable ref to callbacks so the GIS credential callback always has fresh closures
-  callbackRef.current = { onSuccess, onError };
+  useEffect(() => {
+    callbackRef.current = { onSuccess, onError };
+    callbackFnRef.current = handleGoogleCallback;
+  });
 
   const handleGoogleCallback = async (response) => {
     const { onSuccess: successCb, onError: errorCb } = callbackRef.current;
@@ -46,7 +49,6 @@ function GoogleSignInButton({ onSuccess, onError, label = 'Continue with Google'
   };
 
   const callbackFnRef = useRef(handleGoogleCallback);
-  callbackFnRef.current = handleGoogleCallback;
 
   const renderGis = () => {
     if (!GOOGLE_CLIENT_ID || typeof window === 'undefined' || !window.google?.accounts?.id) return;

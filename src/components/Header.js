@@ -167,18 +167,11 @@ export default function Header() {
                         ))}
                       </ul>
                     </div>
-                    <div className="mega-menu-col">
-                      <h4>Summer Styles</h4>
-                      <ul>
-                        <li><Link href="/shop?category=mens&type=slides">Mandala Cork Slides</Link></li>
-                        <li><Link href="/shop?category=mens&type=sandals">Woven Cross Sandals</Link></li>
-                        <li><Link href="/shop?category=mens&type=loafers">Velvet Royal Loafers</Link></li>
-                        <li><Link href="/shop?category=mens&material=cork">Natural Cork Footbed</Link></li>
-                      </ul>
-                    </div>
                     <div className="mega-menu-featured">
-                      <img src="/assets/slides.png" alt="Men's Collection" style={{ objectFit: 'contain' }} />
-                      <span>New Men's Arrivals</span>
+                      <Link href="/shop?category=mens" className="mega-menu-featured-link">
+                        <img src="/assets/slides.png" alt="Men's Collection" style={{ objectFit: 'contain' }} />
+                        <span>New Men&apos;s Arrivals</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -201,18 +194,11 @@ export default function Header() {
                         ))}
                       </ul>
                     </div>
-                    <div className="mega-menu-col">
-                      <h4>Collections</h4>
-                      <ul>
-                        <li><Link href="/shop?category=womens&collection=artisan">Heritage Embroidery</Link></li>
-                        <li><Link href="/shop?category=womens&collection=festive">Festive Splendor</Link></li>
-                        <li><Link href="/shop?category=womens&collection=summer">Breezy Linen Comfort</Link></li>
-                        <li><Link href="/shop?category=womens&pattern=kutch">Mirror-work Specials</Link></li>
-                      </ul>
-                    </div>
                     <div className="mega-menu-featured">
-                      <img src="/assets/mojris.png" alt="Women's Collection" style={{ objectFit: 'contain' }} />
-                      <span>Artisan Juttis Collection</span>
+                      <Link href="/shop?category=womens" className="mega-menu-featured-link">
+                        <img src="/assets/mojris.png" alt="Women's Collection" style={{ objectFit: 'contain' }} />
+                        <span>Artisan Juttis Collection</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
