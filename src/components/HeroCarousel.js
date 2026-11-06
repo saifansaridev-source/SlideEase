@@ -81,7 +81,8 @@ export default function HeroCarousel() {
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              display: activeSlide === idx ? 'block' : 'none',
+              pointerEvents: activeSlide === idx ? 'auto' : 'none',
+              zIndex: activeSlide === idx ? 2 : 1,
               textAlign: slide.textAlign || 'left',
             }}
             role="img"

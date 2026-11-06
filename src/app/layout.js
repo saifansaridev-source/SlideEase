@@ -12,6 +12,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { CompareProvider } from '@/context/CompareContext';
 import CompareBar from '@/components/CompareBar';
+import PageTransition from '@/components/PageTransition';
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim() || 'https://slideease.in';
 
@@ -114,7 +115,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             <CompareProvider>
               <SplitScreenIntro />
               <Header />
-              <main>{children}</main>
+              <main><PageTransition>{children}</PageTransition></main>
               <Footer />
               <WhatsAppButton />
               <BackToTopButton />

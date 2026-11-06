@@ -128,7 +128,21 @@ export default function CartDrawer() {
                   <button className="qty-btn" onClick={() => updateQty(item.id, item.size, 1)} aria-label="Increase quantity">+</button>
                   <button 
                     className="cart-remove-btn" 
-                    style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    style={{ 
+                      marginLeft: 'auto', 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer', 
+                      color: 'var(--text-muted)',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'color 0.2s, transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger-color)'; e.currentTarget.style.transform = 'scale(1.15)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.transform = 'scale(1)'; }}
                     onClick={() => removeFromCart(item.id, item.size)}
                     aria-label="Remove item"
                   >

@@ -1153,3 +1153,92 @@
 
 
 
+
+
+/* ============================================================
+   ADMIN DASHBOARD PREMIUM ANIMATION ENHANCEMENTS
+   Fluid interactions, row entrances, modal transitions
+   ============================================================ */
+
+/* Stat cards entrance */
+.admin-stat-card {
+  animation: adminFadeUp 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+.admin-stat-card:nth-child(1) { animation-delay: 50ms; }
+.admin-stat-card:nth-child(2) { animation-delay: 100ms; }
+.admin-stat-card:nth-child(3) { animation-delay: 150ms; }
+.admin-stat-card:nth-child(4) { animation-delay: 200ms; }
+
+@keyframes adminFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Admin Table rows subtle reveal */
+.admin-table tbody tr {
+  animation: adminRowIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+.admin-table tbody tr:nth-child(1) { animation-delay: 30ms; }
+.admin-table tbody tr:nth-child(2) { animation-delay: 60ms; }
+.admin-table tbody tr:nth-child(3) { animation-delay: 90ms; }
+.admin-table tbody tr:nth-child(4) { animation-delay: 120ms; }
+.admin-table tbody tr:nth-child(5) { animation-delay: 150ms; }
+.admin-table tbody tr:nth-child(n+6) { animation-delay: 180ms; }
+
+@keyframes adminRowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Admin modal entrance */
+.admin-modal-overlay {
+  animation: adminOverlayIn 0.2s ease-out both;
+}
+.admin-modal-overlay .admin-modal {
+  animation: adminModalScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes adminOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes adminModalScale {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0);        }
+}
+
+/* Quick action buttons hover */
+.quick-action-btn {
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.quick-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Admin primary buttons */
+.admin-btn,
+.admin-modal .btn-accent {
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.admin-btn:hover:not(:disabled),
+.admin-modal .btn-accent:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(196, 138, 67, 0.25);
+}
+.admin-btn:active:not(:disabled),
+.admin-modal .btn-accent:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .admin-stat-card,
+  .admin-table tbody tr,
+  .admin-modal-overlay,
+  .admin-modal-overlay .admin-modal {
+    animation: none !important;
+    transition: none !important;
+  }
+}

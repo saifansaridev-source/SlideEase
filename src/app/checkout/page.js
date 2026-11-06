@@ -341,12 +341,13 @@ export default function CheckoutPage() {
           <div style={{
             backgroundColor: '#ffebee',
             color: '#c62828',
-            padding: '0.5rem 1.5rem',
+            padding: '0.85rem 1.5rem',
             borderRadius: 'var(--radius-md)',
             marginBottom: '2rem',
             borderLeft: '5px solid #c62828',
             fontWeight: 600,
-            fontSize: '0.9rem'
+            fontSize: '0.9rem',
+            animation: 'se-fade-down var(--dur-normal) var(--ease-out) both'
           }}>
             ✕ {errorMsg}
           </div>
@@ -732,14 +733,14 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="btn btn-accent"
+                  className={`btn btn-accent ${isProcessing ? 'btn-loading' : ''}`}
                   style={{
                     width: '100%',
                     padding: '1.1rem',
                     fontSize: '1.05rem',
                     fontWeight: 700,
                     cursor: isProcessing ? 'not-allowed' : 'pointer',
-                    opacity: isProcessing ? 0.7 : 1
+                    opacity: isProcessing ? 0.8 : 1
                   }}
                 >
                   {isProcessing

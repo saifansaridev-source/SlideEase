@@ -17,6 +17,23 @@ export default function Header() {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef(null);
 
+  // Accordion state for mobile nav — which section is expanded
+  const [mobileExpanded, setMobileExpanded] = useState(null); // 'mens' | 'womens' | null
+
+  // Cart badge bump animation
+  const cartCount = getCartCount();
+  const [cartBumping, setCartBumping] = useState(false);
+  const prevCount = useRef(cartCount);
+
+  useEffect(() => {
+    if (cartCount > prevCount.current) {
+      setCartBumping(true);
+      const t = setTimeout(() => setCartBumping(false), 500);
+      return () => clearTimeout(t);
+    }
+    prevCount.current = cartCount;
+  }, [cartCount]);
+
   // Dynamic categories from database
   const [categories, setCategories] = useState([]);
 
@@ -69,6 +86,20 @@ export default function Header() {
     setIsAccountMenuOpen(false);
   }, [pathname]);
 
+  // Lock body scroll when mobile menu is open; restore on close
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      // Reset accordion when drawer closes
+      setMobileExpanded(null);
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
   if (pathname?.startsWith('/admin')) {
     return null;
   }
@@ -79,6 +110,12 @@ export default function Header() {
       router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  const toggleMobileSection = (section) => {
+    setMobileExpanded(prev => (prev === section ? null : section));
+  };
+
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <>
@@ -181,34 +218,7 @@ export default function Header() {
                 </div>
               </li>
 
-              {/* Collections Mega Menu */}
-              <li className="nav-item-dropdown">
-                <Link href="/shop" className="nav-link">Collections</Link>
-                <div className="mega-menu">
-                  <div className="mega-menu-grid">
-                    <div className="mega-menu-col">
-                      <h4>Curated Lines</h4>
-                      <ul>
-                        <li><Link href="/shop?tag=Best%20Seller">Best Sellers</Link></li>
-                        <li><Link href="/shop?tag=New%20Launch">New Arrivals</Link></li>
-                        <li><Link href="/shop?tag=Trending">Trending Heritage</Link></li>
-                      </ul>
-                    </div>
-                    <div className="mega-menu-col">
-                      <h4>Craft Specials</h4>
-                      <ul>
-                        <li><Link href="/shop?pattern=ikat">Pochampally Ikat</Link></li>
-                        <li><Link href="/shop?pattern=kutch">Kutch Mirror Work</Link></li>
-                        <li><Link href="/shop?pattern=mandala">Royal Mandala</Link></li>
-                      </ul>
-                    </div>
-                    <div className="mega-menu-featured">
-                      <img src="/assets/loafers.png" alt="Trending Collections" style={{ objectFit: 'contain' }} />
-                      <span>Ascend with Heritage</span>
-                    </div>
-                  </div>
-                </div>
-              </li>
+              {/* Sale link */}
               <li><Link href="/shop?sale=true" className="nav-link" style={{ color: 'var(--danger-color)', fontWeight: 700 }}>Sale</Link></li>
               <li><Link href="/about" className="nav-link">About</Link></li>
               <li><Link href="/contact" className="nav-link">Contact</Link></li>
@@ -314,7 +324,7 @@ export default function Header() {
                       onClick={() => setIsAccountMenuOpen(false)}
                       style={{ fontSize: '0.85rem', color: '#334155', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 4px' }}
                     >
-                      📦 My Orders & Returns
+                      📦 My Orders &amp; Returns
                     </Link>
 
                     <Link
@@ -395,7 +405,11 @@ export default function Header() {
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
-              {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
+              {cartCount > 0 && (
+                <span className={`cart-count ${cartBumping ? 'cart-count-bump' : ''}`}>
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
 
@@ -403,75 +417,154 @@ export default function Header() {
       </header>
 
       {/* Mobile Overlay Navigation Drawer */}
-      <div className={`mobile-nav-drawer ${isMenuOpen ? 'open' : ''}`} id="mobile-nav-menu-drawer">
+      <div
+        className={`mobile-nav-drawer ${isMenuOpen ? 'open' : ''}`}
+        id="mobile-nav-menu-drawer"
+        aria-hidden={!isMenuOpen}
+      >
+        {/* Fixed drawer header */}
         <div className="drawer-header">
           <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--primary-color)' }}>MENU</span>
           <button 
             className="drawer-close" 
             aria-label="Close menu" 
             id="mobile-drawer-close-btn"
-            onClick={() => setIsMenuOpen(false)}
+            onClick={closeMenu}
           >
             &times;
           </button>
         </div>
-        <ul className="mobile-nav-list">
-          <li><Link href="/" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Home</Link></li>
-          <li><Link href="/shop" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Shop All</Link></li>
-          <li><Link href="/shop?category=mens" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Men's Collection</Link></li>
-          {mensSubcategories.map(sub => (
-            <li key={sub.slug} style={{ paddingLeft: '1.2rem' }}>
-              <Link href={`/shop?category=mens&subcategory=${sub.slug}`} className="mobile-nav-link" style={{ fontSize: '0.9rem', color: '#64748b' }} onClick={() => setIsMenuOpen(false)}>
-                ↳ {sub.name}
-              </Link>
-            </li>
-          ))}
-          <li><Link href="/shop?category=womens" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Women's Collection</Link></li>
-          {womensSubcategories.map(sub => (
-            <li key={sub.slug} style={{ paddingLeft: '1.2rem' }}>
-              <Link href={`/shop?category=womens&subcategory=${sub.slug}`} className="mobile-nav-link" style={{ fontSize: '0.9rem', color: '#64748b' }} onClick={() => setIsMenuOpen(false)}>
-                ↳ {sub.name}
-              </Link>
-            </li>
-          ))}
-          <li><Link href="/shop?sale=true" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)} style={{ color: 'var(--danger-color)', fontWeight: 700 }}>Summer Sale</Link></li>
-          <li><Link href="/blog" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Blog & Guides</Link></li>
-          <li><Link href="/contact" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Contact Us</Link></li>
-          {user ? (
-            <>
-              <li style={{ padding: '0.75rem 0 0.25rem 0', borderTop: '1px solid #e2e8f0', marginTop: '0.5rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-color)' }}>
-                  👋 Hi, {user.name} ({user.points || 0} Pts)
-                </span>
-              </li>
-              <li><Link href="/dashboard" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>My Orders & Dashboard</Link></li>
-              {user.role === 'admin' && (
-                <li><Link href="/admin" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)} style={{ color: '#d97706', fontWeight: 700 }}>🛡️ Admin Panel</Link></li>
-              )}
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    logout();
-                  }}
-                  className="mobile-nav-link"
-                  style={{ background: 'none', border: 'none', color: '#dc2626', fontWeight: 600, width: '100%', textAlign: 'left', cursor: 'pointer', padding: '0.6rem 0' }}
+
+        {/* Scrollable content area */}
+        <div className="mobile-nav-scroll">
+          <ul className="mobile-nav-list">
+            <li><Link href="/" className="mobile-nav-link" onClick={closeMenu}>Home</Link></li>
+            <li><Link href="/shop" className="mobile-nav-link" onClick={closeMenu}>Shop All</Link></li>
+
+            {/* Men's Collection — accordion */}
+            <li className="mobile-accordion-item">
+              <button
+                type="button"
+                className="mobile-accordion-trigger"
+                aria-expanded={mobileExpanded === 'mens'}
+                onClick={() => toggleMobileSection('mens')}
+              >
+                <Link
+                  href="/shop?category=mens"
+                  className="mobile-nav-link mobile-nav-link--collection"
+                  onClick={(e) => { e.stopPropagation(); closeMenu(); }}
                 >
-                  🚪 Sign Out
-                </button>
-              </li>
-            </>
-          ) : (
-            <li><Link href="/login" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>My Account</Link></li>
-          )}
-        </ul>
-        <div className="mobile-drawer-footer">
-          <div className="drawer-contact-info">
-            <p><strong>Support Email:</strong> support@slideease.com</p>
-            <p><strong>Phone:</strong> +91 22 4567 8900</p>
+                  Men's Collection
+                </Link>
+                <span className={`accordion-icon ${mobileExpanded === 'mens' ? 'open' : ''}`} aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <div className={`mobile-accordion-content ${mobileExpanded === 'mens' ? 'open' : ''}`}>
+                <ul className="mobile-subnav-list">
+                  {mensSubcategories.map(sub => (
+                    <li key={sub.slug}>
+                      <Link
+                        href={`/shop?category=mens&subcategory=${sub.slug}${sub.typeMapping ? `&type=${sub.typeMapping}` : ''}`}
+                        className="mobile-subnav-link"
+                        onClick={closeMenu}
+                      >
+                        {sub.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+
+            {/* Women's Collection — accordion */}
+            <li className="mobile-accordion-item">
+              <button
+                type="button"
+                className="mobile-accordion-trigger"
+                aria-expanded={mobileExpanded === 'womens'}
+                onClick={() => toggleMobileSection('womens')}
+              >
+                <Link
+                  href="/shop?category=womens"
+                  className="mobile-nav-link mobile-nav-link--collection"
+                  onClick={(e) => { e.stopPropagation(); closeMenu(); }}
+                >
+                  Women's Collection
+                </Link>
+                <span className={`accordion-icon ${mobileExpanded === 'womens' ? 'open' : ''}`} aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <div className={`mobile-accordion-content ${mobileExpanded === 'womens' ? 'open' : ''}`}>
+                <ul className="mobile-subnav-list">
+                  {womensSubcategories.map(sub => (
+                    <li key={sub.slug}>
+                      <Link
+                        href={`/shop?category=womens&subcategory=${sub.slug}${sub.typeMapping ? `&type=${sub.typeMapping}` : ''}`}
+                        className="mobile-subnav-link"
+                        onClick={closeMenu}
+                      >
+                        {sub.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+
+            <li>
+              <Link
+                href="/shop?sale=true"
+                className="mobile-nav-link mobile-nav-link--sale"
+                onClick={closeMenu}
+              >
+                Summer Sale 🔥
+              </Link>
+            </li>
+            <li><Link href="/about" className="mobile-nav-link" onClick={closeMenu}>About Us</Link></li>
+            <li><Link href="/blog" className="mobile-nav-link" onClick={closeMenu}>Blog &amp; Guides</Link></li>
+            <li><Link href="/contact" className="mobile-nav-link" onClick={closeMenu}>Contact Us</Link></li>
+
+            {/* Account section */}
+            {user ? (
+              <>
+                <li className="mobile-nav-divider">
+                  <span className="mobile-nav-greeting">
+                    👋 Hi, {user.name} · {user.points || 0} Pts
+                  </span>
+                </li>
+                <li><Link href="/dashboard" className="mobile-nav-link" onClick={closeMenu}>My Orders &amp; Dashboard</Link></li>
+                {user.role === 'admin' && (
+                  <li><Link href="/admin" className="mobile-nav-link mobile-nav-link--admin" onClick={closeMenu}>🛡️ Admin Panel</Link></li>
+                )}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => { closeMenu(); logout(); }}
+                    className="mobile-nav-link mobile-nav-signout"
+                  >
+                    🚪 Sign Out
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li><Link href="/login" className="mobile-nav-link" onClick={closeMenu}>My Account</Link></li>
+            )}
+          </ul>
+
+          {/* Footer inside scroll area */}
+          <div className="mobile-drawer-footer">
+            <div className="drawer-contact-info">
+              <p><strong>Support Email:</strong> support@slideease.com</p>
+              <p><strong>Phone:</strong> +91 22 4567 8900</p>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>© 2026 SlideEase Pvt Ltd</p>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>© 2026 SlideEase Pvt Ltd</p>
         </div>
       </div>
 

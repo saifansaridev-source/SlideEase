@@ -97,9 +97,23 @@ export default function ProductCard({ product }) {
             )}
 
             <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button type="button" className="btn btn-primary btn-sm" onClick={handleAddToCart} disabled={addedToCart}
-                style={{ flex: 1, padding: '0.55rem', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.2s' }}>
-                {addedToCart ? '&#10003; Added!' : 'Add to Cart'}
+              <button 
+                type="button" 
+                className={`btn btn-primary btn-sm ${addedToCart ? 'btn-added' : ''}`} 
+                onClick={handleAddToCart} 
+                disabled={addedToCart}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.55rem', 
+                  fontWeight: 600, 
+                  fontSize: '0.82rem',
+                  backgroundColor: addedToCart ? 'var(--success-color)' : '',
+                  borderColor: addedToCart ? 'var(--success-color)' : '',
+                  transform: addedToCart ? 'scale(0.98)' : '',
+                  transition: 'all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)'
+                }}
+              >
+                {addedToCart ? '✓ Added to Bag' : 'Add to Cart'}
               </button>
 
               <button type="button" onClick={handleCompare}
