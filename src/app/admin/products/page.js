@@ -44,6 +44,19 @@ export default function AdminProducts() {
   const [sizes, setSizes] = useState('6, 7, 8, 9, 10');
   const [sizeStock, setSizeStock] = useState({ '5': 10, '6': 12, '7': 5, '8': 0, '9': 10, '10': 8 });
 
+  // Variants management fields
+  const [variantsList, setVariantsList] = useState([]);
+  const [newVarName, setNewVarName] = useState('');
+  const [newVarColor, setNewVarColor] = useState('Tan');
+  const [newVarColorHex, setNewVarColorHex] = useState('#c48a43');
+  const [newVarPrice, setNewVarPrice] = useState('');
+  const [newVarOriginalPrice, setNewVarOriginalPrice] = useState('');
+  const [newVarSku, setNewVarSku] = useState('');
+  const [newVarImage, setNewVarImage] = useState('/assets/sandals.png');
+  const [newVarStock, setNewVarStock] = useState('in-stock');
+  const [newVarSizes, setNewVarSizes] = useState('5, 6, 7, 8, 9, 10');
+  const [newVarDesc, setNewVarDesc] = useState('');
+
   // Media fields
   const [image, setImage] = useState('/assets/slides.png');
   const [gallery, setGallery] = useState('');
@@ -119,6 +132,17 @@ export default function AdminProducts() {
     setSizes('6, 7, 8, 9, 10');
     setImage('/assets/slides.png');
     setGallery('');
+    setVariantsList([]);
+    setNewVarName('');
+    setNewVarColor('Tan');
+    setNewVarColorHex('#c48a43');
+    setNewVarPrice('');
+    setNewVarOriginalPrice('');
+    setNewVarSku('');
+    setNewVarImage('/assets/sandals.png');
+    setNewVarStock('in-stock');
+    setNewVarSizes('5, 6, 7, 8, 9, 10');
+    setNewVarDesc('');
     
     setEditingProduct(null);
     setFormMsg('');
@@ -156,6 +180,7 @@ export default function AdminProducts() {
     
     setImage(product.image || '/assets/slides.png');
     setGallery(Array.isArray(product.gallery) ? product.gallery.join(', ') : '');
+    setVariantsList(Array.isArray(product.variants) ? product.variants : []);
     
     setFormMsg('');
     setFormError('');
@@ -238,7 +263,8 @@ export default function AdminProducts() {
       sizes: sizes ? sizes.split(',').map(s => s.trim()).filter(Boolean) : ['6', '7', '8', '9', '10'],
       sizeStock: sizeStock || {},
       image,
-      gallery: gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : []
+      gallery: gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : [],
+      variants: variantsList
     };
 
     try {
@@ -542,6 +568,24 @@ export default function AdminProducts() {
                   onClick={() => setFormTab('attributes')}
                 >
                   🎨 Attributes & Design
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    padding: '0.8rem 1rem',
+                    textAlign: 'left',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    fontWeight: formTab === 'variants' ? 700 : 500,
+                    backgroundColor: formTab === 'variants' ? '#f1f5f9' : 'transparent',
+                    color: formTab === 'variants' ? 'var(--accent-color)' : '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => setFormTab('variants')}
+                >
+                  🎭 Color Variants ({variantsList.length})
                 </button>
               </div>
 
@@ -983,6 +1027,239 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </>
+                )}
+
+                {/* 5. COLOR VARIANTS TAB */}
+                {formTab === 'variants' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ paddingBottom: '0.5rem', borderBottom: '1px solid #e2e8f0' }}>
+                      <h4 style={{ margin: '0 0 0.3rem 0', color: '#0f172a' }}>Product Color Variants</h4>
+                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        Manage authentic color variants for this product. Each variant maintains its own real name, photo, pricing, SKU, and size inventory.
+                      </p>
+                    </div>
+
+                    {/* Existing Variants List */}
+                    {variantsList.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}>🎨</div>
+                        <strong style={{ fontSize: '0.9rem', color: '#334155' }}>No custom color variants defined yet</strong>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.3rem 0 0 0' }}>
+                          Add distinct color editions below (e.g. Tan, Dark Brown, Onyx Black) so customers can switch colors on the storefront.
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                        {variantsList.map((v, i) => (
+                          <div 
+                            key={v.id || i} 
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              padding: '0.8rem 1rem', 
+                              borderRadius: '8px', 
+                              backgroundColor: '#f8fafc', 
+                              border: '1px solid #e2e8f0',
+                              gap: '1rem' 
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <span style={{ 
+                                width: '22px', 
+                                height: '22px', 
+                                borderRadius: '50%', 
+                                backgroundColor: v.colorHex || '#333', 
+                                border: '2px solid #fff', 
+                                boxShadow: '0 0 0 1px #cbd5e1',
+                                flexShrink: 0
+                              }} />
+                              <div>
+                                <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{v.name || v.color}</strong>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                  Color: <strong>{v.color}</strong> &bull; SKU: <code>{v.sku || '—'}</code> &bull; ₹{v.price} {v.originalPrice ? `(MRP ₹${v.originalPrice})` : ''}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <span className={`status-badge ${v.stock === 'in-stock' ? 'delivered' : v.stock === 'low-stock' ? 'pending' : 'cancelled'}`} style={{ fontSize: '0.72rem' }}>
+                                {v.stock === 'in-stock' ? 'In Stock' : v.stock === 'low-stock' ? 'Low Stock' : 'Out of Stock'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setVariantsList(prev => prev.filter((_, idx) => idx !== i));
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--danger-color)',
+                                  cursor: 'pointer',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  padding: '0.2rem 0.5rem'
+                                }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add New Variant Subform */}
+                    <div style={{ backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1.25rem', marginTop: '0.5rem' }}>
+                      <h5 style={{ margin: '0 0 1rem 0', fontSize: '0.92rem', color: 'var(--primary-color)' }}>➕ Add Variant Edition</h5>
+                      
+                      <div className="admin-form-row-2">
+                        <div className="form-group">
+                          <label className="form-label">Variant Name</label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="e.g. Golden Mandala Heels - Warm Tan"
+                            value={newVarName}
+                            onChange={(e) => setNewVarName(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Color Name & Hex</label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              placeholder="e.g. Tan, Dark Brown, Black"
+                              value={newVarColor}
+                              onChange={(e) => setNewVarColor(e.target.value)}
+                              style={{ flex: 1 }}
+                            />
+                            <input 
+                              type="color" 
+                              value={newVarColorHex}
+                              onChange={(e) => setNewVarColorHex(e.target.value)}
+                              style={{ width: '42px', height: '38px', padding: '0.2rem', cursor: 'pointer', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="admin-form-row-3" style={{ marginTop: '0.8rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Price (₹)</label>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            placeholder={price || "1899"}
+                            value={newVarPrice}
+                            onChange={(e) => setNewVarPrice(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Original MRP (₹)</label>
+                          <input 
+                            type="number" 
+                            className="form-input" 
+                            placeholder={originalPrice || "3199"}
+                            value={newVarOriginalPrice}
+                            onChange={(e) => setNewVarOriginalPrice(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">SKU</label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="e.g. SLDX-PROD-11-TAN"
+                            value={newVarSku}
+                            onChange={(e) => setNewVarSku(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="admin-form-row-2" style={{ marginTop: '0.8rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Variant Photo URL</label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="/assets/sandals.png or Cloudinary URL"
+                            value={newVarImage}
+                            onChange={(e) => setNewVarImage(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Stock Status</label>
+                          <select 
+                            className="form-select"
+                            value={newVarStock}
+                            onChange={(e) => setNewVarStock(e.target.value)}
+                          >
+                            <option value="in-stock">In Stock</option>
+                            <option value="low-stock">Low Stock</option>
+                            <option value="out-of-stock">Out of Stock</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-group" style={{ marginTop: '0.8rem' }}>
+                        <label className="form-label">Available Sizes (Comma separated)</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="5, 6, 7, 8, 9, 10"
+                          value={newVarSizes}
+                          onChange={(e) => setNewVarSizes(e.target.value)}
+                        />
+                      </div>
+
+                      <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem', borderColor: 'var(--accent-color)', color: 'var(--accent-color)' }}
+                          onClick={() => {
+                            if (!newVarColor.trim()) {
+                              alert('Please provide a color name for this variant.');
+                              return;
+                            }
+                            const vPrice = parseFloat(newVarPrice || price || '1299');
+                            const vOrig = parseFloat(newVarOriginalPrice || originalPrice || String(vPrice + 900));
+                            const vName = newVarName.trim() || `${name || 'Product'} - ${newVarColor.trim()}`;
+                            const vSku = newVarSku.trim() || `SLX-${(newVarColor || 'VAR').toUpperCase().slice(0, 3)}-${Date.now().toString().slice(-4)}`;
+                            const varSizesArr = newVarSizes ? newVarSizes.split(',').map(s => s.trim()).filter(Boolean) : [5, 6, 7, 8, 9, 10];
+                            
+                            const createdVariant = {
+                              id: `var-${Date.now()}`,
+                              name: vName,
+                              color: newVarColor.trim(),
+                              colorHex: newVarColorHex,
+                              price: vPrice,
+                              originalPrice: vOrig,
+                              sku: vSku,
+                              image: newVarImage.trim() || image || '/assets/sandals.png',
+                              gallery: [newVarImage.trim() || image || '/assets/sandals.png'],
+                              sizes: varSizesArr,
+                              sizeStock: varSizesArr.reduce((acc, sz) => ({ ...acc, [sz]: 10 }), {}),
+                              stock: newVarStock,
+                              desc: newVarDesc.trim() || desc || ''
+                            };
+
+                            setVariantsList(prev => [...prev, createdVariant]);
+                            setNewVarName('');
+                            setNewVarColor('');
+                            setNewVarPrice('');
+                            setNewVarOriginalPrice('');
+                            setNewVarSku('');
+                            setNewVarDesc('');
+                          }}
+                        >
+                          ✓ Add Variant to List
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
               </div>

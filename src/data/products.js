@@ -217,7 +217,69 @@ export const PRODUCTS = [
     color: 'gold',
     material: 'Vegan Leather',
     stock: 'low-stock',
-    sizes: [5, 6, 7, 8]
+    sizes: [5, 6, 7, 8],
+    variants: [
+      {
+        id: 'prod-11-gold',
+        name: 'Golden Mandala Heels - Royal Gold',
+        color: 'Gold',
+        colorHex: '#b45309',
+        price: 1899,
+        originalPrice: 3199,
+        sku: 'SLDX-PROD-11-GLD',
+        image: '/assets/sandals.png',
+        gallery: ['/assets/sandals.png', '/assets/sandals.png'],
+        sizes: [5, 6, 7, 8],
+        sizeStock: { '5': 10, '6': 4, '7': 11, '8': 15 },
+        stock: 'in-stock',
+        desc: 'Elegantly block-heeled sandals displaying golden mandala embroidery on soft vegan leather with cushioned memory foam arch support.'
+      },
+      {
+        id: 'prod-11-tan',
+        name: 'Golden Mandala Heels - Warm Tan',
+        color: 'Tan',
+        colorHex: '#c48a43',
+        price: 1899,
+        originalPrice: 3199,
+        sku: 'SLDX-PROD-11-TAN',
+        image: '/assets/sandals.png',
+        gallery: ['/assets/sandals.png', '/assets/sandals.png'],
+        sizes: [5, 6, 7, 8, 9],
+        sizeStock: { '5': 8, '6': 12, '7': 7, '8': 6, '9': 5 },
+        stock: 'in-stock',
+        desc: 'Handcrafted warm tan vegan leather block heels featuring intricate golden mandala needlework and all-day cushioned soles.'
+      },
+      {
+        id: 'prod-11-dbr',
+        name: 'Golden Mandala Heels - Dark Brown',
+        color: 'Dark Brown',
+        colorHex: '#5a3921',
+        price: 1999,
+        originalPrice: 3299,
+        sku: 'SLDX-PROD-11-DBR',
+        image: '/assets/sandals.png',
+        gallery: ['/assets/sandals.png', '/assets/sandals.png'],
+        sizes: [6, 7, 8, 9],
+        sizeStock: { '6': 3, '7': 5, '8': 2, '9': 4 },
+        stock: 'low-stock',
+        desc: 'Deep espresso dark brown vegan leather sandals adorned with lustrous metallic mandala embroidery on sturdy artisan heels.'
+      },
+      {
+        id: 'prod-11-blk',
+        name: 'Golden Mandala Heels - Midnight Black',
+        color: 'Black',
+        colorHex: '#111827',
+        price: 1949,
+        originalPrice: 3249,
+        sku: 'SLDX-PROD-11-BLK',
+        image: '/assets/sandals.png',
+        gallery: ['/assets/sandals.png', '/assets/sandals.png'],
+        sizes: [5, 6, 7, 8, 9, 10],
+        sizeStock: { '5': 6, '6': 10, '7': 9, '8': 8, '9': 7, '10': 4 },
+        stock: 'in-stock',
+        desc: 'Midnight black vegan leather block heels highlighted with radiant gold thread mandala motifs and textured anti-slip outsoles.'
+      }
+    ]
   },
   {
     id: 'prod-12',

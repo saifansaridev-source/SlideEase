@@ -6,7 +6,7 @@
 export const DEFAULT_HERO_SLIDES = [
   {
     id: 'slide-1',
-    image: '',
+    image: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791835951/slideease/products/1791835950187-yooooooooooooo.jpg',
     tagline: '✦ Ascend with Heritage',
     heading: 'Every stitch carries a hand.\nEvery step carries a story.',
     description: 'Handcrafted from cork-based vegan leather and traditional Indian artisan weaves, re-engineered with dual-density memory foam for modern movement.',
@@ -19,14 +19,14 @@ export const DEFAULT_HERO_SLIDES = [
     showDescription: true,
     showCta: true,
     showSecondaryCta: true,
-    showCountdown: true,
+    showCountdown: false,
     isActive: true,
     textAlign: 'left',
     overlayOpacity: 65,
   },
   {
     id: 'slide-2',
-    image: '',
+    image: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791907205/slideease/products/1791907203066-hero2.jpg',
     tagline: '✦ Living Craft • Cruelty-Free Elegance',
     heading: "The Women's Guild:\nIkat Weaves & Kutch Mirrorwork",
     description: 'Preserving generational textile artistry on contoured, shock-absorbing bases designed for everyday festive and casual poise.',
@@ -42,17 +42,17 @@ export const DEFAULT_HERO_SLIDES = [
     showCountdown: false,
     isActive: true,
     textAlign: 'left',
-    overlayOpacity: 65,
+    overlayOpacity: 70,
   },
   {
     id: 'slide-3',
-    image: '',
+    image: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791907239/slideease/products/1791907237029-hero3.jpg',
     tagline: '✦ Grounded Sophistication',
     heading: "The Men's Edit:\nSleek Cork Slides & Formal Loafers",
     description: 'Double-padded memory foam soles wrapped in water-resistant vegan leather. Built for daily strides, celebrations, and understated poise.',
     ctaText: "Explore Men's",
     ctaLink: '/shop?category=mens',
-    secondaryCtaText: '360° Studio',
+    secondaryCtaText: '180° Studio',
     secondaryCtaLink: '/#showcase-360',
     showTagline: true,
     showHeading: true,
@@ -62,15 +62,15 @@ export const DEFAULT_HERO_SLIDES = [
     showCountdown: false,
     isActive: true,
     textAlign: 'left',
-    overlayOpacity: 65,
+    overlayOpacity: 75,
   },
 ];
 
 export const DEFAULT_SECTION_IMAGES = {
   // Hero Banners
-  heroImage1: '',
-  heroImage2: '',
-  heroImage3: '',
+  heroImage1: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791835951/slideease/products/1791835950187-yooooooooooooo.jpg',
+  heroImage2: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791907205/slideease/products/1791907203066-hero2.jpg',
+  heroImage3: 'https://res.cloudinary.com/yttzcohv/image/upload/v1791907239/slideease/products/1791907237029-hero3.jpg',
 
   // Page Heroes
   aboutHeroImage: '/og_image.png',

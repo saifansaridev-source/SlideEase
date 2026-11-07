@@ -10,51 +10,98 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   const router = useRouter();
   const { addToCart, toggleWishlist, wishlist } = useCart();
 
-  /* ── 1. Variant & Gallery States ── */
-  const getInitialSize = () => {
-    const rawSizes = product.sizes || [5, 6, 7, 8, 9, 10];
+  /* ── 1. Real Product Variants Resolution ── */
+  const realVariants = React.useMemo(() => {
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      return product.variants;
+    }
+    return [
+      {
+        id: product.id,
+        name: product.name,
+        color: product.color || 'Original',
+        colorHex: product.patternColor || '#b45309',
+        price: product.price || 1299,
+        originalPrice: product.originalPrice || 2199,
+        sku: product.sku || `SLX-${String(product.id).toUpperCase()}`,
+        image: product.image,
+        gallery: Array.isArray(product.gallery) && product.gallery.length > 0 ? product.gallery : [product.image],
+        sizes: Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : [5, 6, 7, 8, 9, 10],
+        sizeStock: product.sizeStock || {},
+        stock: product.stock || 'in-stock',
+        desc: product.desc || '',
+      }
+    ];
+  }, [product]);
+
+  // Initial variant from URL query (?color=...) if provided
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const colorParam = urlParams.get('color');
+      if (colorParam) {
+        const foundIdx = realVariants.findIndex(
+          (v) => (v.color || '').toLowerCase() === colorParam.toLowerCase()
+        );
+        if (foundIdx !== -1) return foundIdx;
+      }
+    }
+    return 0;
+  });
+
+  const activeVariant = realVariants[selectedVariantIndex] || realVariants[0];
+
+  const getInitialSizeForVariant = useCallback((v) => {
+    const rawSizes = v?.sizes || product.sizes || [5, 6, 7, 8, 9, 10];
     const availableSizes = rawSizes.map(String);
-    if (product.sizeStock) {
-      const firstInStock = availableSizes.find(s => (product.sizeStock[s] || 0) > 0);
+    const stockMap = v?.sizeStock || product.sizeStock;
+    if (stockMap) {
+      const firstInStock = availableSizes.find(s => (stockMap[s] || 0) > 0);
       if (firstInStock) return isNaN(Number(firstInStock)) ? firstInStock : Number(firstInStock);
     }
     return rawSizes[0] || 7;
-  };
+  }, [product.sizes, product.sizeStock]);
 
-  const [activeThumb, setActiveThumb] = useState(product.image);
-  const [selectedSize, setSelectedSize] = useState(getInitialSize);
-  const [selectedColor, setSelectedColor] = useState('Original');
-  const [priceModifier, setPriceModifier] = useState(0);
-  const [skuSuffix, setSkuSuffix] = useState('-ORG');
+  const [activeThumb, setActiveThumb] = useState(activeVariant.image || product.image);
+  const [selectedSize, setSelectedSize] = useState(() => getInitialSizeForVariant(activeVariant));
 
-  const selectedSizeQty = product.sizeStock && product.sizeStock[String(selectedSize)] !== undefined
-    ? product.sizeStock[String(selectedSize)]
-    : 10;
+  // Sync active thumbnail and sizes when variant changes
+  useEffect(() => {
+    setActiveThumb(activeVariant.image || product.image);
+    setSelectedSize(getInitialSizeForVariant(activeVariant));
+  }, [selectedVariantIndex, activeVariant, getInitialSizeForVariant, product.image]);
+
+  // Calculated Pricing & Inventory
+  const currentPrice = typeof activeVariant.price === 'number' ? activeVariant.price : (product.price || 1299);
+  const originalPrice = typeof activeVariant.originalPrice === 'number' ? activeVariant.originalPrice : (product.originalPrice || 2199);
+  const discountPercent = Math.max(0, Math.round(((originalPrice - currentPrice) / originalPrice) * 100));
+
+  const currentStockMap = activeVariant.sizeStock || product.sizeStock || {};
+  const selectedSizeQty = currentStockMap[String(selectedSize)] !== undefined
+    ? currentStockMap[String(selectedSize)]
+    : (activeVariant.stock === 'out-of-stock' ? 0 : 10);
   const isSelectedSizeOOS = selectedSizeQty === 0;
   const isSelectedSizeLow = selectedSizeQty > 0 && selectedSizeQty < 5;
 
   const [variantStockLabel, setVariantStockLabel] = useState(
-    isSelectedSizeOOS ? 'Out of Stock' : isSelectedSizeLow ? 'Low Stock' : 'In Stock'
+    isSelectedSizeOOS ? 'Out of Stock' : isSelectedSizeLow ? `Only ${selectedSizeQty} Left!` : 'In Stock'
   );
   const [variantStockClass, setVariantStockClass] = useState(
     isSelectedSizeOOS ? 'out-of-stock' : isSelectedSizeLow ? 'low-stock' : 'in-stock'
   );
 
   useEffect(() => {
-    const qty = product.sizeStock && product.sizeStock[String(selectedSize)] !== undefined
-      ? product.sizeStock[String(selectedSize)]
-      : 10;
-    if (qty === 0) {
+    if (isSelectedSizeOOS) {
       setVariantStockLabel('Out of Stock');
       setVariantStockClass('out-of-stock');
-    } else if (qty < 5) {
-      setVariantStockLabel(`Only ${qty} Left!`);
+    } else if (isSelectedSizeLow) {
+      setVariantStockLabel(`Only ${selectedSizeQty} Left!`);
       setVariantStockClass('low-stock');
     } else {
       setVariantStockLabel('In Stock');
       setVariantStockClass('in-stock');
     }
-  }, [selectedSize, product.sizeStock]);
+  }, [isSelectedSizeOOS, isSelectedSizeLow, selectedSizeQty]);
 
   const [qty, setQty] = useState(1);
   const [addedNotice, setAddedNotice] = useState(false);
@@ -86,42 +133,40 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
     });
   };
 
-  /* ── 4. Color Swatches Definition ── */
-  const colorSwatches = [
-    { name: 'Original', hex: product.patternColor || '#008080', priceDelta: 0, sku: '-ORG', stock: 'In Stock', stockClass: 'in-stock' },
-    { name: 'Tan', hex: '#c48a43', priceDelta: 100, sku: '-TAN', stock: 'Only 5 Left!', stockClass: 'low-stock' },
-    { name: 'Dark Brown', hex: '#5a3921', priceDelta: 150, sku: '-DBR', stock: 'Only 2 Left!', stockClass: 'low-stock' },
-    { name: 'Black', hex: '#1a1a2e', priceDelta: 50, sku: '-BLK', stock: 'In Stock', stockClass: 'in-stock' },
-  ];
-
-  const handleColorSelect = (swatch) => {
-    setSelectedColor(swatch.name);
-    setPriceModifier(swatch.priceDelta);
-    setSkuSuffix(swatch.sku);
-    setVariantStockLabel(swatch.stock);
-    setVariantStockClass(swatch.stockClass);
+  /* ── 4. Variant Selection Handler ── */
+  const handleVariantSelect = (idx) => {
+    setSelectedVariantIndex(idx);
+    const chosen = realVariants[idx];
+    if (chosen && chosen.color && typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('color', chosen.color.toLowerCase());
+      window.history.replaceState(null, '', newUrl.toString());
+    }
   };
 
-  /* ── 5. Calculated Pricing ── */
-  const currentPrice = (product.price || 1299) + priceModifier;
-  const originalPrice = (product.originalPrice || 2199) + priceModifier;
-  const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
-
-  /* ── 6. Wishlist check ── */
+  /* ── 5. Wishlist check ── */
   const isWishlisted = wishlist.includes(product.id);
 
-  /* ── 7. Thumbnails List ── */
-  const thumbUrls = Array.isArray(product.gallery) && product.gallery.length > 0
-    ? [product.image, ...product.gallery]
-    : [product.image, product.image, product.image];
+  /* ── 6. Thumbnails List ── */
+  const currentGallery = Array.isArray(activeVariant.gallery) && activeVariant.gallery.length > 0
+    ? activeVariant.gallery
+    : (Array.isArray(product.gallery) && product.gallery.length > 0 ? product.gallery : []);
+  
+  const thumbUrls = Array.from(new Set([activeVariant.image || product.image, ...currentGallery])).filter(Boolean);
 
-  /* ── 8. Add to Cart / Buy Now ── */
+  /* ── 7. Add to Cart / Buy Now ── */
   const handleAddToCart = () => {
     const itemToAdd = {
       ...product,
+      id: product.id,
+      variantId: activeVariant.id || product.id,
+      name: activeVariant.name || product.name,
       price: currentPrice,
       originalPrice: originalPrice,
-      selectedColor: selectedColor,
+      selectedColor: activeVariant.color || product.color || 'Original',
+      color: activeVariant.color || product.color || 'Original',
+      image: activeVariant.image || product.image,
+      sku: activeVariant.sku || product.sku,
     };
     addToCart(itemToAdd, `UK ${selectedSize}`, qty);
     setAddedNotice(true);
@@ -131,9 +176,15 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   const handleBuyNow = () => {
     const itemToAdd = {
       ...product,
+      id: product.id,
+      variantId: activeVariant.id || product.id,
+      name: activeVariant.name || product.name,
       price: currentPrice,
       originalPrice: originalPrice,
-      selectedColor: selectedColor,
+      selectedColor: activeVariant.color || product.color || 'Original',
+      color: activeVariant.color || product.color || 'Original',
+      image: activeVariant.image || product.image,
+      sku: activeVariant.sku || product.sku,
     };
     addToCart(itemToAdd, `UK ${selectedSize}`, qty);
     router.push('/checkout');
@@ -285,14 +336,14 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   }, [product.id, allProducts]);
 
   /* ── 11. Schema.org JSON-LD ── */
-  const safeId = String(product.id || product._id || 'PROD-01');
+  const safeId = String(activeVariant.sku || activeVariant.id || product.id || 'PROD-01');
   const productSchema = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
-    name: product.name || 'SlideEase Footwear',
-    image: product.image || '/assets/loafers.png',
-    description: product.desc || 'Premium handcrafted footwear.',
-    sku: safeId.toUpperCase().replace('PROD-', 'SLDX-SKU-') + skuSuffix,
+    name: activeVariant.name || product.name || 'SlideEase Footwear',
+    image: activeVariant.image || product.image || '/assets/loafers.png',
+    description: activeVariant.desc || product.desc || 'Premium handcrafted footwear.',
+    sku: safeId,
     brand: {
       '@type': 'Brand',
       name: 'SlideEase Footwear'
@@ -301,8 +352,8 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
       '@type': 'Offer',
       priceCurrency: 'INR',
       price: currentPrice,
-      availability: 'https://schema.org/InStock',
-      url: `https://slide-ease.vercel.app/product/${product.slug || safeId}`
+      availability: isSelectedSizeOOS ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      url: `https://slide-ease.vercel.app/product/${product.slug || product.id}${activeVariant.color ? `?color=${encodeURIComponent(activeVariant.color.toLowerCase())}` : ''}`
     },
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -404,7 +455,12 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
             {/* Right Column: Product Information & Purchase Bar */}
             <div className="product-info">
               <div className="product-info-tag" id="product-tag">{product.tag || 'Handcrafted Heritage'}</div>
-              <h1 className="product-info-title" id="product-title">{product.name}</h1>
+              <h1 className="product-info-title" id="product-title">{activeVariant.name || product.name}</h1>
+              {activeVariant.sku && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '-0.3rem', marginBottom: '0.5rem' }}>
+                  SKU: {activeVariant.sku}
+                </div>
+              )}
 
               <div className="product-info-rating" id="product-rating-display">
                 <span className="stars" style={{ color: 'var(--accent-color)', fontSize: '1.1rem' }}>
@@ -425,7 +481,7 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
               <p className="product-info-tax-note">Inclusive of all taxes. Free shipping on orders above ₹999.</p>
 
               <div className="product-info-desc" id="product-description">
-                <p>{product.desc || 'Handcrafted vegan luxury footwear with artisanal Indian motifs and orthotic cushioned soles.'}</p>
+                <p>{activeVariant.desc || product.desc || 'Handcrafted vegan luxury footwear with artisanal Indian motifs and orthotic cushioned soles.'}</p>
               </div>
 
               {/* Variant: Size Selector */}
@@ -442,10 +498,10 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
                   </span>
                 </label>
                 <div className="variant-options size-options" id="product-size-options" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-                  {(product.sizes || [5, 6, 7, 8, 9, 10]).map((sz) => {
+                  {(activeVariant.sizes || product.sizes || [5, 6, 7, 8, 9, 10]).map((sz) => {
                     const szKey = String(sz);
-                    const qtyInStock = product.sizeStock && product.sizeStock[szKey] !== undefined
-                      ? product.sizeStock[szKey]
+                    const qtyInStock = currentStockMap[szKey] !== undefined
+                      ? currentStockMap[szKey]
                       : 10;
                     const isOOS = qtyInStock === 0;
                     const isLow = qtyInStock > 0 && qtyInStock < 5;
@@ -491,25 +547,36 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
                 </div>
               </div>
 
-              {/* Variant: Color Selector */}
-              <div className="product-variant-group">
-                <label className="variant-label">
-                  <span>Color: <strong style={{ textTransform: 'capitalize', color: 'var(--primary-color)' }}>{selectedColor}</strong></span>
-                </label>
-                <div className="variant-options color-options" id="product-color-options">
-                  {colorSwatches.map((swatch) => (
-                    <button
-                      key={swatch.name}
-                      type="button"
-                      className={`color-swatch ${selectedColor === swatch.name ? 'active' : ''}`}
-                      style={{ backgroundColor: swatch.hex }}
-                      title={`${swatch.name} ${swatch.priceDelta ? `(+₹${swatch.priceDelta})` : ''}`}
-                      onClick={() => handleColorSelect(swatch)}
-                      aria-label={`Select ${swatch.name} color`}
-                    />
-                  ))}
+              {/* Variant: Color Selector — Only real validated variants displayed */}
+              {realVariants.length > 1 && (
+                <div className="product-variant-group">
+                  <label className="variant-label">
+                    <span>Color: <strong style={{ textTransform: 'capitalize', color: 'var(--primary-color)' }}>{activeVariant.color || 'Original'}</strong></span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      ({realVariants.length} authentic colors available)
+                    </span>
+                  </label>
+                  <div className="variant-options color-options" id="product-color-options">
+                    {realVariants.map((v, idx) => (
+                      <button
+                        key={v.id || idx}
+                        type="button"
+                        className={`color-swatch ${selectedVariantIndex === idx ? 'active' : ''}`}
+                        style={{ 
+                          backgroundColor: v.colorHex || v.hex || '#333',
+                          border: selectedVariantIndex === idx ? '2px solid var(--accent-color)' : '1px solid #cbd5e1',
+                          transform: selectedVariantIndex === idx ? 'scale(1.15)' : 'scale(1)',
+                          transition: 'all 0.2s ease',
+                          boxShadow: selectedVariantIndex === idx ? '0 0 0 2px rgba(196, 138, 67, 0.4)' : 'none'
+                        }}
+                        title={`${v.name || v.color} — ₹${v.price}`}
+                        onClick={() => handleVariantSelect(idx)}
+                        aria-label={`Select ${v.color} color`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Quantity */}
               <div className="product-variant-group">
@@ -593,7 +660,7 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
                 <div className="meta-row">
                   <span className="meta-label">SKU:</span>
                   <span className="meta-value" id="product-sku">
-                    {product.id.toUpperCase().replace('PROD-', 'SLDX-SKU-') + skuSuffix}
+                    {(activeVariant?.sku || product.id.toUpperCase().replace('PROD-', 'SLDX-SKU-'))}
                   </span>
                 </div>
                 <div className="meta-row">

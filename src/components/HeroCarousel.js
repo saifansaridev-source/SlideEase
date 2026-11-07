@@ -8,6 +8,19 @@ export default function HeroCarousel() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [countdown, setCountdown] = useState({ hours: 14, mins: 42, secs: 18 });
   const [slides, setSlides] = useState(DEFAULT_HERO_SLIDES);
+  const [heroReady, setHeroReady] = useState(false);
+
+  // Eagerly preload slide 1 image in the browser cache
+  useEffect(() => {
+    if (typeof window !== 'undefined' && slides[0]?.image) {
+      const img = new Image();
+      img.src = slides[0].image;
+      img.onload = () => setHeroReady(true);
+      img.onerror = () => setHeroReady(true);
+    } else {
+      setHeroReady(true);
+    }
+  }, [slides]);
 
   // Fetch admin-configured hero slides from MongoDB
   useEffect(() => {
@@ -65,6 +78,10 @@ export default function HeroCarousel() {
 
   return (
     <section className="hero-carousel" id="hero-banner-section" aria-label="Hero Slideshow">
+      {/* Preload first slide image in head */}
+      {activeSlides[0]?.image && (
+        <link rel="preload" as="image" href={activeSlides[0].image} fetchPriority="high" />
+      )}
       {activeSlides.map((slide, idx) => {
         const hasImage = Boolean(slide.image);
         const bgImage = hasImage 
@@ -84,6 +101,7 @@ export default function HeroCarousel() {
               pointerEvents: activeSlide === idx ? 'auto' : 'none',
               zIndex: activeSlide === idx ? 2 : 1,
               textAlign: slide.textAlign || 'left',
+              transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
             role="img"
             aria-label={slide.heading || slide.tagline}

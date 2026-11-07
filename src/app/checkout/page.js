@@ -123,10 +123,13 @@ export default function CheckoutPage() {
     zip,
     items: cart.map((item) => ({
       productId: item.id,
+      variantId: item.variantId || item.id,
       name: item.name,
       price: item.price,
       qty: item.qty,
       size: item.size,
+      color: item.selectedColor || item.color || '',
+      sku: item.sku || '',
       image: item.image || '',
     })),
     subtotal,
@@ -772,14 +775,16 @@ export default function CheckoutPage() {
             {/* Cart Items Miniature list */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '280px', overflowY: 'auto', marginBottom: '1.5rem', paddingRight: '0.3rem' }}>
               {cart.map((item) => (
-                <div key={`${item.id}-${item.size}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
+                <div key={`${item.id}-${item.variantId || item.selectedColor || ''}-${item.size}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '4px', overflow: 'hidden', backgroundColor: item.bgColor || '#f9f9f9', flexShrink: 0 }}>
                       <img src={item.image || '/og_image.png'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div>
                       <div style={{ fontWeight: 600, color: 'var(--primary-color)', lineHeight: 1.2 }}>{item.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Size {item.size} × {item.qty}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Size {item.size} {item.selectedColor || item.color ? `• ${item.selectedColor || item.color}` : ''} × {item.qty}
+                      </div>
                     </div>
                   </div>
                   <span style={{ fontWeight: 600 }}>₹{(item.price * item.qty).toLocaleString('en-IN')}</span>

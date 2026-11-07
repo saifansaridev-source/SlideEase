@@ -97,8 +97,9 @@ export function CartProvider({ children }) {
   };
 
   const addToCart = (product, size = 'UK 8', qty = 1) => {
+    const variantKey = product.variantId || product.selectedColor || product.color || '';
     const existingIndex = cart.findIndex(
-      (item) => item.id === product.id && item.size === size
+      (item) => item.id === product.id && item.size === size && (item.variantId || item.selectedColor || '') === variantKey
     );
 
     let newCart = [...cart];
@@ -107,13 +108,18 @@ export function CartProvider({ children }) {
     } else {
       newCart.push({
         id: product.id,
+        variantId: product.variantId || product.id,
         name: product.name,
         price: product.price,
+        originalPrice: product.originalPrice,
         image: product.image,
         bgColor: product.bgColor,
         pattern: product.pattern,
         patternColor: product.patternColor,
         type: product.type,
+        color: product.selectedColor || product.color || '',
+        selectedColor: product.selectedColor || product.color || '',
+        sku: product.sku || '',
         size: size,
         qty: qty,
       });
@@ -122,17 +128,23 @@ export function CartProvider({ children }) {
     setIsCartOpen(true); // Automatically slide open cart drawer
   };
 
-  const removeFromCart = (productId, size) => {
-    const newCart = cart.filter(
-      (item) => !(item.id === productId && item.size === size)
-    );
+  const removeFromCart = (productId, size, variantId = null) => {
+    const newCart = cart.filter((item) => {
+      const matchId = item.id === productId || item.variantId === productId;
+      const matchSize = item.size === size;
+      const matchVariant = variantId ? (item.variantId === variantId || item.selectedColor === variantId) : true;
+      return !(matchId && matchSize && matchVariant);
+    });
     saveCart(newCart);
   };
 
-  const updateQty = (productId, size, delta) => {
+  const updateQty = (productId, size, delta, variantId = null) => {
     let newCart = cart
       .map((item) => {
-        if (item.id === productId && item.size === size) {
+        const matchId = item.id === productId || item.variantId === productId;
+        const matchSize = item.size === size;
+        const matchVariant = variantId ? (item.variantId === variantId || item.selectedColor === variantId) : true;
+        if (matchId && matchSize && matchVariant) {
           return { ...item, qty: item.qty + delta };
         }
         return item;

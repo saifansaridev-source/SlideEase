@@ -54,64 +54,31 @@ export default async function DashboardPage() {
   const totalSpent = orders.reduce((sum, o) => sum + (o.pricing?.total || o.total || 0), 0);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-light)', minHeight: '85vh', padding: '3rem 1.5rem 6rem 1.5rem' }}>
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="dashboard-page-wrapper">
+      <div className="dashboard-container">
         
         {/* Dashboard Top Header */}
-        <div style={{
-          backgroundColor: 'var(--bg-white)',
-          padding: '2rem 2.5rem',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-color)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          marginBottom: '2.5rem',
-          boxShadow: 'var(--shadow-sm)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--primary-color)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.6rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-heading)'
-            }}>
+        <div className="dashboard-header-card">
+          <div className="dashboard-user-meta">
+            <div className="dashboard-user-avatar">
               {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', margin: 0, color: 'var(--primary-color)' }}>
+            <div className="dashboard-user-info">
+              <div className="dashboard-user-title-row">
+                <h1 className="dashboard-user-name">
                   Welcome, {user.name}!
                 </h1>
-                <span style={{
-                  backgroundColor: 'var(--accent-light)',
-                  color: 'var(--primary-color)',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
+                <span className="dashboard-user-badge">
                   SlideEase Circle Member
                 </span>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0.3rem 0 0 0' }}>
+              <p className="dashboard-user-email">
                 {user.email} • Member since {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '2026'}
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.8rem' }}>
+          <div className="dashboard-header-actions">
             {user.role === 'admin' && (
               <Link href="/admin" className="btn btn-accent" style={{ fontSize: '0.85rem', padding: '0.6rem 1.4rem' }}>
                 🛡️ Admin Panel
@@ -124,19 +91,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* Overview Stats Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1.5rem',
-          marginBottom: '3rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--bg-white)',
-            padding: '1.8rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
+        <div className="dashboard-stats-grid">
+          <div className="dashboard-stat-card">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
             <div style={{ fontSize: '0.82rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>
               Artisan Reward Points
@@ -149,13 +105,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div style={{
-            backgroundColor: 'var(--bg-white)',
-            padding: '1.8rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
+          <div className="dashboard-stat-card">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📦</div>
             <div style={{ fontSize: '0.82rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>
               Orders Completed
@@ -168,13 +118,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div style={{
-            backgroundColor: 'var(--bg-white)',
-            padding: '1.8rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
+          <div className="dashboard-stat-card">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎟️</div>
             <div style={{ fontSize: '0.82rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>
               Exclusive Coupon
@@ -187,13 +131,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div style={{
-            backgroundColor: 'var(--bg-white)',
-            padding: '1.8rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
+          <div className="dashboard-stat-card">
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>❤️</div>
             <div style={{ fontSize: '0.82rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>
               Saved Wishlist
@@ -208,10 +146,10 @@ export default async function DashboardPage() {
         </div>
 
         {/* Main Dashboard Layout: Orders & Profile */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: '2.5rem', alignItems: 'start' }}>
+        <div className="dashboard-main-grid">
           
           {/* Order History Section */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: 'var(--primary-color)', marginBottom: '1.2rem' }}>
               Recent Orders
             </h2>
@@ -220,33 +158,21 @@ export default async function DashboardPage() {
           </div>
 
           {/* User Account Info Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{
-              backgroundColor: 'var(--bg-white)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              padding: '1.8rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}>
-              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', color: 'var(--primary-color)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
+          <div className="dashboard-sidebar-panels">
+            <div className="dashboard-panel-card">
+              <h3 className="dashboard-panel-title">
                 Account Details
               </h3>
-              <div style={{ fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--text-color)' }}>
+              <div className="dashboard-details-list">
                 <div><strong>Full Name:</strong> {user.name}</div>
-                <div><strong>Email:</strong> {user.email}</div>
+                <div style={{ wordBreak: 'break-all' }}><strong>Email:</strong> {user.email}</div>
                 <div><strong>Phone:</strong> {user.phone || 'Not provided'}</div>
                 <div><strong>Role:</strong> <span style={{ textTransform: 'capitalize' }}>{user.role || 'Customer'}</span></div>
               </div>
             </div>
 
-            <div style={{
-              backgroundColor: 'var(--bg-white)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              padding: '1.8rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}>
-              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', color: 'var(--primary-color)', margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.6rem' }}>
+            <div className="dashboard-panel-card">
+              <h3 className="dashboard-panel-title">
                 Quick Assistance
               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: '1rem' }}>

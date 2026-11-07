@@ -312,7 +312,7 @@ export default function CartPage() {
                     </thead>
                     <tbody id="cart-items-table-body">
                       {cart.map((item) => (
-                        <tr key={`${item.id}-${item.size}`}>
+                        <tr key={`${item.id}-${item.variantId || item.selectedColor || ''}-${item.size}`}>
                           <td>
                             <div className="cart-product">
                               <div 
@@ -341,8 +341,14 @@ export default function CartPage() {
                                 >
                                   {item.name}
                                 </Link>
-                                <div className="cart-product-size">
-                                  Size: <strong style={{ color: 'var(--primary-color)' }}>{item.size}</strong>
+                                <div className="cart-product-size" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <span>Size: <strong style={{ color: 'var(--primary-color)' }}>{item.size}</strong></span>
+                                  {(item.selectedColor || item.color) && (
+                                    <span>&bull; Color: <strong style={{ color: 'var(--primary-color)' }}>{item.selectedColor || item.color}</strong></span>
+                                  )}
+                                  {item.sku && (
+                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>({item.sku})</span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -353,7 +359,7 @@ export default function CartPage() {
                               <button 
                                 className="qty-btn" 
                                 style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.3rem', color: 'var(--primary-color)' }}
-                                onClick={() => updateQty(item.id, item.size, -1)}
+                                onClick={() => updateQty(item.id, item.size, -1, item.variantId || item.selectedColor)}
                                 aria-label="Decrease quantity"
                               >
                                 -
@@ -362,7 +368,7 @@ export default function CartPage() {
                               <button 
                                 className="qty-btn" 
                                 style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0 0.3rem', color: 'var(--primary-color)' }}
-                                onClick={() => updateQty(item.id, item.size, 1)}
+                                onClick={() => updateQty(item.id, item.size, 1, item.variantId || item.selectedColor)}
                                 aria-label="Increase quantity"
                               >
                                 +
@@ -376,7 +382,7 @@ export default function CartPage() {
                             <button 
                               className="cart-remove-btn" 
                               style={{ border: 'none', background: 'none', cursor: 'pointer' }}
-                              onClick={() => removeFromCart(item.id, item.size)}
+                              onClick={() => removeFromCart(item.id, item.size, item.variantId || item.selectedColor)}
                               title="Remove item"
                               aria-label="Remove item"
                             >

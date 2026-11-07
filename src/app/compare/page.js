@@ -82,15 +82,38 @@ export default function ComparePage() {
         {error && <div style={{ textAlign: "center", padding: "1.5rem", color: "var(--danger-color)", background: "#fef2f2", borderRadius: "8px", marginBottom: "1.5rem" }}>{error}</div>}
 
         {!loading && products.length > 0 && (
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <div style={{ display: "grid", gridTemplateColumns: `200px repeat(${products.length}, 1fr)`, minWidth: "560px", gap: 0, borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", border: "1px solid var(--border-color)" }}>
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: `minmax(110px, 135px) repeat(${products.length}, minmax(180px, 1fr))`, 
+              minWidth: `${135 + products.length * 190}px`, 
+              gap: 0, 
+              background: "#fff",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.06)" 
+            }}>
 
-              {/* Header row — product images */}
-              <div style={{ background: "var(--primary-color)", padding: "1.25rem 1rem", display: "flex", alignItems: "center" }}>
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Attribute</span>
+              {/* Header row — Attribute label */}
+              <div style={{ 
+                background: "#f8fafc", 
+                padding: "1.25rem 1rem", 
+                display: "flex", 
+                alignItems: "center",
+                borderBottom: "1px solid var(--border-color)",
+                borderRight: "1px solid var(--border-color)"
+              }}>
+                <span style={{ color: "var(--primary-color)", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Specification
+                </span>
               </div>
               {products.map((p) => (
-                <div key={p.id || p._id} style={{ background: "#fff", padding: "1.25rem 1rem", textAlign: "center", borderLeft: "1px solid var(--border-color)", position: "relative" }}>
+                <div key={p.id || p._id} style={{ 
+                  background: "#fff", 
+                  padding: "1.25rem 1rem", 
+                  textAlign: "center", 
+                  borderRight: "1px solid var(--border-color)", 
+                  borderBottom: "1px solid var(--border-color)", 
+                  position: "relative" 
+                }}>
                   <button onClick={() => removeFromCompare(p.id || String(p._id))} title="Remove" aria-label="Remove from compare"
                     style={{ position: "absolute", top: "8px", right: "8px", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: "18px", lineHeight: 1, padding: "2px" }}>
                     ×
@@ -111,14 +134,30 @@ export default function ComparePage() {
 
               {/* Attribute rows */}
               {ATTRS.map((attr, i) => {
-                const rowBg = i % 2 === 0 ? "#fafafa" : "#fff";
+                const rowBg = i % 2 === 0 ? "#fcfcfd" : "#fff";
                 return (
                   <React.Fragment key={attr.key}>
-                    <div style={{ background: rowBg, padding: "0.85rem 1rem", borderTop: "1px solid var(--border-color)", fontSize: "0.8rem", fontWeight: 700, color: "var(--primary-color)" }}>
+                    <div style={{ 
+                      background: i % 2 === 0 ? "#f1f5f9" : "#f8fafc", 
+                      padding: "0.85rem 1rem", 
+                      borderBottom: "1px solid var(--border-color)", 
+                      borderRight: "1px solid var(--border-color)", 
+                      fontSize: "0.78rem", 
+                      fontWeight: 700, 
+                      color: "var(--primary-color)" 
+                    }}>
                       {attr.label}
                     </div>
                     {products.map((p) => (
-                      <div key={(p.id||p._id)+attr.key} style={{ background: rowBg, padding: "0.85rem 1rem", borderTop: "1px solid var(--border-color)", borderLeft: "1px solid var(--border-color)", fontSize: "0.85rem", color: "var(--text-dark)", textAlign: "center" }}>
+                      <div key={(p.id||p._id)+attr.key} style={{ 
+                        background: rowBg, 
+                        padding: "0.85rem 1rem", 
+                        borderBottom: "1px solid var(--border-color)", 
+                        borderRight: "1px solid var(--border-color)", 
+                        fontSize: "0.85rem", 
+                        color: "var(--text-dark)", 
+                        textAlign: "center" 
+                      }}>
                         {attr.render(p)}
                       </div>
                     ))}

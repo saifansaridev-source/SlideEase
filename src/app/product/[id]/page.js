@@ -16,6 +16,26 @@ const slugify = (text) => {
 
 function cleanProduct(p) {
   if (!p) return null;
+  const cleanVariants = Array.isArray(p.variants)
+    ? p.variants.map((v) => ({
+        ...v,
+        _id: v._id ? v._id.toString() : (v.id || ''),
+        id: v.id || slugify(v.name || v.color),
+        name: v.name || `${p.name} - ${v.color || 'Variant'}`,
+        color: v.color || 'Original',
+        colorHex: v.colorHex || v.hex || p.patternColor || '#b45309',
+        price: typeof v.price === 'number' ? v.price : p.price,
+        originalPrice: typeof v.originalPrice === 'number' ? v.originalPrice : (p.originalPrice || p.price),
+        image: v.image || p.image,
+        gallery: Array.isArray(v.gallery) && v.gallery.length > 0 ? v.gallery : (p.gallery || [p.image]),
+        sizes: Array.isArray(v.sizes) && v.sizes.length > 0 ? v.sizes : (p.sizes || [5, 6, 7, 8]),
+        sizeStock: v.sizeStock || p.sizeStock || {},
+        stock: v.stock || p.stock || 'in-stock',
+        sku: v.sku || (p.sku ? `${p.sku}-${(v.color || 'VAR').toUpperCase().slice(0, 3)}` : `SLX-${p.id}-${(v.color || 'VAR').toUpperCase()}`),
+        desc: v.desc || p.desc,
+      }))
+    : undefined;
+
   return {
     ...p,
     _id: p._id ? p._id.toString() : (p.id || ''),
@@ -26,6 +46,7 @@ function cleanProduct(p) {
     category: p.category || 'womens',
     image: p.image || '/assets/loafers.png',
     sizes: Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : [5, 6, 7, 8, 9, 10],
+    variants: cleanVariants,
     createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt)) : undefined,
     updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt)) : undefined,
   };

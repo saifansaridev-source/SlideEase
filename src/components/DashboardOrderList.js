@@ -51,8 +51,11 @@ export default function DashboardOrderList({ initialOrders = [] }) {
             backgroundColor: 'var(--bg-white)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)',
-            padding: '1.8rem',
-            boxShadow: 'var(--shadow-sm)'
+            padding: '1.5rem',
+            boxShadow: 'var(--shadow-sm)',
+            width: '100%',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
           }}>
             <div style={{
               display: 'flex',
@@ -70,7 +73,7 @@ export default function DashboardOrderList({ initialOrders = [] }) {
                 <strong style={{ color: 'var(--primary-color)', fontFamily: 'monospace' }}>{ordRef}</strong>
                 <span style={{ color: 'var(--text-muted)', marginLeft: '1rem' }}>Placed: {orderDate}</span>
               </div>
-              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{
                   backgroundColor: status === 'Delivered' ? '#e8f5e9' : '#fff3e0',
                   color: status === 'Delivered' ? 'var(--success-color)' : '#e65100',
@@ -109,19 +112,19 @@ export default function DashboardOrderList({ initialOrders = [] }) {
             {/* Items */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '1.2rem' }}>
               {items.map((it, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '4px', overflow: 'hidden', backgroundColor: 'var(--accent-light)' }}>
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', minWidth: 0, flex: '1 1 200px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '4px', overflow: 'hidden', backgroundColor: 'var(--accent-light)', flexShrink: 0 }}>
                       <img src={it.image || '/og_image.png'} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--primary-color)' }}>{it.name}</div>
+                    <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{it.name}</div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         Size UK {it.size} {it.color ? `• ${it.color}` : ''} • Qty {it.quantity || it.qty || 1}
                       </div>
                     </div>
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                     ₹{(it.lineTotal || (it.unitPrice || it.price || 0) * (it.quantity || it.qty || 1)).toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -129,13 +132,13 @@ export default function DashboardOrderList({ initialOrders = [] }) {
             </div>
 
             {ord.trackingNumber && (
-              <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#f0fdf4', borderRadius: '6px', fontSize: '0.8rem', color: '#166534', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
+              <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#f0fdf4', borderRadius: '6px', fontSize: '0.8rem', color: '#166534', marginBottom: '1rem', border: '1px solid #bbf7d0', wordBreak: 'break-all' }}>
                 🚚 Shipped via <strong>{ord.courierName || 'Courier Partner'}</strong> — Tracking / AWB: <code style={{ backgroundColor: '#fff', padding: '0.1rem 0.4rem', borderRadius: '3px', border: '1px solid #86efac', fontWeight: 700 }}>{ord.trackingNumber}</code>
               </div>
             )}
 
             {ord.returnAwb && (
-              <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#e0f2fe', borderRadius: '6px', fontSize: '0.8rem', color: '#0369a1', marginBottom: '1rem', border: '1px solid #bae6fd' }}>
+              <div style={{ padding: '0.5rem 0.8rem', backgroundColor: '#e0f2fe', borderRadius: '6px', fontSize: '0.8rem', color: '#0369a1', marginBottom: '1rem', border: '1px solid #bae6fd', wordBreak: 'break-all' }}>
                 ↩️ Reverse Pickup Scheduled — AWB: <code style={{ backgroundColor: '#fff', padding: '0.1rem 0.4rem', borderRadius: '3px', border: '1px solid #7dd3fc', fontWeight: 700 }}>{ord.returnAwb}</code> &bull; Hand over packed footwear to courier executive.
               </div>
             )}

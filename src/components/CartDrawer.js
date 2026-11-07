@@ -110,22 +110,24 @@ export default function CartDrawer() {
           </div>
         ) : (
           cart.map((item) => (
-            <div key={`${item.id}-${item.size}`} className="drawer-cart-item">
+            <div key={`${item.id}-${item.variantId || item.selectedColor || ''}-${item.size}`} className="drawer-cart-item">
               <div className="drawer-cart-item-img" style={{ backgroundColor: item.bgColor || '#f9f9f9', borderRadius: '4px', overflow: 'hidden' }}>
                 <img src={item.image || '/assets/slides.png'} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <div className="drawer-cart-item-details">
                 <div className="drawer-cart-item-title" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600 }}>{item.name}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 6px 0' }}>
-                  Size: <strong>UK {item.size}</strong> {item.pattern ? `• ${item.pattern}` : ''}
+                  Size: <strong>UK {item.size}</strong>
+                  {item.selectedColor || item.color ? ` • Color: ${item.selectedColor || item.color}` : ''}
+                  {item.pattern ? ` • ${item.pattern}` : ''}
                 </div>
                 <div className="drawer-cart-item-price" style={{ fontWeight: 700, color: 'var(--accent-dark)' }}>
                   ₹{(item.price * item.qty).toLocaleString('en-IN')}
                 </div>
                 <div className="drawer-cart-item-qty" style={{ marginTop: '6px' }}>
-                  <button className="qty-btn" onClick={() => updateQty(item.id, item.size, -1)} aria-label="Decrease quantity">-</button>
+                  <button className="qty-btn" onClick={() => updateQty(item.id, item.size, -1, item.variantId || item.selectedColor)} aria-label="Decrease quantity">-</button>
                   <span className="qty-val">{item.qty}</span>
-                  <button className="qty-btn" onClick={() => updateQty(item.id, item.size, 1)} aria-label="Increase quantity">+</button>
+                  <button className="qty-btn" onClick={() => updateQty(item.id, item.size, 1, item.variantId || item.selectedColor)} aria-label="Increase quantity">+</button>
                   <button 
                     className="cart-remove-btn" 
                     style={{ 
@@ -143,7 +145,7 @@ export default function CartDrawer() {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger-color)'; e.currentTarget.style.transform = 'scale(1.15)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                    onClick={() => removeFromCart(item.id, item.size)}
+                    onClick={() => removeFromCart(item.id, item.size, item.variantId || item.selectedColor)}
                     aria-label="Remove item"
                   >
                     <svg style={{ width: '15px', height: '15px', fill: 'currentColor' }} viewBox="0 0 20 20">

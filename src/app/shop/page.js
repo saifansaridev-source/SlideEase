@@ -43,14 +43,10 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  /* ── URL params (all 7 filter dimensions) ── */
+  /* ── URL params (Clean Navigation) ── */
   const category    = searchParams.get('category') || 'all';
   const subcategory = searchParams.get('subcategory') || 'all';
   const type        = searchParams.get('type')     || 'all';
-  const price       = searchParams.get('price')    || 'all';
-  const color       = searchParams.get('color')    || 'all';
-  const material    = searchParams.get('material') || 'all';
-  const stock       = searchParams.get('stock')    || 'all';
   const sort        = searchParams.get('sort')     || 'default';
   const q           = searchParams.get('q')        || '';
 
@@ -83,7 +79,7 @@ function ShopContent() {
       .catch(() => {});
   }, []);
 
-  /* ── Fetch /api/products; client-side post-filter for price/color/material/stock ── */
+  /* ── Fetch products by category / subcategory / search query ── */
   const fetchProducts = useCallback(() => {
     setLoading(true);
     const p = new URLSearchParams();
@@ -96,47 +92,14 @@ function ShopContent() {
     fetch('/api/products?' + p.toString())
       .then(r => r.json())
       .then(json => {
-        if (json.success) {
-          let data = json.data;
-          if (price !== 'all') {
-            data = data.filter(p => {
-              if (price === 'under-1000') return p.price < 1000;
-              if (price === '1000-1500') return p.price >= 1000 && p.price <= 1500;
-              if (price === '1500-2000') return p.price >= 1500 && p.price <= 2000;
-              if (price === 'above-2000') return p.price > 2000;
-              return true;
-            });
-          }
-          if (color !== 'all') {
-            const normColor = color.toLowerCase().trim();
-            data = data.filter(p => (p.color || '').toLowerCase().trim() === normColor);
-          }
-          if (material !== 'all') {
-            const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            const targetMat = clean(material);
-            data = data.filter(p => {
-              const pMat = clean(p.material);
-              return pMat.includes(targetMat) || targetMat.includes(pMat);
-            });
-          }
-          const getStockCount = (p) => {
-            if (typeof p.stockQty === 'number') return p.stockQty;
-            if (typeof p.stock === 'number') return p.stock;
-            if (p.sizeStock && typeof p.sizeStock === 'object') {
-              return Object.values(p.sizeStock).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
-            }
-            return 50;
-          };
-          if (stock === 'in-stock')  data = data.filter(p => getStockCount(p) > 5);
-          if (stock === 'low-stock') data = data.filter(p => { const s = getStockCount(p); return s > 0 && s <= 5; });
-          if (stock === 'out-of-stock') data = data.filter(p => getStockCount(p) === 0);
-          setProducts(data);
+        if (json.success && Array.isArray(json.data)) {
+          setProducts(json.data);
           setIsFallback(!!json.isFallback);
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [category, subcategory, type, price, color, material, stock, sort, q]);
+  }, [category, subcategory, type, sort, q]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -157,26 +120,10 @@ function ShopContent() {
     womens: "Women's Footwear Collection",
   };
 
-  /* ── Dynamic Category Tabs & Options ── */
+  /* ── Dynamic Category Tabs ── */
   const categoryTabs = categoriesList.filter(c => !c.parent).length > 0 
     ? [['all', 'All Products'], ...categoriesList.filter(c => !c.parent).map(c => [c.slug, c.name])]
     : [['all','All Products'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]];
-
-  const categoryFilterOpts = categoriesList.filter(c => !c.parent).length > 0
-    ? [['all', 'All Genders'], ...categoriesList.filter(c => !c.parent).map(c => [c.slug, c.name])]
-    : [['all','All Genders'],['mens',"Men's Footwear"],['womens',"Women's Footwear"]];
-
-  /* ── Filter / sort option definitions ── */
-  const row1Filters = [
-    { label: 'Gender:',  id: 'filter-category', val: category, key: 'category', opts: categoryFilterOpts },
-    { label: 'Style:',   id: 'filter-type',     val: type,     key: 'type',     opts: [['all','All Styles'],['slides','Slides & Slip-Ons'],['sandals','Sandals & Flats'],['loafers','Premium Loafers']] },
-    { label: 'Price:',   id: 'filter-price',    val: price,    key: 'price',    opts: [['all','All Prices'],['under-1000','Under ₹1000'],['1000-1500','₹1000–₹1500'],['1500-2000','₹1500–₹2000'],['above-2000','Above ₹2000']] },
-    { label: 'Color:',   id: 'filter-color',    val: color,    key: 'color',    opts: [['all','All Colors'],['tan','Tan'],['black','Black'],['teal','Teal'],['red','Red'],['purple','Purple'],['gold','Gold'],['blue','Blue'],['pink','Pink'],['green','Green']] },
-  ];
-  const row2Filters = [
-    { label: 'Material:', id: 'filter-material', val: material, key: 'material', opts: [['all','All Materials'],['vegan-leather','Vegan Leather'],['velvet','Velvet'],['jute','Jute'],['khadi','Khadi Cotton'],['ikat','Ikat Canvas']] },
-    { label: 'Status:',   id: 'filter-stock',    val: stock,    key: 'stock',    opts: [['all','All Status'],['in-stock','In Stock'],['low-stock','Low Stock']] },
-  ];
 
   return (
     <>
@@ -196,119 +143,52 @@ function ShopContent() {
         </div>
       </section>
 
-      {/* ── CATEGORY TABS ───────────────────────────────────────────────── */}
-      <section className="container" style={{ padding: '3rem 1.5rem 1rem' }} id="shop-tab-filters-section">
-        <div className="shop-categories-tab">
-          {categoryTabs.map(([val, label]) => (
-            <button
-              key={val}
-              id={`tab-${val}`}
-              className={`category-tab-btn${category === val ? ' active' : ''}`}
-              onClick={() => updateQuery('category', val)}
-            >{label}</button>
-          ))}
-        </div>
-      </section>
-
-      {/* ── FILTER + SORT BAR ───────────────────────────────────────────── */}
-      <section className="container" style={{ padding: '0 1.5rem 2rem' }} id="shop-controls-section">
-        <div className="shop-filter-bar">
-
-          {/* Row 1: Gender, Style, Price, Color */}
-          <div className="filter-group">
-            {row1Filters.map(({ label, id, val, key, opts }) => (
-              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="filter-label">{label}</span>
-                <select
-                  id={id}
-                  className="filter-select"
-                  value={val}
-                  aria-label={`Filter by ${key}`}
-                  onChange={e => updateQuery(key, e.target.value)}
-                >
-                  {opts.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
-                </select>
-              </div>
-            ))}
-          </div>
-
-          {/* Row 2: Material, Stock, Sort */}
-          <div className="filter-group">
-            {row2Filters.map(({ label, id, val, key, opts }) => (
-              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="filter-label">{label}</span>
-                <select
-                  id={id}
-                  className="filter-select"
-                  value={val}
-                  aria-label={`Filter by ${key}`}
-                  onChange={e => updateQuery(key, e.target.value)}
-                >
-                  {opts.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
-                </select>
-              </div>
-            ))}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto' }}>
-              <span className="filter-label">Sort By:</span>
-              <select
-                id="sort-by"
-                className="filter-select"
-                value={sort}
-                aria-label="Sort products"
-                onChange={e => updateQuery('sort', e.target.value)}
-              >
-                <option value="default">Featured</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Customer Rating</option>
-              </select>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── ACTIVE FILTER CHIPS ─────────────────────────────────────────── */}
-      {(() => {
-        const activeFilters = [
-          category !== 'all' && { key: 'category', label: `Gender: ${category === 'mens' ? "Men's" : "Women's"}` },
-          type !== 'all'     && { key: 'type',     label: `Style: ${type}` },
-          price !== 'all'    && { key: 'price',    label: `Price: ${price}` },
-          color !== 'all'    && { key: 'color',    label: `Color: ${color}` },
-          material !== 'all' && { key: 'material', label: `Material: ${material}` },
-          stock !== 'all'    && { key: 'stock',    label: `Status: ${stock}` },
-          q                  && { key: 'q',        label: `Search: "${q}"` },
-        ].filter(Boolean);
-        if (!activeFilters.length) return null;
-        return (
-          <section className="container" style={{ padding: '0 1.5rem 1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {activeFilters.length} filter{activeFilters.length > 1 ? 's' : ''} active:
-              </span>
-              {activeFilters.map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => updateQuery(f.key, 'all')}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.28rem 0.7rem', borderRadius: '999px', background: 'var(--primary-color)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
-                >
-                  {f.label}
-                  <span style={{ fontSize: '1rem', lineHeight: 1, opacity: 0.8 }}>×</span>
-                </button>
-              ))}
+      {/* ── CATEGORY NAVIGATION TABS ───────────────────────────────────── */}
+      <section className="container" style={{ padding: '2.5rem 1.5rem 1.5rem' }} id="shop-tab-filters-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="shop-categories-tab" style={{ margin: 0 }}>
+            {categoryTabs.map(([val, label]) => (
               <button
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  startTransition(() => router.push(pathname));
-                }}
-                style={{ fontSize: '0.78rem', color: 'var(--danger-color)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginLeft: '0.25rem', textDecoration: 'underline' }}
+                key={val}
+                id={`tab-${val}`}
+                className={`category-tab-btn${category === val ? ' active' : ''}`}
+                onClick={() => updateQuery('category', val)}
+              >{label}</button>
+            ))}
+          </div>
+
+          <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            Showing <strong>{products.length}</strong> styles
+          </div>
+        </div>
+
+        {/* Search query tag if searching */}
+        {q && (
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Search results for:</span>
+            <span style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              backgroundColor: 'var(--primary-color)', 
+              color: '#fff', 
+              padding: '0.2rem 0.6rem', 
+              borderRadius: '999px',
+              fontSize: '0.78rem',
+              fontWeight: 600
+            }}>
+              &ldquo;{q}&rdquo;
+              <button 
+                onClick={() => updateQuery('q', '')} 
+                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '0.9rem', lineHeight: 1 }}
+                title="Clear search"
               >
-                Clear all
+                &times;
               </button>
-            </div>
-          </section>
-        );
-      })()}
+            </span>
+          </div>
+        )}
+      </section>
 
       {/* ── PRODUCT GRID ────────────────────────────────────────────────── */}
       <section
