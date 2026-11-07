@@ -285,13 +285,14 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   }, [product.id, allProducts]);
 
   /* ── 11. Schema.org JSON-LD ── */
+  const safeId = String(product.id || product._id || 'PROD-01');
   const productSchema = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
-    name: product.name,
-    image: product.image,
-    description: product.desc,
-    sku: product.id.toUpperCase().replace('PROD-', 'SLDX-SKU-') + skuSuffix,
+    name: product.name || 'SlideEase Footwear',
+    image: product.image || '/assets/loafers.png',
+    description: product.desc || 'Premium handcrafted footwear.',
+    sku: safeId.toUpperCase().replace('PROD-', 'SLDX-SKU-') + skuSuffix,
     brand: {
       '@type': 'Brand',
       name: 'SlideEase Footwear'
@@ -301,7 +302,7 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
       priceCurrency: 'INR',
       price: currentPrice,
       availability: 'https://schema.org/InStock',
-      url: `https://www.slidexfootwear.com/product/${product.id}`
+      url: `https://slide-ease.vercel.app/product/${product.slug || safeId}`
     },
     aggregateRating: {
       '@type': 'AggregateRating',

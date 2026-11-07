@@ -1,9 +1,10 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
 import { getDb } from '@/lib/mongodb';
 import { PRODUCTS } from '@/data/products';
 import ProductDetailsWrapper from '@/components/ProductDetailsWrapper';
+
+export const dynamicParams = true;
 
 const slugify = (text) => {
   if (!text) return '';
@@ -13,18 +14,35 @@ const slugify = (text) => {
     .replace(/(^-|-$)+/g, '');
 };
 
+function cleanProduct(p) {
+  if (!p) return null;
+  return {
+    ...p,
+    _id: p._id ? p._id.toString() : (p.id || ''),
+    id: p.id || (p._id ? p._id.toString() : slugify(p.name)),
+    name: p.name || 'Footwear Product',
+    price: typeof p.price === 'number' ? p.price : 1299,
+    originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : (p.price ? p.price + 900 : 2199),
+    category: p.category || 'womens',
+    image: p.image || '/assets/loafers.png',
+    sizes: Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : [5, 6, 7, 8, 9, 10],
+    createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : String(p.createdAt)) : undefined,
+    updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt)) : undefined,
+  };
+}
+
 async function getProductData(idOrSlug) {
+  const cleanId = decodeURIComponent(idOrSlug || '').trim();
+  if (!cleanId) return null;
+
   try {
     const db = await getDb();
     const rawProducts = await db.collection('products').find({}).toArray();
-    const dbProducts = rawProducts.map(p => ({
-      ...p,
-      _id: p._id ? p._id.toString() : p.id
-    }));
+    const dbProducts = rawProducts.map(cleanProduct);
 
     // Match by ID, database slug, or generated name slug
     let product = dbProducts.find(
-      (p) => p.id === idOrSlug || p.slug === idOrSlug || slugify(p.name) === idOrSlug
+      (p) => p.id === cleanId || p.slug === cleanId || slugify(p.name) === cleanId
     );
 
     if (product) {
@@ -32,33 +50,43 @@ async function getProductData(idOrSlug) {
         .filter((p) => p.category === product.category && p.id !== product.id)
         .slice(0, 4);
 
-      return { product, relatedProducts: related, allProducts: dbProducts };
+      // JSON stringify & parse ensures 100% clean serializable props for Client Components
+      return JSON.parse(JSON.stringify({ 
+        product, 
+        relatedProducts: related, 
+        allProducts: dbProducts 
+      }));
     }
   } catch (error) {
-    console.error('Failed to query product from MongoDB:', error.message);
+    console.warn('MongoDB lookup bypassed, falling back to static products:', error.message);
   }
 
   // Fallback: Check local static PRODUCTS array
-  const product = PRODUCTS.find(
-    (p) => p.id === idOrSlug || slugify(p.name) === idOrSlug
+  const staticProducts = PRODUCTS.map(cleanProduct);
+  const product = staticProducts.find(
+    (p) => p.id === cleanId || p.slug === cleanId || slugify(p.name) === cleanId
   );
 
   if (product) {
-    const related = PRODUCTS
+    const related = staticProducts
       .filter((p) => p.category === product.category && p.id !== product.id)
       .slice(0, 4);
-    return { product, relatedProducts: related, allProducts: PRODUCTS };
+    return JSON.parse(JSON.stringify({ 
+      product, 
+      relatedProducts: related, 
+      allProducts: staticProducts 
+    }));
   }
 
   return null;
 }
 
-// 1. Dynamic SEO Metadata Generator for WhatsApp/Social Shares
+// 1. Dynamic SEO Metadata Generator (using metadataBase from RootLayout, no headers() bailouts)
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const data = await getProductData(id);
 
-  if (!data) {
+  if (!data || !data.product) {
     return {
       title: 'Product Not Found | SlideEase Footwear',
       description: 'The requested footwear item could not be found.'
@@ -66,19 +94,7 @@ export async function generateMetadata({ params }) {
   }
 
   const { product } = data;
-
-  // Resolve headers to fetch active host domain to build absolute URLs for social sharing cards
-  const headerList = await headers();
-  const host = headerList.get('host') || 'localhost:3000';
-  const proto = headerList.get('x-forwarded-proto') || 'http';
-  const siteUrl = `${proto}://${host}`;
-
-  // Make image URL absolute (e.g. converting '/assets/loafers.png' -> 'https://domain.com/assets/loafers.png')
-  const absoluteImageUrl = product.image.startsWith('http')
-    ? product.image
-    : `${siteUrl}${product.image}`;
-
-  // Remove HTML tags from descriptions for plain text previews
+  const imageUrl = product.image || '/assets/loafers.png';
   const cleanDescription = (product.desc || product.shortDesc || 'Premium handcrafted vegan slides and footwear.')
     .replace(/<[^>]*>/g, '')
     .substring(0, 160);
@@ -89,12 +105,12 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: `${product.name} | SlideEase Footwear`,
       description: cleanDescription,
-      url: `${siteUrl}/product/${id}`,
+      url: `/product/${id}`,
       siteName: 'SlideEase Footwear',
       type: 'website',
       images: [
         {
-          url: absoluteImageUrl,
+          url: imageUrl,
           width: 800,
           height: 600,
           alt: product.name
@@ -105,14 +121,20 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title: `${product.name} | SlideEase Footwear`,
       description: cleanDescription,
-      images: [absoluteImageUrl]
+      images: [imageUrl]
     }
   };
 }
 
-// 2. Allow on-demand page generation for database products
+// 2. Pre-generate static paths for existing catalog products
 export async function generateStaticParams() {
-  return [];
+  const params = [];
+  PRODUCTS.forEach((p) => {
+    if (p.id) params.push({ id: p.id });
+    const slug = slugify(p.name);
+    if (slug && slug !== p.id) params.push({ id: slug });
+  });
+  return params;
 }
 
 // 3. Main Server Page Component
@@ -120,14 +142,14 @@ export default async function ProductPage({ params }) {
   const { id } = await params;
   const data = await getProductData(id);
 
-  if (!data) {
+  if (!data || !data.product) {
     notFound();
   }
 
   return (
     <ProductDetailsWrapper 
       product={data.product} 
-      relatedProducts={data.relatedProducts} 
+      relatedProducts={data.relatedProducts || []} 
       allProducts={data.allProducts || []}
     />
   );
