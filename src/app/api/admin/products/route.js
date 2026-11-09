@@ -5,6 +5,9 @@ import { verifySession } from '@/lib/auth';
 import { isConnectionError } from '@/lib/dbFallback';
 import { ObjectId } from 'mongodb';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 async function requireAdmin() {
   const cookieStore = await cookies();
   const sc = cookieStore.get('slidex_session');
@@ -77,6 +80,7 @@ export async function POST(request) {
       sizes: body.sizes || ['6', '7', '8', '9', '10'],
       sizeStock: sizeStock,
       sku: body.sku || `${newId}-MAIN`.toUpperCase(),
+      variants: Array.isArray(body.variants) ? body.variants : [],
       manageStock: body.manageStock === undefined ? true : !!body.manageStock,
       stockQty: body.stockQty !== undefined ? parseInt(body.stockQty) : computedTotalStock,
       lowStockThreshold: parseInt(body.lowStockThreshold) || 5,

@@ -47,8 +47,14 @@ export default function MediaSelector({ isOpen, onClose, onSelect, mode = 'singl
         method: 'POST',
         body: formData
       });
-      const data = await res.json();
-      if (data.success) {
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        alert(`Server error (${res.status}): ${res.statusText}`);
+        return;
+      }
+      if (res.ok && data.success && data.data?.url) {
         await fetchAssets();
         // Automatically switch to library and select the newly uploaded asset
         setActiveTab('library');
@@ -58,10 +64,10 @@ export default function MediaSelector({ isOpen, onClose, onSelect, mode = 'singl
           setSelectedUrls((prev) => [...prev, data.data.url]);
         }
       } else {
-        alert('Upload failed: ' + data.error);
+        alert('Upload failed: ' + (data.error || 'Unknown error'));
       }
     } catch (err) {
-      alert('Upload error.');
+      alert('Upload error: ' + (err.message || 'Check your connection'));
     } finally {
       setUploading(false);
     }

@@ -189,43 +189,133 @@ export default function AdminProducts() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDirectFileUpload = async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFeaturedImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     setIsUploading(true);
-    setFormMsg('Uploading selected product photo(s)...');
+    setFormMsg('Uploading featured product photo to Cloudinary CDN...');
+    setFormError('');
 
     try {
       const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-      }
+      formData.append('file', file);
 
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
 
-      if (data.success && data.urls) {
-        // If no main image set or default placeholder, set first uploaded as main
-        if (!image || image.includes('slides.png') || image.includes('og_image')) {
-          setImage(data.urls[0]);
-        }
-        // Append all uploaded to gallery
-        const existing = gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : [];
-        const combined = [...existing, ...data.urls];
-        setGallery(combined.join(', '));
-        setFormMsg(`✓ Successfully uploaded ${data.urls.length} product photo(s)!`);
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        throw new Error(`Upload failed (Status ${res.status}: ${res.statusText})`);
+      }
+
+      if (res.ok && data.success && data.url) {
+        setImage(data.url);
+        setFormMsg('✓ Featured photo uploaded successfully to Cloudinary CDN!');
         setTimeout(() => setFormMsg(''), 4000);
       } else {
-        setFormError(data.error || 'Upload failed');
+        setFormError(data.error || 'Failed to upload featured photo.');
       }
+    } catch (err) {
+      setFormError('Upload error: ' + err.message);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDirectFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    setFormError('');
+    const newUploadedUrls = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setFormMsg(`Uploading image ${i + 1} of ${files.length} to Cloudinary CDN...`);
+        const formData = new FormData();
+        formData.append('file', files[i]);
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        let data;
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          throw new Error(`Upload failed for "${files[i].name}" (Status ${res.status}: ${res.statusText})`);
+        }
+
+        if (res.ok && data.success && (data.url || data.urls?.[0])) {
+          newUploadedUrls.push(data.url || data.urls[0]);
+        } else {
+          throw new Error(data.error || `Failed to upload "${files[i].name}"`);
+        }
+      }
+
+      // If no main image set or default placeholder, set first uploaded as main
+      if (!image || image.includes('slides.png') || image.includes('og_image')) {
+        setImage(newUploadedUrls[0]);
+      }
+
+      // Append all uploaded to gallery
+      const existing = gallery ? gallery.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const combined = [...existing, ...newUploadedUrls];
+      setGallery(combined.join(', '));
+      setFormMsg(`✓ Successfully uploaded ${newUploadedUrls.length} product photo(s) to Cloudinary CDN!`);
+      setTimeout(() => setFormMsg(''), 4000);
     } catch (err) {
       setFormError('Upload failed: ' + err.message);
     } finally {
       setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleVariantPhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setFormMsg('Uploading variant photo to Cloudinary CDN...');
+    setFormError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        throw new Error(`Upload failed (Status ${res.status}: ${res.statusText})`);
+      }
+
+      if (res.ok && data.success && data.url) {
+        setNewVarImage(data.url);
+        setFormMsg('✓ Variant photo uploaded successfully to Cloudinary CDN!');
+        setTimeout(() => setFormMsg(''), 4000);
+      } else {
+        setFormError(data.error || 'Failed to upload variant photo.');
+      }
+    } catch (err) {
+      setFormError('Variant upload error: ' + err.message);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -817,22 +907,52 @@ export default function AdminProducts() {
                   <>
                     <div className="form-group">
                       <label className="form-label">Featured Product Image</label>
-                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                        <div style={{ width: '100px', height: '100px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
+                      <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ width: '100px', height: '100px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', flexShrink: 0 }}>
                           {image ? (
                             <img src={image} alt="Featured Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                           ) : (
                             <span style={{ fontSize: '2rem' }}>🖼️</span>
                           )}
                         </div>
-                        <button 
-                          type="button" 
-                          className="btn btn-outline" 
-                          style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
-                          onClick={() => setIsMainPickerOpen(true)}
-                        >
-                          Select Featured Image
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              id="directFeaturedUpload" 
+                              style={{ display: 'none' }}
+                              onChange={handleFeaturedImageUpload}
+                              disabled={isUploading}
+                            />
+                            <label 
+                              htmlFor="directFeaturedUpload"
+                              className="btn btn-primary"
+                              style={{ 
+                                padding: '0.5rem 1rem', 
+                                fontSize: '0.82rem', 
+                                cursor: isUploading ? 'not-allowed' : 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                opacity: isUploading ? 0.6 : 1
+                              }}
+                            >
+                              {isUploading ? '⏳ Uploading...' : '📤 Upload New Featured Photo'}
+                            </label>
+                            <button 
+                              type="button" 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
+                              onClick={() => setIsMainPickerOpen(true)}
+                            >
+                              Browse Media Library
+                            </button>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            Directly upload a photo from your computer to Cloudinary CDN, or select an asset from the media library.
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -1180,14 +1300,47 @@ export default function AdminProducts() {
 
                       <div className="admin-form-row-2" style={{ marginTop: '0.8rem' }}>
                         <div className="form-group">
-                          <label className="form-label">Variant Photo URL</label>
-                          <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="/assets/sandals.png or Cloudinary URL"
-                            value={newVarImage}
-                            onChange={(e) => setNewVarImage(e.target.value)}
-                          />
+                          <label className="form-label">Variant Photo</label>
+                          <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                            <div style={{ width: '48px', height: '48px', border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', flexShrink: 0 }}>
+                              {newVarImage ? (
+                                <img src={newVarImage} alt="Variant Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <span style={{ fontSize: '1.2rem' }}>🎨</span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', flex: 1, alignItems: 'center' }}>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                id="directVariantPhotoUpload" 
+                                style={{ display: 'none' }}
+                                onChange={handleVariantPhotoUpload}
+                                disabled={isUploading}
+                              />
+                              <label 
+                                htmlFor="directVariantPhotoUpload"
+                                className="btn btn-outline"
+                                style={{ 
+                                  padding: '0.4rem 0.8rem', 
+                                  fontSize: '0.78rem', 
+                                  cursor: isUploading ? 'not-allowed' : 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  opacity: isUploading ? 0.6 : 1
+                                }}
+                              >
+                                {isUploading ? '⏳ Uploading...' : '📤 Upload Photo'}
+                              </label>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="or paste Image URL"
+                                value={newVarImage}
+                                onChange={(e) => setNewVarImage(e.target.value)}
+                                style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem' }}
+                              />
+                            </div>
+                          </div>
                         </div>
                         <div className="form-group">
                           <label className="form-label">Stock Status</label>

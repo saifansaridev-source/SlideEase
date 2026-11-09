@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import ImageUploadSlot from '@/components/ImageUploadSlot';
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -15,6 +16,7 @@ export default function AdminCategories() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [desc, setDesc] = useState('');
+  const [image, setImage] = useState('');
   const [parent, setParent] = useState('');
   const [displayOrder, setDisplayOrder] = useState('10');
   
@@ -133,6 +135,7 @@ export default function AdminCategories() {
           name, 
           slug, 
           desc,
+          image: image || null,
           parent: parent || null,
           displayOrder: parseInt(displayOrder, 10) || 10
         }),
@@ -144,6 +147,7 @@ export default function AdminCategories() {
         setName('');
         setSlug('');
         setDesc('');
+        setImage('');
         setParent('');
         setDisplayOrder('10');
         fetchCategories(); // Reload table
@@ -372,6 +376,14 @@ export default function AdminCategories() {
                 onChange={(e) => setDesc(e.target.value)}
               ></textarea>
             </div>
+
+            <ImageUploadSlot
+              id="category-add-image-slot"
+              label="Category Banner / Icon (Optional)"
+              value={image}
+              onChange={(val) => setImage(val)}
+              helpText="Upload a category photo to Cloudinary CDN"
+            />
 
             <button 
               type="submit" 
@@ -647,13 +659,12 @@ export default function AdminCategories() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Image / Banner URL (Optional)</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="e.g. /assets/slides.png"
+                <ImageUploadSlot
+                  id="category-edit-image-slot"
+                  label="Category Banner / Photo"
                   value={editImage}
-                  onChange={(e) => setEditImage(e.target.value)}
+                  onChange={(val) => setEditImage(val)}
+                  helpText="Upload or change category image via Cloudinary CDN"
                 />
               </div>
 

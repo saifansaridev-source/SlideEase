@@ -4,6 +4,9 @@ import { DEFAULT_BLOGS } from '@/lib/blog-defaults';
 import { isConnectionError } from '@/lib/dbFallback';
 import { ObjectId } from 'mongodb';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 // Helper to slugify a title string
 function slugify(text) {
   return text

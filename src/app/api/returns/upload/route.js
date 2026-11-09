@@ -1,55 +1,15 @@
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
-import { cookies } from 'next/headers';
-import { verifySession } from '@/lib/auth';
-import fs from 'fs';
-import path from 'path';
+import { uploadBufferToCloudinary } from '@/lib/cloudinary';
 
-// Cloudinary configuration
-const hasCloudinary = Boolean(
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-);
-
-if (hasCloudinary) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true,
-  });
-}
-
-function uploadReturnEvidenceToCloudinary(buffer, fileName) {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: 'slideease/returns',
-        resource_type: 'image',
-        public_id: `ret-${Date.now()}-${path.parse(fileName).name.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result.secure_url);
-      }
-    );
-    uploadStream.end(buffer);
-  });
-}
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per image
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB per image
 const MAX_PHOTOS = 4;
 
 export async function POST(request) {
   try {
-    // Authenticate customer session or guest request
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('slidex_session');
-    const session = sessionCookie ? verifySession(sessionCookie.value) : null;
-
     const formData = await request.formData();
     const files = formData.getAll('photos');
     const singleFile = formData.get('photo') || formData.get('file');
@@ -85,55 +45,36 @@ export async function POST(request) {
       if (f.size && f.size > MAX_FILE_SIZE) {
         return NextResponse.json({
           success: false,
-          error: `File size exceeds 5MB limit (${(f.size / (1024 * 1024)).toFixed(1)}MB). Please upload a smaller photo.`
+          error: `File size exceeds 8MB limit (${(f.size / (1024 * 1024)).toFixed(1)}MB). Please upload a smaller photo.`
         }, { status: 400 });
       }
     }
 
     const uploadedUrls = [];
 
-    // 1. Cloudinary upload path (Production CDN)
-    if (hasCloudinary) {
-      for (const file of allFiles) {
-        if (!file || typeof file === 'string' || !file.arrayBuffer) continue;
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const secureUrl = await uploadReturnEvidenceToCloudinary(buffer, file.name || 'return-photo.jpg');
-        uploadedUrls.push(secureUrl);
-      }
-
-      return NextResponse.json({
-        success: true,
-        storage: 'cloudinary',
-        urls: uploadedUrls,
-        message: `Successfully uploaded ${uploadedUrls.length} evidence photo(s).`
-      });
-    }
-
-    // 2. Local disk fallback
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'returns');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
     for (const file of allFiles) {
       if (!file || typeof file === 'string' || !file.arrayBuffer) continue;
       const buffer = Buffer.from(await file.arrayBuffer());
-      const safeName = file.name ? file.name.replace(/[^a-zA-Z0-9._-]/g, '_') : 'evidence.jpg';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${safeName}`;
-      const filePath = path.join(uploadDir, fileName);
+      const fileName = file.name || 'return-photo.jpg';
 
-      fs.writeFileSync(filePath, buffer);
-      uploadedUrls.push(`/uploads/returns/${fileName}`);
+      const uploadRes = await uploadBufferToCloudinary(buffer, {
+        folder: 'slideease/returns',
+        fileName,
+        tags: ['slideease', 'returns'],
+      });
+
+      uploadedUrls.push(uploadRes.secure_url);
     }
 
     return NextResponse.json({
       success: true,
-      storage: 'local_disk',
+      storage: 'cloudinary',
       urls: uploadedUrls,
+      url: uploadedUrls[0] || null,
       message: `Successfully uploaded ${uploadedUrls.length} evidence photo(s).`
     });
   } catch (error) {
-    console.error('Return evidence upload error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('[Return Evidence Upload Error]:', error);
+    return NextResponse.json({ success: false, error: error.message || 'Evidence upload failed.' }, { status: 500 });
   }
 }

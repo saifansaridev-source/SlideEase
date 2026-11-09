@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 async function requireAdmin() {
   const cookieStore = await cookies();
   const sc = cookieStore.get('slidex_session');

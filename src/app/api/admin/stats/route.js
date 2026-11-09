@@ -4,6 +4,9 @@ import { MOCK_STATS, isConnectionError } from '@/lib/dbFallback';
 import { cookies } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function requireAdmin() {
   const cookieStore = await cookies();
   const sc = cookieStore.get('slidex_session');

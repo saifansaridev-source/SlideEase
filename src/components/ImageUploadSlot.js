@@ -45,14 +45,21 @@ export default function ImageUploadSlot({
         body: formData,
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        setUploadError(`Upload failed with server status ${res.status}: ${res.statusText || 'Response error'}`);
+        return;
+      }
+
       if (res.ok && data.success && data.url) {
         onChange(data.url);
       } else {
         setUploadError(data.error || 'Failed to upload image. Please try again.');
       }
     } catch (err) {
-      setUploadError('Network error during upload. Please check connection.');
+      setUploadError(err.message || 'Network error during upload. Please check connection.');
     } finally {
       setUploading(false);
     }

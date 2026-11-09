@@ -1,6 +1,8 @@
 import { getDb } from '@/lib/mongodb';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/admin/popups — list all popups
 export async function GET() {
   try {
