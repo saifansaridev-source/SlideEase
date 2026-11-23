@@ -50,6 +50,7 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
   });
 
   const activeVariant = realVariants[selectedVariantIndex] || realVariants[0];
+  const selectedColor = activeVariant?.color || product.color || '';
 
   const getInitialSizeForVariant = useCallback((v) => {
     const rawSizes = v?.sizes || product.sizes || [5, 6, 7, 8, 9, 10];
@@ -639,7 +640,7 @@ export default function ProductDetailsWrapper({ product, relatedProducts = [], a
 
               {addedNotice && (
                 <div style={{ padding: '0.8rem 1rem', backgroundColor: '#dcfce7', color: '#15803d', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontWeight: 600, fontSize: '0.85rem' }}>
-                  ✓ {product.name} ({selectedColor}, UK {selectedSize} × {qty}) added to cart!
+                  ✓ {product.name} {selectedColor && selectedColor !== 'Original' ? `(${selectedColor}, ` : '('}UK {selectedSize} × {qty}) added to cart!
                 </div>
               )}
 

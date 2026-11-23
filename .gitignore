@@ -41,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 
 /scratch/
+extracted_shoes/
+pdf_pages_rendered/

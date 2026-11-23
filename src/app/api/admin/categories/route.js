@@ -7,16 +7,15 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const DEFAULT_CATEGORIES = [
-  { name: "Men's Collection", slug: 'mens', desc: 'Premium slides, loafers and slip-ons for men.', parent: null, displayOrder: 1 },
-  { name: "Women's Collection", slug: 'womens', desc: 'Handcrafted juttis, flats, sandals and mules.', parent: null, displayOrder: 2 },
-  { name: 'Artisan Loafers', slug: 'mens-loafers', desc: 'Premium artisan loafers and slip-ons for men.', parent: 'mens', displayOrder: 1, typeMapping: 'loafers' },
-  { name: 'Ergonomic Slides', slug: 'mens-slides', desc: 'Contoured footbed ergonomic everyday slides.', parent: 'mens', displayOrder: 2, typeMapping: 'slides' },
-  { name: 'Strappy Sandals', slug: 'mens-sandals', desc: 'Comfort cross and strappy sandals.', parent: 'mens', displayOrder: 3, typeMapping: 'sandals' },
-  { name: 'Casual Footwear', slug: 'mens-casual', desc: 'Relaxed everyday casual footwear for men.', parent: 'mens', displayOrder: 4, typeMapping: 'casual' },
-  { name: 'Kutch Juttis & Mojris', slug: 'womens-juttis', desc: 'Handcrafted heritage mirror-work juttis.', parent: 'womens', displayOrder: 1, typeMapping: 'sandals' },
-  { name: 'Ikat Slip-on Loafers', slug: 'womens-loafers', desc: 'Pochampally ikat woven loafers.', parent: 'womens', displayOrder: 2, typeMapping: 'loafers' },
-  { name: 'Paisley Comfort Sandals', slug: 'womens-sandals', desc: 'Handcrafted paisley comfort sandals and flats.', parent: 'womens', displayOrder: 3, typeMapping: 'sandals' },
-  { name: 'Floral Cork Slides', slug: 'womens-slides', desc: 'Natural cork footbed floral and mandala slides.', parent: 'womens', displayOrder: 4, typeMapping: 'slides' },
+  { name: "Men's Collection", slug: 'mens', desc: 'Premium lifestyle sneakers, sports shoes, slip-ons and velcro footwear for men.', parent: null, displayOrder: 1 },
+  { name: "Women's Collection", slug: 'womens', desc: 'Elegant and supportive sneakers, slip-on shoes and comfort velcro footwear for women.', parent: null, displayOrder: 2 },
+  { name: "Men's Sneakers", slug: 'mens-sneakers', desc: 'Retro court and lifestyle toggle-lace sneakers for men.', parent: 'mens', displayOrder: 1, typeMapping: 'sneakers' },
+  { name: "Men's Sports Shoes", slug: 'mens-sports', desc: 'High-cushioning trail and athletic running shoes for men.', parent: 'mens', displayOrder: 2, typeMapping: 'sports' },
+  { name: "Men's Slip-On Shoes", slug: 'mens-slip-on', desc: 'Effortless ergonomic slip-on walking shoes for men.', parent: 'mens', displayOrder: 3, typeMapping: 'casual' },
+  { name: "Men's Velcro Shoes", slug: 'mens-velcro', desc: 'Easy-fasten adjustable velcro walking shoes for men.', parent: 'mens', displayOrder: 4, typeMapping: 'casual' },
+  { name: "Women's Sneakers", slug: 'womens-sneakers', desc: 'Pastel multi and retro court casual sneakers for women.', parent: 'womens', displayOrder: 1, typeMapping: 'sneakers' },
+  { name: "Women's Slip-On Shoes", slug: 'womens-slip-on', desc: 'Blush pink and cream comfort slip-on walking shoes for women.', parent: 'womens', displayOrder: 2, typeMapping: 'casual' },
+  { name: "Women's Velcro Shoes", slug: 'womens-velcro', desc: 'Rose pink and cream easy-strap velcro walking shoes for women.', parent: 'womens', displayOrder: 3, typeMapping: 'casual' }
 ];
 
 // GET: Retrieve all categories with product counts

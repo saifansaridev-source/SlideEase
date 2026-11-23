@@ -52,10 +52,10 @@ export default function Header() {
     const fromApi = categories.filter(c => c.parent === 'mens');
     if (fromApi.length > 0) return fromApi;
     return [
-      { name: 'Artisan Loafers', slug: 'mens-loafers', typeMapping: 'loafers' },
-      { name: 'Ergonomic Slides', slug: 'mens-slides', typeMapping: 'slides' },
-      { name: 'Strappy Sandals', slug: 'mens-sandals', typeMapping: 'sandals' },
-      { name: 'Casual Footwear', slug: 'mens-casual', typeMapping: 'casual' },
+      { name: "Men's Sneakers", slug: 'mens-sneakers', typeMapping: 'sneakers' },
+      { name: "Men's Sports Shoes", slug: 'mens-sports', typeMapping: 'sports' },
+      { name: "Men's Slip-On Shoes", slug: 'mens-slip-on', typeMapping: 'casual' },
+      { name: "Men's Velcro Shoes", slug: 'mens-velcro', typeMapping: 'casual' },
     ];
   }, [categories]);
 
@@ -63,10 +63,9 @@ export default function Header() {
     const fromApi = categories.filter(c => c.parent === 'womens');
     if (fromApi.length > 0) return fromApi;
     return [
-      { name: 'Kutch Juttis & Mojris', slug: 'womens-juttis', typeMapping: 'sandals' },
-      { name: 'Ikat Slip-on Loafers', slug: 'womens-loafers', typeMapping: 'loafers' },
-      { name: 'Paisley Comfort Sandals', slug: 'womens-sandals', typeMapping: 'sandals' },
-      { name: 'Floral Cork Slides', slug: 'womens-slides', typeMapping: 'slides' },
+      { name: "Women's Sneakers", slug: 'womens-sneakers', typeMapping: 'sneakers' },
+      { name: "Women's Slip-On Shoes", slug: 'womens-slip-on', typeMapping: 'casual' },
+      { name: "Women's Velcro Shoes", slug: 'womens-velcro', typeMapping: 'casual' },
     ];
   }, [categories]);
 
