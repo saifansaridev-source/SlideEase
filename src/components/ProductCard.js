@@ -192,7 +192,7 @@ function QuickBuyModal({ product, onClose, addToCart }) {
         <style>{`@keyframes qbIn{from{opacity:0;transform:translate(-50%,-52%) scale(0.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`}</style>
 
         <div style={{ display: 'flex', gap: '1rem', padding: '1.25rem', borderBottom: '1px solid var(--border-color)', alignItems: 'flex-start' }}>
-          <img src={product.image} alt={product.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)', flexShrink: 0 }} />
+          <img src={product.image} alt={product.name} style={{ width: '80px', height: '80px', objectFit: 'contain', objectPosition: 'center', backgroundColor: '#faf8f5', borderRadius: '8px', border: '1px solid var(--border-color)', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem', color: 'var(--primary-color)', lineHeight: 1.3, marginBottom: '0.3rem' }}>{product.name}</div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

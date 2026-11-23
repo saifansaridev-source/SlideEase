@@ -1037,25 +1037,33 @@ h6 {
 }
 
 .product-card-img-wrapper {
-  aspect-ratio: 1;
+  /* Use 4:3 ratio instead of strict 1:1 so tall/wide shoes breathe */
+  aspect-ratio: 4 / 3;
   background-color: #faf8f5;
   position: relative;
+  /* Keep overflow hidden for clean card edges; padding gives the shoe breathing room */
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  /* Generous padding keeps shoe away from card edges */
+  padding: 1.2rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .product-card-img {
-  max-height: 180px;
+  /* Contain ensures full shoe is always visible in the card */
+  width: 100%;
+  height: 100%;
+  max-height: 200px;
   object-fit: contain;
+  object-position: center;
   transition: var(--transition-smooth);
 }
 
 .product-card:hover .product-card-img {
-  transform: scale(1.08) rotate(3deg);
+  /* Subtle scale — no rotation, keeps the shoe orientation natural */
+  transform: scale(1.06);
 }
 
 .product-card-overlay {
@@ -2552,7 +2560,8 @@ h6 {
   }
 
   .product-card-img-wrapper {
-    padding: 2.5rem;
+    /* Consistent padding on larger screens — do NOT over-pad */
+    padding: 1.4rem;
   }
 }
 
@@ -2622,6 +2631,12 @@ h6 {
   position: relative;
 }
 
+/* ── Product Detail Gallery ──────────────────────────────────────────
+   FOOTWEAR VISIBILITY FIX: overflow must NOT be hidden on the wrapper
+   so that the zoom lens (controlled by JS zoomStyle) can work properly.
+   object-fit: contain ensures the entire shoe is always visible.
+   scale(1.4) zoom is JS-driven on mouse-move only — not a CSS hover.
+   ──────────────────────────────────────────────────────────────────── */
 .product-gallery-main {
   position: relative;
   border-radius: var(--radius-md);
@@ -2636,14 +2651,19 @@ h6 {
 }
 
 .product-main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
+  /* Use contain so the FULL shoe is always visible — never cropped */
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  object-position: center;
+  transition: transform 0.08s ease-out;
+  /* Zoom is applied via JS zoomStyle on mouse-move — no CSS hover zoom */
 }
 
+/* Remove the aggressive CSS hover-zoom that was auto-triggering scale(1.5)
+   The JS handleMouseMove / handleMouseLeave now controls zoom intentionally */
 .product-gallery-main:hover .product-main-img {
-  transform: scale(1.5);
+  /* intentionally left with no transform — zoom is JS-only via zoomStyle prop */
 }
 
 .product-stock-badge {
@@ -2714,12 +2734,16 @@ h6 {
 .product-gallery-thumbs img {
   width: 70px;
   height: 70px;
-  object-fit: cover;
+  /* contain so thumbnail always shows the complete shoe */
+  object-fit: contain;
+  object-position: center;
+  background-color: #faf8f5;
   border-radius: var(--radius-sm);
   border: 2px solid var(--border-color);
   cursor: pointer;
   transition: var(--transition-smooth);
   flex-shrink: 0;
+  padding: 4px;
 }
 
 .product-gallery-thumbs img.active,
@@ -6905,7 +6929,8 @@ textarea.input-error {
   }
 
   .product-card:hover .product-card-img {
-    transform: scale(1.05);
+    /* Subtle scale — consistent with base rule, no rotation */
+    transform: scale(1.06);
   }
 }
 
