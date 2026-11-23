@@ -44,10 +44,29 @@ export default function Home() {
     .sort((a, b) => (b.rating || 0) - (a.rating || 0))
     .slice(0, 4);
 
+  // Dynamic resolution for Shop By Style circular showcase (using actual catalog products)
+  const styleProd1 = catalogProducts.find((p) => p.id === 'prod-09') || catalogProducts[8] || PRODUCTS[8]; // Men's Khaki Tan Slip-On
+  const styleProd2 = catalogProducts.find((p) => p.id === 'prod-07') || catalogProducts[6] || PRODUCTS[6]; // Women's Blush Pink & Cream Slip-On
+  const styleProd3 = catalogProducts.find((p) => p.id === 'prod-06') || catalogProducts[5] || PRODUCTS[5]; // Men's Stealth Black Slip-On / Loafer
+  const styleProd4 = catalogProducts.find((p) => p.id === 'prod-02') || catalogProducts[1] || PRODUCTS[1]; // Women's Pastel Multi Artisan
+
+  const styleImg1 = (cmsImages.styleImage1 && !cmsImages.styleImage1.includes('/assets/'))
+    ? cmsImages.styleImage1
+    : (styleProd1?.image || '/products/shoes/shoe_09.png');
+  const styleImg2 = (cmsImages.styleImage2 && !cmsImages.styleImage2.includes('/assets/'))
+    ? cmsImages.styleImage2
+    : (styleProd2?.image || '/products/shoes/shoe_07.png');
+  const styleImg3 = (cmsImages.styleImage3 && !cmsImages.styleImage3.includes('/assets/'))
+    ? cmsImages.styleImage3
+    : (styleProd3?.image || '/products/shoes/shoe_06.png');
+  const styleImg4 = (cmsImages.styleImage4 && !cmsImages.styleImage4.includes('/assets/'))
+    ? cmsImages.styleImage4
+    : (styleProd4?.image || '/products/shoes/shoe_02.png');
+
   const testimonials = [
     {
       stars: '★ ★ ★ ★ ★',
-      text: '"I bought the Peacock Ikat Loafers, and they have become my absolute favorite daily wear! The memory foam cushioning is so comfortable, and I get compliments at my office every day. Plus, knowing it is cruelty-free makes it even better!"',
+      text: '"I bought the GlideWave Olive Toggle-Lace Sneakers, and they have become my absolute favorite daily wear! The hollow cushioning pods are so comfortable, and I get compliments at my office every day. Plus, knowing it is cruelty-free makes it even better!"',
       author: 'Prerna Sharma',
       role: 'Verified Buyer, Mumbai'
     },
@@ -85,69 +104,69 @@ export default function Home() {
             <h2 className="section-title">Shop By Style</h2>
             <p className="section-subtitle">Find your perfect pair from our curated catalog categories</p>
           </AnimateIn>
-          
+
           <div className="category-quick-grid">
             {/* Card 1: Men's Slides */}
             <AnimateIn variant="fade-up" delay={80}>
-              <Link href="/shop?category=mens&type=slides" className="category-quick-card" id="category-mens">
+              <Link href="/shop?category=mens&subcategory=mens-slip-on" className="category-quick-card" id="category-mens">
                 <div className="category-circle-wrapper">
-                  <img 
-                    src={cmsImages.styleImage1 || '/assets/slides.png'} 
-                    alt="Men's Slides" 
-                    className="category-circle-img" 
+                  <img
+                    src={styleImg1}
+                    alt="Men's Slides & Slip-Ons"
+                    className="category-circle-img"
                   />
                   <div className="category-circle-overlay"><span>Shop Now →</span></div>
                 </div>
                 <span className="category-title-text">Men's Slides</span>
-                <span className="category-count-text">12 Handcrafted Styles</span>
+                <span className="category-count-text">13 Handcrafted Styles</span>
               </Link>
             </AnimateIn>
 
             {/* Card 2: Women's Sandals */}
             <AnimateIn variant="fade-up" delay={160}>
-              <Link href="/shop?category=womens&type=sandals" className="category-quick-card" id="category-womens">
+              <Link href="/shop?category=womens&subcategory=womens-slip-on" className="category-quick-card" id="category-womens">
                 <div className="category-circle-wrapper">
-                  <img 
-                    src={cmsImages.styleImage2 || '/assets/sandals.png'} 
-                    alt="Women's Sandals" 
-                    className="category-circle-img" 
+                  <img
+                    src={styleImg2}
+                    alt="Women's Sandals & Slip-Ons"
+                    className="category-circle-img"
                   />
                   <div className="category-circle-overlay"><span>Shop Now →</span></div>
                 </div>
                 <span className="category-title-text">Women's Sandals</span>
-                <span className="category-count-text">18 Handcrafted Styles</span>
+                <span className="category-count-text">4 Handcrafted Styles</span>
               </Link>
             </AnimateIn>
 
             {/* Card 3: Premium Loafers */}
             <AnimateIn variant="fade-up" delay={240}>
-              <Link href="/shop?type=loafers" className="category-quick-card" id="category-loafers">
+              <Link href="/shop?category=mens&subcategory=mens-slip-on" className="category-quick-card" id="category-loafers">
                 <div className="category-circle-wrapper">
-                  <img 
-                    src={cmsImages.styleImage3 || '/assets/loafers.png'} 
-                    alt="Premium Loafers" 
-                    className="category-circle-img" 
+                  <img
+                    src={styleImg3}
+                    alt="Premium Loafers"
+                    className="category-circle-img"
                   />
                   <div className="category-circle-overlay"><span>Shop Now →</span></div>
                 </div>
                 <span className="category-title-text">Premium Loafers</span>
-                <span className="category-count-text">9 Handcrafted Styles</span>
+                <span className="category-count-text">Wave Cushion Sole</span>
               </Link>
             </AnimateIn>
 
             {/* Card 4: Artisan Mojris */}
             <AnimateIn variant="fade-up" delay={320}>
-              <Link href="/shop?category=womens&type=sandals" className="category-quick-card" id="category-mojris">
+              <Link href="/shop?category=womens" className="category-quick-card" id="category-mojris">
                 <div className="category-circle-wrapper">
-                  <img 
-                    src={cmsImages.styleImage4 || '/assets/mojris.png'} 
-                    alt="Traditional Mojris & Juttis" 
-                    className="category-circle-img" 
+                  <img
+                    src={styleImg4}
+                    alt="Artisan Mojris & Juttis"
+                    className="category-circle-img"
                   />
                   <div className="category-circle-overlay"><span>Shop Now →</span></div>
                 </div>
                 <span className="category-title-text">Artisan Mojris</span>
-                <span className="category-count-text">15 Handcrafted Styles</span>
+                <span className="category-count-text">Handcrafted Heritage</span>
               </Link>
             </AnimateIn>
           </div>
@@ -238,7 +257,7 @@ export default function Home() {
             <h2 className="section-title">New Arrivals</h2>
             <p className="section-subtitle">Discover the latest additions to our premium handcrafted luxury collection.</p>
           </AnimateIn>
-          
+
           <AnimateIn variant="fade-up" delay={150}>
             <NewArrivalsSlider products={newArrivals} />
           </AnimateIn>
@@ -252,7 +271,7 @@ export default function Home() {
             <h2 className="section-title">Most Loved Footwear</h2>
             <p className="section-subtitle">Highly rated vegan footwear adored by our clients across the nation.</p>
           </AnimateIn>
-          
+
           <div className="product-grid best-sellers-grid">
             {bestSellers.map((product, idx) => (
               <AnimateIn key={product.id} variant="fade-up" delay={idx * 100}>
@@ -260,7 +279,7 @@ export default function Home() {
               </AnimateIn>
             ))}
           </div>
-          
+
           <div style={{ textAlign: 'center', marginTop: '3.5rem' }}>
             <Link href="/shop" className="btn btn-primary">
               View Full Catalog
@@ -275,9 +294,9 @@ export default function Home() {
           <div className="artisan-beat-grid">
             <AnimateIn variant="fade-right" style={{ width: '100%', height: '100%' }}>
               <div className="artisan-portrait-wrapper" style={{ height: '100%' }}>
-                <img 
-                  src={cmsImages.ramjiLeftImage || "https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=800&auto=format&fit=crop&q=80"} 
-                  alt="Master Artisan Ramjibhai at work" 
+                <img
+                  src={cmsImages.ramjiLeftImage || "https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=800&auto=format&fit=crop&q=80"}
+                  alt="Master Artisan Ramjibhai at work"
                 />
                 <div className="artisan-portrait-badge">
                   <div className="artisan-name">Ramjibhai Vankar</div>
@@ -285,7 +304,7 @@ export default function Home() {
                 </div>
               </div>
             </AnimateIn>
-            
+
             <AnimateIn variant="fade-left" delay={150}>
               <div className="artisan-quote-content">
                 <div className="artisan-quote-mark">“</div>
@@ -307,7 +326,7 @@ export default function Home() {
       </section>
 
       {/* SECTION 7: INTERACTIVE 360° PRODUCT STUDIO */}
-      <Turntable360 />
+      <Turntable360 product={catalogProducts[0] || PRODUCTS[0]} />
 
       {/* SECTION 8: BRAND STORY (MODERN INDIAN CLASSIC) */}
       <section className="brand-story-section section-padding" id="brand-heritage-section">
@@ -323,7 +342,7 @@ export default function Home() {
                 <p className="brand-story-p">
                   Every pair goes through stringent quality checks, utilizing double-padded memory foam in the base, guaranteeing you look sleek and walk light, all day long.
                 </p>
-                
+
                 <div className="brand-story-features">
                   <div className="story-feature-item">
                     <div className="story-feature-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -355,9 +374,9 @@ export default function Home() {
 
             <AnimateIn variant="fade-left" delay={150}>
               <div className="brand-story-image">
-                <img 
-                  src={cmsImages.modernClassicImage || "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&auto=format&fit=crop&q=80"} 
-                  alt="Artisanal shoemaking process" 
+                <img
+                  src={cmsImages.modernClassicImage || "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&auto=format&fit=crop&q=80"}
+                  alt="Artisanal shoemaking process"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', aspectRatio: 1.25, borderRadius: 'var(--radius-md)' }}
                 />
               </div>
@@ -376,9 +395,9 @@ export default function Home() {
               <p className="section-subtitle">Curated styling inspiration bridging ethnic grandeur with modern metropolitan tailoring.</p>
             </div>
           </AnimateIn>
-          
+
           <div className="materials-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-            
+
             {/* Card 1: Ethno-Formal Look */}
             <AnimateIn variant="fade-up" delay={80}>
               <div className="material-card" style={{ background: '#fbf9f5', border: '1px solid rgba(201, 169, 97, 0.3)', borderRadius: 'var(--radius-md)', padding: '2rem', height: '100%' }}>
@@ -407,7 +426,7 @@ export default function Home() {
                 </div>
                 <h3 className="material-h3" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>Smart-Casual Appeal</h3>
                 <p className="material-desc" style={{ lineHeight: 1.6, fontSize: '0.88rem' }}>
-                  Slip on the Peacock Ikat Loafers or Classic Tan Vegan slides with tapered linen chinos, polo shirts, or selvedge denim for relaxed boardrooms and weekend retreats.
+                  Slip on the GlideWave Olive Sneakers or CloudStride Tan Vegan shoes with tapered linen chinos, polo shirts, or selvedge denim for relaxed boardrooms and weekend retreats.
                 </p>
               </div>
             </AnimateIn>
@@ -438,7 +457,7 @@ export default function Home() {
             <h2 className="section-title">Designed with Ethics & Ergonomics</h2>
             <p className="section-subtitle">Take a closer look at the advanced materials engineered into every pair of SlideEase footwear.</p>
           </AnimateIn>
-          
+
           <div className="materials-grid">
             <AnimateIn variant="fade-up" delay={80}>
               <div className="material-card" style={{ height: '100%' }}>
@@ -491,7 +510,7 @@ export default function Home() {
             <h2 className="section-title">Loved by Thousands</h2>
             <p className="section-subtitle">Here is what our happy customers say about their walking comfort in SlideEase.</p>
           </AnimateIn>
-          
+
           <AnimateIn variant="fade-up" delay={150}>
             <div className="testimonial-slider">
               {testimonials.map((t, idx) => (
@@ -502,11 +521,11 @@ export default function Home() {
                   <div className="testimonial-author-role" style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{t.role}</div>
                 </div>
               ))}
-              
+
               <div className="testimonial-nav-dots" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '24px' }}>
                 {testimonials.map((_, idx) => (
-                  <span 
-                    key={idx} 
+                  <span
+                    key={idx}
                     className={`testimonial-dot ${activeTestimonial === idx ? 'active' : ''}`}
                     onClick={() => setActiveTestimonial(idx)}
                     style={{
@@ -600,7 +619,7 @@ export default function Home() {
               See how our fashion community styles their SlideEase Footwear. Follow <a href="https://instagram.com/slideease" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-dark)', fontWeight: 600 }}>@SlideEase</a>
             </p>
           </AnimateIn>
-          
+
           <div className="instagram-grid">
             <AnimateIn variant="fade-up" delay={60}>
               <div className="instagram-item">

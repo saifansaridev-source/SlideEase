@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { PRODUCTS } from '@/data/products';
 
 // Multi-angle footwear perspectives
 const PRESET_VIEWPOINTS = [
@@ -13,7 +14,12 @@ const PRESET_VIEWPOINTS = [
   { label: 'Medial (270°)', angle: 270 },
 ];
 
-export default function Turntable360({ frames = null, productName = 'Peacock Ikat Loafer', price = 1499 }) {
+export default function Turntable360({
+  product = null,
+  frames = null,
+  productName = null,
+  price = null
+}) {
   const { addToCart, setIsCartOpen } = useCart();
   const [angle, setAngle] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -21,14 +27,28 @@ export default function Turntable360({ frames = null, productName = 'Peacock Ika
   const startXRef = useRef(0);
   const autoPlayRef = useRef(null);
 
-  // Default multi-angle frame sequence if dedicated 36-frame pack is not injected
-  const frameList = frames && frames.length > 0 ? frames : [
-    '/assets/loafers.png',
-    '/assets/slides.png',
-    '/assets/sandals.png',
-    '/assets/mojris.png',
-    '/assets/loafers.png'
-  ];
+  // Fallback to flagship product from catalog if no product prop is provided
+  const activeProduct = product || PRODUCTS[0] || {
+    id: 'prod-01',
+    name: "Men's GlideWave Olive Toggle-Lace Sneakers",
+    slug: 'mens-glidewave-olive-toggle-lace-sneakers',
+    price: 2999,
+    originalPrice: 6000,
+    image: 'https://res.cloudinary.com/yttzcohv/image/upload/v1795377672/slideease/products/catalog-shoe_01-1795377671099.jpg',
+  };
+
+  const displayName = productName || activeProduct.name;
+  const displayPrice = typeof price === 'number' ? price : (activeProduct.price || 2999);
+  const displayOriginalPrice = activeProduct.originalPrice || 6000;
+  const productSlug = activeProduct.slug || activeProduct.id || 'prod-01';
+
+  // Frame sequence for turntable (uses product image/gallery with fallback)
+  const defaultImage = activeProduct.image || '/products/shoes/shoe_01.png';
+  const frameList = frames && frames.length > 0
+    ? frames
+    : (Array.isArray(activeProduct.gallery) && activeProduct.gallery.length > 0
+        ? activeProduct.gallery
+        : [defaultImage]);
 
   const totalFrames = frameList.length;
   const currentFrameIndex = Math.min(
@@ -95,32 +115,29 @@ export default function Turntable360({ frames = null, productName = 'Peacock Ika
   };
 
   const handleAddToCart = () => {
-    addToCart({
-      id: 'prod-01',
-      name: productName,
-      price: price,
-      size: '7',
-      image: frameList[0],
-    });
+    addToCart(activeProduct, 'UK 7', 1);
     setIsCartOpen(true);
   };
+
+  // Dynamic interactive tilt to mimic multi-angle studio inspection
+  const dynamicTilt = ((angle - 180) / 180) * 6; // Max ±6 deg smooth tilt
 
   return (
     <section className="section-360-showcase" id="showcase-360">
       <div className="container">
-        <div style={{ textAlign: 'center', maxWidth: '650px', margin: '0 auto 40px auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 40px auto' }}>
           <span className="craft-eyebrow">✦ 360° Studio Inspection</span>
           <h2 className="section-title">Experience Every Angle of Handcraft</h2>
           <p className="section-subtitle">
-            Interact with our multi-angle studio turntable. Inspect hand-stitched borders, arch ergonomics, and cruelty-free finishes.
+            Interact with our studio inspection turntable. Inspect the sculpted sole contours, reinforced welt, and breathable cruelty-free upper.
           </p>
         </div>
 
         <div className="turntable-container">
           {/* Interactive Viewer Frame */}
           <div>
-            <div 
-              className="turntable-viewer-box" 
+            <div
+              className="turntable-viewer-box"
               id="turntable-box"
               style={{ cursor: isDragging ? 'grabbing' : 'grab', userSelect: 'none', position: 'relative' }}
               onMouseDown={handleMouseDown}
@@ -135,23 +152,27 @@ export default function Turntable360({ frames = null, productName = 'Peacock Ika
                 <span>⟳ Studio Angle:</span>
                 <span id="turntable-angle-val">{Math.round(angle)}°</span>
               </div>
-              
-              <img 
-                src={frameList[currentFrameIndex]} 
-                alt={`${productName} 360 View - Frame ${currentFrameIndex + 1}`} 
-                className="turntable-image-layer" 
+
+              <img
+                src={frameList[currentFrameIndex]}
+                alt={`${displayName} 360 Studio View`}
+                className="turntable-image-layer"
                 id="turntable-img"
                 style={{
                   filter: 'drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15))',
-                  transition: isDragging ? 'none' : 'opacity 0.15s ease',
+                  transition: isDragging ? 'none' : 'transform 0.15s ease, opacity 0.15s ease',
                   maxHeight: '340px',
+                  maxWidth: '92%',
+                  width: 'auto',
+                  height: 'auto',
                   objectFit: 'contain',
+                  transform: `rotate(${dynamicTilt}deg)`,
                 }}
                 draggable="false"
               />
-              
+
               <div className="turntable-hint-overlay">
-                <span>👈 Drag or swipe to rotate 360° 👉</span>
+                <span>👈 Drag or swipe to inspect 360° 👉</span>
               </div>
             </div>
 
@@ -206,43 +227,45 @@ export default function Turntable360({ frames = null, productName = 'Peacock Ika
             <span style={{ fontSize: '0.8rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--accent-dark)', fontWeight: 600 }}>
               Signature Footwear Silhouette
             </span>
-            <h3 className="turntable-title">{productName}</h3>
+            <h3 className="turntable-title">{displayName}</h3>
             <div className="turntable-price">
-              ₹{price?.toLocaleString('en-IN')}{' '}
-              <span style={{ textDecoration: 'line-through', fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>
-                ₹2,499
-              </span>
+              ₹{displayPrice?.toLocaleString('en-IN')}{' '}
+              {displayOriginalPrice > displayPrice && (
+                <span style={{ textDecoration: 'line-through', fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: '8px' }}>
+                  ₹{displayOriginalPrice.toLocaleString('en-IN')}
+                </span>
+              )}
             </div>
-            
+
             <div className="turntable-hotspots">
               <div className="hotspot-item">
                 <div className="hotspot-icon">01</div>
                 <div>
-                  <h5>Hand-Dyed Vegan Canvas</h5>
-                  <p>Breathable organic cotton weave treated with natural plant-based water repellents.</p>
+                  <h5>Bungee Speed-Toggle Lacing</h5>
+                  <p>Innovative cinch toggle mechanism providing instant slip-in fit with zero lace tying required.</p>
                 </div>
               </div>
               <div className="hotspot-item">
                 <div className="hotspot-icon">02</div>
                 <div>
-                  <h5>Ergonomic Arch Cushioning</h5>
-                  <p>High-resilience dual-density memory foam reduces impact for all-day walking comfort.</p>
+                  <h5>Dual-Density Cushioning Pods</h5>
+                  <p>Sculpted hollow wave pods engineered to reduce foot fatigue and absorb step impact.</p>
                 </div>
               </div>
               <div className="hotspot-item">
                 <div className="hotspot-icon">03</div>
                 <div>
-                  <h5>Reinforced Goodyear Welt</h5>
-                  <p>Cruelty-free vegan leather welt with perimeter stitching for lasting durability.</p>
+                  <h5>Breathable Vegan Overlays</h5>
+                  <p>Microfiber mesh with durable, water-resistant cruelty-free overlays for lasting comfort.</p>
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
               <button className="btn btn-accent" id="turntable-add-cart-btn" onClick={handleAddToCart}>
-                Add to Cart • ₹{price?.toLocaleString('en-IN')}
+                Add to Cart • ₹{displayPrice?.toLocaleString('en-IN')}
               </button>
-              <Link href="/product/prod-01" className="btn btn-outline">
+              <Link href={`/product/${productSlug}`} className="btn btn-outline">
                 View Full Specs & Care
               </Link>
             </div>

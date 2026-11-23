@@ -76,11 +76,11 @@ export const DEFAULT_SECTION_IMAGES = {
   aboutHeroImage: '/og_image.png',
   contactHeroImage: '/og_image.png',
 
-  // Shop by Style (4 images)
-  styleImage1: '/assets/slides.png',
-  styleImage2: '/assets/sandals.png',
-  styleImage3: '/assets/loafers.png',
-  styleImage4: '/assets/mojris.png',
+  // Shop by Style (4 images from new footwear catalog)
+  styleImage1: 'https://res.cloudinary.com/yttzcohv/image/upload/v1795377680/slideease/products/catalog-shoe_09-1795377680163.jpg', // Men's Slides / Slip-On (prod-09: Khaki Tan Slip-On)
+  styleImage2: 'https://res.cloudinary.com/yttzcohv/image/upload/v1795377678/slideease/products/catalog-shoe_07-1795377678097.jpg', // Women's Sandals / Slip-On (prod-07: Blush Pink & Cream Slip-On)
+  styleImage3: 'https://res.cloudinary.com/yttzcohv/image/upload/v1795377677/slideease/products/catalog-shoe_06-1795377677197.jpg', // Premium Loafers (prod-06: Stealth Black Slip-On)
+  styleImage4: 'https://res.cloudinary.com/yttzcohv/image/upload/v1795377673/slideease/products/catalog-shoe_02-1795377673408.jpg', // Artisan Mojris (prod-02: Pastel Multi Artisan Toggle-Lace)
 
   // Ramjibhai Vankar Story
   ramjiLeftImage: 'https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=800&auto=format&fit=crop&q=80',
@@ -495,7 +495,7 @@ export const DEFAULT_CMS_PAGES = {
     content: `<div class="about-cms-container">
   <h2>Crafting Comfort, Celebrating Heritage</h2>
   <p>At SlideEase, we believe style should never come at the cost of conscience. Founded in Mumbai, India, our mission is to create premium-quality, cruelty-free footwear that celebrates India's rich weaving heritage while using zero animal products.</p>
-  
+
   <h3>Walk Light, Walk Right</h3>
   <p>Every pair of SlideEase shoes is handcrafted by master craftspeople from Gujarat, Rajasthan, and Madhya Pradesh—artisanal weavers who have preserved traditional handloom techniques for generations. We combine their generational craft with modern comfort engineering to deliver footwear that is both ethically made and ergonomically contoured.</p>
 
